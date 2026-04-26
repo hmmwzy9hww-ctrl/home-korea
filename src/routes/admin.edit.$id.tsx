@@ -90,7 +90,31 @@ function EditPage() {
         (file) =>
           new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
-            reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+            reader.onload = () => {
+              const raw = typeof reader.result === "string" ? reader.result : "";
+              if (!raw) {
+                resolve("");
+                return;
+              }
+
+              const image = new Image();
+              image.onload = () => {
+                const maxSide = 1600;
+                const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+                const canvas = document.createElement("canvas");
+                canvas.width = Math.max(1, Math.round(image.width * scale));
+                canvas.height = Math.max(1, Math.round(image.height * scale));
+                const ctx = canvas.getContext("2d");
+                if (!ctx) {
+                  resolve(raw);
+                  return;
+                }
+                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL("image/jpeg", 0.82));
+              };
+              image.onerror = () => resolve(raw);
+              image.src = raw;
+            };
             reader.onerror = () => reject(new Error("read failed"));
             reader.readAsDataURL(file);
           }),
