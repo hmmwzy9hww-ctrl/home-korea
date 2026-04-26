@@ -43,7 +43,9 @@ function ensureInit() {
 
 function subscribe(cb: () => void) {
   listeners.add(cb);
-  return () => listeners.delete(cb);
+  return () => {
+    listeners.delete(cb);
+  };
 }
 
 function getSnapshot(): Listing[] {
@@ -156,7 +158,9 @@ export function logoutAdmin() {
 }
 
 export function useAdmin(): boolean {
-  const [v, setV] = useState(false);
+  // Initialize synchronously from localStorage to avoid a false "logged out"
+  // flash on first render of admin pages.
+  const [v, setV] = useState<boolean>(() => isAdmin());
   useEffect(() => {
     setV(isAdmin());
     const cb = () => setV(isAdmin());
