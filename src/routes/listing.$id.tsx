@@ -4,7 +4,7 @@ import { AppShell } from "@/components/AppShell";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
 import { useI18n } from "@/lib/i18n";
 import { useListing, useFavorites, toggleFavorite } from "@/lib/store";
-import { DEFAULT_MESSENGER_URL } from "@/lib/config";
+import { buildMessengerUrl } from "@/lib/config";
 import { formatWon } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -42,7 +42,13 @@ function ListingDetailPage() {
   }
 
   const isFav = favs.has(listing.id);
-  const messenger = listing.messengerUrl || DEFAULT_MESSENGER_URL;
+  const listingUrl =
+    typeof window !== "undefined" ? window.location.href : `/listing/${listing.id}`;
+  const messenger = buildMessengerUrl({
+    listingTitle: listing.title,
+    listingUrl,
+    override: listing.messengerUrl,
+  });
 
   return (
     <AppShell showSearch={false}>

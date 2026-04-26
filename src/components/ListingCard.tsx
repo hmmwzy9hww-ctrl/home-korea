@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Heart, MapPin, Train, Bus, MessageCircle } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useFavorites, toggleFavorite } from "@/lib/store";
-import { DEFAULT_MESSENGER_URL } from "@/lib/config";
+import { buildMessengerUrl } from "@/lib/config";
 import type { Listing } from "@/lib/types";
 import { formatWon } from "@/lib/format";
 import { PhotoCarousel } from "./PhotoCarousel";
@@ -12,7 +12,14 @@ export function ListingCard({ listing }: { listing: Listing }) {
   const { t } = useI18n();
   const favs = useFavorites();
   const isFav = favs.has(listing.id);
-  const messenger = listing.messengerUrl || DEFAULT_MESSENGER_URL;
+  const origin =
+    typeof window !== "undefined" ? window.location.origin : "";
+  const listingUrl = `${origin}/listing/${listing.id}`;
+  const messenger = buildMessengerUrl({
+    listingTitle: listing.title,
+    listingUrl,
+    override: listing.messengerUrl,
+  });
 
   return (
     <article className="group bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover transition-shadow border">
