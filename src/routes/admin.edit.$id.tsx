@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
@@ -55,6 +55,11 @@ function EditPage() {
   const [photo3, setPhoto3] = useState("");
   const [photo4, setPhoto4] = useState("");
   const [optionsStr, setOptionsStr] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const photoFields = useMemo(
+    () => [photo0, photo1, photo2, photo3, photo4].map((p) => p.trim()).filter(Boolean),
+    [photo0, photo1, photo2, photo3, photo4],
+  );
 
   useEffect(() => {
     if (!isNew && existing) {
@@ -66,8 +71,62 @@ function EditPage() {
       setPhoto3(existing.photos[3] || "");
       setPhoto4(existing.photos[4] || "");
       setOptionsStr(existing.options.join(", "));
+    } else if (isNew) {
+      setForm(empty());
+      setPhoto0("");
+      setPhoto1("");
+      setPhoto2("");
+      setPhoto3("");
+      setPhoto4("");
+      setOptionsStr("");
     }
   }, [existing, isNew]);
+
+  const readFiles = async (files: FileList | null) => {
+    if (!files?.length) return;
+    const images = Array.from(files).slice(0, 5);
+    const dataUrls = await Promise.all(
+      images.map(
+        (file) =>
+          new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const raw = typeof reader.result === "string" ? reader.result : "";
+              if (!raw) {
+                resolve("");
+                return;
+              }
+
+              const image = new Image();
+              image.onload = () => {
+                const maxSide = 1600;
+                const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+                const canvas = document.createElement("canvas");
+                canvas.width = Math.max(1, Math.round(image.width * scale));
+                canvas.height = Math.max(1, Math.round(image.height * scale));
+                const ctx = canvas.getContext("2d");
+                if (!ctx) {
+                  resolve(raw);
+                  return;
+                }
+                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL("image/jpeg", 0.82));
+              };
+              image.onerror = () => resolve(raw);
+              image.src = raw;
+            };
+            reader.onerror = () => reject(new Error("read failed"));
+            reader.readAsDataURL(file);
+          }),
+      ),
+    );
+
+    setPhoto0(dataUrls[0] || "");
+    setPhoto1(dataUrls[1] || "");
+    setPhoto2(dataUrls[2] || "");
+    setPhoto3(dataUrls[3] || "");
+    setPhoto4(dataUrls[4] || "");
+  };
 
   if (!isAdmin) {
     return (
@@ -88,7 +147,7 @@ function EditPage() {
       toast.error(t("form.required") + ": " + t("form.title"));
       return;
     }
-    const photos = [photo0, photo1, photo2, photo3, photo4].map((p) => p.trim()).filter(Boolean);
+    const photos = photoFields;
     const options = optionsStr.split(",").map((o) => o.trim()).filter(Boolean);
     const payload = { ...form, photos, options };
 
@@ -294,6 +353,29 @@ function EditPage() {
 
           <Field label={t("form.photos")}>
             <div className="space-y-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => {
+                  void readFiles(e.target.files).catch(() => toast.error(t("form.imageError")));
+                }}
+                className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-secondary file:px-3 file:py-2 file:text-sm file:font-medium"
+              />
+              {photoFields.length > 0 && (
+                <div className="grid grid-cols-3 gap-2">
+                  {photoFields.map((photo, i) => (
+                    <img
+                      key={`${photo.slice(0, 20)}-${i}`}
+                      src={photo}
+                      alt={`${form.title || t("form.title")}-${i + 1}`}
+                      className="aspect-square w-full rounded-lg border object-cover bg-muted"
+                      loading="lazy"
+                    />
+                  ))}
+                </div>
+              )}
               {[
                 [photo0, setPhoto0],
                 [photo1, setPhoto1],

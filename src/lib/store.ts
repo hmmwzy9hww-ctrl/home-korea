@@ -23,7 +23,11 @@ function load(): Listing[] {
 
 function persist() {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(KEY, JSON.stringify(memoryStore));
+  try {
+    window.localStorage.setItem(KEY, JSON.stringify(memoryStore));
+  } catch {
+    // ignore persistence failures so the UI still updates in-memory on Safari/private mode
+  }
   listeners.forEach((l) => l());
 }
 
@@ -110,7 +114,11 @@ function ensureFavs() {
 
 function persistFavs() {
   if (typeof window === "undefined" || !favs) return;
-  window.localStorage.setItem(FAV_KEY, JSON.stringify([...favs]));
+  try {
+    window.localStorage.setItem(FAV_KEY, JSON.stringify([...favs]));
+  } catch {
+    // ignore persistence failures
+  }
   favListeners.forEach((l) => l());
 }
 

@@ -1,8 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { Heart, MapPin, Train, Bus, MessageCircle } from "lucide-react";
+import { Heart, MapPin, Train, Bus, MessageCircle, ExternalLink } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useFavorites, toggleFavorite } from "@/lib/store";
 import { buildMessengerUrl } from "@/lib/config";
+import { buildGoogleMapsSearchUrl, getListingLocationText } from "@/lib/maps";
 import type { Listing } from "@/lib/types";
 import { formatWon } from "@/lib/format";
 import { PhotoCarousel } from "./PhotoCarousel";
@@ -20,6 +21,8 @@ export function ListingCard({ listing }: { listing: Listing }) {
     listingUrl,
     override: listing.messengerUrl,
   });
+  const locationText = getListingLocationText(listing);
+  const mapsUrl = locationText ? buildGoogleMapsSearchUrl(locationText) : "";
 
   return (
     <article className="group bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover transition-shadow border">
@@ -70,18 +73,18 @@ export function ListingCard({ listing }: { listing: Listing }) {
         </div>
 
         <div className="text-[12px] text-muted-foreground space-y-1">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 min-w-0">
             <MapPin className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{t(`city.${listing.city}`)} · {listing.area}</span>
+            <span className="truncate">{listing.area ? `${t(`city.${listing.city}`)} · ${listing.area}` : t(`city.${listing.city}`)}</span>
           </div>
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
               <Train className="h-3.5 w-3.5" />
-              {listing.subwayMinutes} {t("card.minWalk")}
+              {listing.subwayMinutes > 0 ? `${listing.subwayMinutes} ${t("card.minWalk")}` : listing.subwayStation || "-"}
             </span>
             <span className="flex items-center gap-1">
               <Bus className="h-3.5 w-3.5" />
-              {listing.busMinutes} {t("card.minWalk")}
+              {listing.busMinutes > 0 ? `${listing.busMinutes} ${t("card.minWalk")}` : listing.busStop || "-"}
             </span>
           </div>
         </div>
@@ -105,6 +108,19 @@ export function ListingCard({ listing }: { listing: Listing }) {
             {t("card.contact")}
           </a>
         </div>
+
+        {mapsUrl && (
+          <a
+            href={mapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-medium py-2 rounded-lg border bg-card hover:bg-secondary transition-colors"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            {t("card.viewMap")}
+          </a>
+        )}
       </div>
     </article>
   );

@@ -5,6 +5,7 @@ import { PhotoCarousel } from "@/components/PhotoCarousel";
 import { useI18n } from "@/lib/i18n";
 import { useListing, useFavorites, toggleFavorite } from "@/lib/store";
 import { buildMessengerUrl } from "@/lib/config";
+import { buildGoogleMapsSearchUrl, getListingLocationText } from "@/lib/maps";
 import { formatWon } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -49,6 +50,8 @@ function ListingDetailPage() {
     listingUrl,
     override: listing.messengerUrl,
   });
+  const locationText = getListingLocationText(listing);
+  const mapUrl = locationText ? buildGoogleMapsSearchUrl(locationText) : "";
 
   return (
     <AppShell showSearch={false}>
@@ -93,7 +96,7 @@ function ListingDetailPage() {
           <h1 className="text-xl font-bold leading-tight">{listing.title}</h1>
           <p className="mt-1.5 text-sm text-muted-foreground flex items-center gap-1">
             <MapPin className="h-3.5 w-3.5" />
-            {t(`city.${listing.city}`)} · {listing.area}
+            {listing.area ? `${t(`city.${listing.city}`)} · ${listing.area}` : t(`city.${listing.city}`)}
           </p>
         </div>
 
@@ -146,10 +149,10 @@ function ListingDetailPage() {
           <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">{listing.description}</p>
         </div>
 
-        {/* Naver map */}
-        {listing.naverMapUrl && (
+        {/* Map */}
+        {mapUrl && (
           <a
-            href={listing.naverMapUrl}
+            href={mapUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex w-full items-center justify-center gap-2 py-3 rounded-xl border bg-card hover:bg-secondary text-sm font-medium"
