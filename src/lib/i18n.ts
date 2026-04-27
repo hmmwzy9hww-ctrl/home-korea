@@ -169,6 +169,35 @@ const mn: Dict = {
   "common.notIncluded": "багтаагүй",
   "common.now": "Одоо",
   "lang.label": "Хэл",
+
+  // Map / list toggle
+  "view.list": "Жагсаалт",
+  "view.map": "Газрын зураг",
+  "map.empty": "Газрын зурагт харуулах байр алга байна.",
+  "map.openExternal": "Naver Map дээр харах",
+
+  // Views
+  "card.views": "{count} удаа үзсэн",
+
+  // Notifications
+  "notif.title": "Мэдэгдэл",
+  "notif.empty": "Мэдэгдэл алга байна.",
+  "notif.markAll": "Бүгдийг уншсан болгох",
+  "notif.clear": "Цэвэрлэх",
+  "notif.subscribed": "{city}-ийн шинэ байрны мэдэгдэл асаалаа",
+  "notif.unsubscribed": "{city}-ийн мэдэгдлийг унтраалаа",
+  "subscribe.on": "Мэдэгдэл асаах",
+  "subscribe.off": "Мэдэгдэл унтраах",
+
+  // Admin analytics
+  "admin.analytics.title": "Аналитик",
+  "admin.analytics.totalViews": "Нийт үзэлт",
+  "admin.analytics.totalSaves": "Нийт хадгалалт",
+  "admin.analytics.subscribers": "Хотын захиалагчид",
+  "admin.analytics.byListing": "Байр тус бүрээр",
+  "admin.analytics.cityInterest": "Хотын сонирхол",
+  "admin.analytics.views": "Үзэлт",
+  "admin.analytics.saves": "Хадгалалт",
 };
 
 const ko: Dict = {
@@ -303,6 +332,18 @@ const en: Dict = {
   "common.back": "Back", "common.share": "Share",
   "common.included": "included", "common.notIncluded": "separate",
   "common.now": "Now", "lang.label": "Language",
+  "view.list": "List", "view.map": "Map",
+  "map.empty": "No listings to show on the map.", "map.openExternal": "Open in Naver Map",
+  "card.views": "{count} views",
+  "notif.title": "Notifications", "notif.empty": "No notifications.",
+  "notif.markAll": "Mark all read", "notif.clear": "Clear",
+  "notif.subscribed": "Subscribed to {city} alerts",
+  "notif.unsubscribed": "Unsubscribed from {city}",
+  "subscribe.on": "Get alerts", "subscribe.off": "Stop alerts",
+  "admin.analytics.title": "Analytics", "admin.analytics.totalViews": "Total views",
+  "admin.analytics.totalSaves": "Total saves", "admin.analytics.subscribers": "City subscribers",
+  "admin.analytics.byListing": "Per listing", "admin.analytics.cityInterest": "City interest",
+  "admin.analytics.views": "Views", "admin.analytics.saves": "Saves",
 };
 
 const ru: Dict = {

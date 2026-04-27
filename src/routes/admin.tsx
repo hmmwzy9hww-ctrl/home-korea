@@ -26,6 +26,8 @@ import {
   updateListing,
   updateSiteSettings,
   useAdmin,
+  useAnalytics,
+  useCitySubscriptions,
   useListings,
   useSiteSettings,
 } from "@/lib/store";
@@ -79,6 +81,8 @@ function AdminPage() {
   const isAdmin = useAdmin();
   const listings = useListings();
   const settings = useSiteSettings();
+  const analytics = useAnalytics();
+  const subs = useCitySubscriptions();
   const [pw, setPw] = useState("");
   const [err, setErr] = useState("");
   const [editor, setEditor] = useState<EditorState>(null);
@@ -240,6 +244,9 @@ function AdminPage() {
             {t("admin.logout")}
           </button>
         </div>
+
+        {/* Analytics dashboard */}
+        <AnalyticsPanel listings={listings} analytics={analytics} subs={subs} />
 
         {/* Cover image setting */}
         <div className="mb-4 rounded-2xl border bg-card p-3">
@@ -672,6 +679,102 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
         {label}
       </label>
       {children}
+    </div>
+  );
+}
+
+function AnalyticsPanel({
+  listings,
+  analytics,
+  subs,
+}: {
+  listings: Listing[];
+  analytics: { views: Record<string, number>; saves: Record<string, number> };
+  subs: Set<string>;
+}) {
+  const { t } = useI18n();
+  const totalViews = Object.values(analytics.views).reduce((a, b) => a + b, 0);
+  const totalSaves = Object.values(analytics.saves).reduce((a, b) => a + b, 0);
+
+  // City interest = sum of views per listing aggregated by city.
+  const cityInterest: Record<string, number> = {};
+  for (const l of listings) {
+    cityInterest[l.city] = (cityInterest[l.city] || 0) + (analytics.views[l.id] || 0);
+  }
+  const cityList: City[] = ["seoul", "incheon", "gyeonggi", "busan", "other"];
+
+  // Sort listings by views desc for the per-listing table.
+  const sorted = [...listings].sort(
+    (a, b) => (analytics.views[b.id] || 0) - (analytics.views[a.id] || 0),
+  );
+
+  return (
+    <div className="mb-4 rounded-2xl border bg-card p-3">
+      <h2 className="mb-3 text-sm font-bold">{t("admin.analytics.title")}</h2>
+
+      <div className="grid grid-cols-3 gap-2">
+        <div className="rounded-xl border bg-gradient-to-br from-primary/10 to-accent p-2.5">
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            {t("admin.analytics.totalViews")}
+          </div>
+          <div className="mt-0.5 text-xl font-bold">{totalViews}</div>
+        </div>
+        <div className="rounded-xl border bg-gradient-to-br from-primary/10 to-accent p-2.5">
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            {t("admin.analytics.totalSaves")}
+          </div>
+          <div className="mt-0.5 text-xl font-bold">{totalSaves}</div>
+        </div>
+        <div className="rounded-xl border bg-gradient-to-br from-primary/10 to-accent p-2.5">
+          <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            {t("admin.analytics.subscribers")}
+          </div>
+          <div className="mt-0.5 text-xl font-bold">{subs.size}</div>
+        </div>
+      </div>
+
+      <h3 className="mt-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {t("admin.analytics.cityInterest")}
+      </h3>
+      <ul className="mt-2 space-y-1.5">
+        {cityList.map((c) => {
+          const v = cityInterest[c] || 0;
+          const sub = subs.has(c);
+          const max = Math.max(1, ...cityList.map((x) => cityInterest[x] || 0));
+          const pct = Math.round((v / max) * 100);
+          return (
+            <li key={c} className="text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">{t(`city.${c}`)}</span>
+                <span className="text-muted-foreground">
+                  {v} {t("admin.analytics.views")}
+                  {sub && " · 🔔"}
+                </span>
+              </div>
+              <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                <div className="h-full bg-primary" style={{ width: `${pct}%` }} />
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+
+      <h3 className="mt-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {t("admin.analytics.byListing")}
+      </h3>
+      <ul className="mt-2 divide-y rounded-xl border">
+        {sorted.slice(0, 8).map((l) => (
+          <li key={l.id} className="flex items-center justify-between gap-2 px-3 py-2 text-xs">
+            <span className="min-w-0 flex-1 truncate font-medium">{l.title || "-"}</span>
+            <span className="whitespace-nowrap text-muted-foreground">
+              👁 {analytics.views[l.id] || 0} · ❤ {analytics.saves[l.id] || 0}
+            </span>
+          </li>
+        ))}
+        {sorted.length === 0 && (
+          <li className="px-3 py-3 text-center text-xs text-muted-foreground">—</li>
+        )}
+      </ul>
     </div>
   );
 }

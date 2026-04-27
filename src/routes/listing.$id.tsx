@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Heart, MapPin, Train, Bus, Calendar, Ruler, Building2, MessageCircle, ExternalLink } from "lucide-react";
+import { useEffect } from "react";
+import { ArrowLeft, Heart, MapPin, Train, Bus, Calendar, Ruler, Building2, MessageCircle, ExternalLink, Eye } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
 import { useI18n } from "@/lib/i18n";
-import { useListing, useFavorites, toggleFavorite } from "@/lib/store";
+import { useListing, useFavorites, toggleFavorite, trackView, useAnalytics } from "@/lib/store";
 import { buildMessengerUrl } from "@/lib/config";
 import { buildNaverMapSearchUrl } from "@/lib/maps";
 import { formatWon } from "@/lib/format";
@@ -28,6 +29,11 @@ function ListingDetailPage() {
   const { id } = Route.useParams();
   const listing = useListing(id);
   const favs = useFavorites();
+  const analytics = useAnalytics();
+
+  useEffect(() => {
+    if (id) trackView(id);
+  }, [id]);
 
   if (!listing) {
     return (
@@ -92,6 +98,10 @@ function ListingDetailPage() {
           <p className="mt-1.5 text-sm text-muted-foreground flex items-center gap-1">
             <MapPin className="h-3.5 w-3.5" />
             {listing.area ? `${t(`city.${listing.city}`)} · ${listing.area}` : t(`city.${listing.city}`)}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground inline-flex items-center gap-1">
+            <Eye className="h-3 w-3" />
+            {t("card.views", { count: analytics.views[listing.id] || 0 })}
           </p>
         </div>
 

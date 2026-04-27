@@ -1,11 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, SlidersHorizontal, X } from "lucide-react";
+import { ArrowLeft, ExternalLink, List, Map as MapIcon, MapPin, SlidersHorizontal, X } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ListingCard } from "@/components/ListingCard";
 import { useI18n } from "@/lib/i18n";
 import { useListings } from "@/lib/store";
-import type { City, RoomType, SortKey } from "@/lib/types";
+import { buildNaverMapSearchUrl, getListingLocationText } from "@/lib/maps";
+import { formatWon } from "@/lib/format";
+import type { City, Listing, RoomType, SortKey } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface ListingsSearch {
@@ -48,6 +50,8 @@ function ListingsPage() {
   const navigate = useNavigate();
   const all = useListings();
   const [filterOpen, setFilterOpen] = useState(false);
+  const [view, setView] = useState<"list" | "map">("list");
+  const [selectedPin, setSelectedPin] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     let r = all.slice();
@@ -150,19 +154,53 @@ function ListingsPage() {
       </div>
 
       <div className="px-4 py-3">
-        <p className="text-xs text-muted-foreground mb-3">
-          {t("listings.count", { count: filtered.length })}
-        </p>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground">
+            {t("listings.count", { count: filtered.length })}
+          </p>
+          {/* List/map toggle */}
+          <div className="inline-flex rounded-full border bg-card p-0.5 text-xs font-medium">
+            <button
+              type="button"
+              onClick={() => setView("list")}
+              className={cn(
+                "inline-flex items-center gap-1 px-3 py-1 rounded-full",
+                view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+              )}
+            >
+              <List className="h-3.5 w-3.5" />
+              {t("view.list")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("map")}
+              className={cn(
+                "inline-flex items-center gap-1 px-3 py-1 rounded-full",
+                view === "map" ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+              )}
+            >
+              <MapIcon className="h-3.5 w-3.5" />
+              {t("view.map")}
+            </button>
+          </div>
+        </div>
+
         {filtered.length === 0 ? (
           <div className="py-16 text-center text-sm text-muted-foreground">
             {t("listings.empty")}
           </div>
-        ) : (
+        ) : view === "list" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {filtered.map((l) => (
               <ListingCard key={l.id} listing={l} />
             ))}
           </div>
+        ) : (
+          <MapView
+            listings={filtered}
+            selectedId={selectedPin}
+            onSelect={setSelectedPin}
+          />
         )}
       </div>
 
@@ -350,5 +388,100 @@ function ToggleRow({
         className="h-5 w-5 accent-primary"
       />
     </label>
+  );
+}
+
+function MapView({
+  listings,
+  selectedId,
+  onSelect,
+}: {
+  listings: Listing[];
+  selectedId: string | null;
+  onSelect: (id: string | null) => void;
+}) {
+  const { t } = useI18n();
+  const selected = listings.find((l) => l.id === selectedId) || listings[0];
+  const focusQuery = selected
+    ? getListingLocationText(selected) || t(`city.${selected.city}`)
+    : "Korea";
+  // Google Maps embed (no API key needed for /maps?q=&output=embed)
+  const embedSrc = `https://www.google.com/maps?q=${encodeURIComponent(focusQuery)}&z=14&output=embed`;
+  const externalUrl = selected
+    ? buildNaverMapSearchUrl(getListingLocationText(selected) || t(`city.${selected.city}`))
+    : "";
+
+  return (
+    <div className="space-y-3">
+      <div className="relative w-full overflow-hidden rounded-2xl border bg-muted aspect-[4/3] sm:aspect-[16/9]">
+        <iframe
+          key={focusQuery}
+          src={embedSrc}
+          title="map"
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          className="absolute inset-0 h-full w-full"
+        />
+      </div>
+
+      {externalUrl && (
+        <a
+          href={externalUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-primary"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+          {t("map.openExternal")}
+        </a>
+      )}
+
+      <ul className="space-y-2">
+        {listings.map((l) => {
+          const active = selected?.id === l.id;
+          return (
+            <li key={l.id}>
+              <button
+                type="button"
+                onClick={() => onSelect(l.id)}
+                className={cn(
+                  "w-full text-left flex items-start gap-3 rounded-2xl border p-3 transition-colors",
+                  active ? "border-primary bg-primary/5" : "bg-card hover:bg-secondary",
+                )}
+              >
+                <span
+                  className={cn(
+                    "grid h-8 w-8 shrink-0 place-items-center rounded-full",
+                    active ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground",
+                  )}
+                >
+                  <MapPin className="h-4 w-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-semibold truncate">{l.title}</span>
+                    <span className="text-sm font-bold text-primary whitespace-nowrap">
+                      {formatWon(l.monthlyRent)}
+                    </span>
+                  </div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {[t(`city.${l.city}`), l.area || l.address].filter(Boolean).join(" · ")}
+                  </div>
+                  {active && (
+                    <Link
+                      to="/listing/$id"
+                      params={{ id: l.id }}
+                      className="mt-2 inline-block text-xs font-medium text-primary"
+                    >
+                      {t("card.viewDetail")} →
+                    </Link>
+                  )}
+                </div>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }

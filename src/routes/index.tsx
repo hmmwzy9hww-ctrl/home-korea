@@ -1,9 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Train, Wallet } from "lucide-react";
+import { ArrowRight, Bell, BellOff, Train, Wallet } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { ListingCard } from "@/components/ListingCard";
 import { useI18n } from "@/lib/i18n";
-import { useListings, useSiteSettings } from "@/lib/store";
+import {
+  toggleCitySubscription,
+  useCitySubscriptions,
+  useListings,
+  useSiteSettings,
+} from "@/lib/store";
 import type { City } from "@/lib/types";
 
 export const Route = createFileRoute("/")({
@@ -24,6 +30,7 @@ function HomePage() {
   const { t } = useI18n();
   const all = useListings();
   const settings = useSiteSettings();
+  const subs = useCitySubscriptions();
 
   const featured = all.filter((l) => l.featured && l.status === "available").slice(0, 4);
   const latest = sortAvailableFirst(all).slice(0, 4);
@@ -101,21 +108,44 @@ function HomePage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {cities.map((c) => {
             const count = countByCity(c.code);
+            const subscribed = subs.has(c.code);
             return (
-              <Link
+              <div
                 key={c.code}
-                to="/listings"
-                search={{ city: c.code } as never}
-                className="flex items-center justify-between p-3 rounded-2xl border bg-gradient-to-br from-primary/10 to-accent hover:shadow-card-hover transition-shadow"
+                className="flex items-center justify-between p-3 rounded-2xl border bg-gradient-to-br from-primary/10 to-accent"
               >
-                <div className="flex items-center gap-2 min-w-0">
+                <Link
+                  to="/listings"
+                  search={{ city: c.code } as never}
+                  className="flex items-center gap-2 min-w-0 flex-1"
+                >
                   <span className="text-xl shrink-0">{c.emoji}</span>
-                  <span className="text-sm font-semibold truncate">{t(`city.${c.code}`)}</span>
-                </div>
-                <span className="text-sm font-bold text-primary whitespace-nowrap">
-                  {t("home.cityStats.unit", { count })}
-                </span>
-              </Link>
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold truncate">{t(`city.${c.code}`)}</div>
+                    <div className="text-xs font-bold text-primary">
+                      {t("home.cityStats.unit", { count })}
+                    </div>
+                  </div>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    toggleCitySubscription(c.code);
+                    toast.success(
+                      t(subscribed ? "notif.unsubscribed" : "notif.subscribed", {
+                        city: t(`city.${c.code}`),
+                      }),
+                    );
+                  }}
+                  aria-label={subscribed ? t("subscribe.off") : t("subscribe.on")}
+                  className={
+                    "ml-2 grid h-8 w-8 place-items-center rounded-full border bg-background hover:bg-secondary " +
+                    (subscribed ? "text-primary border-primary/40" : "text-muted-foreground")
+                  }
+                >
+                  {subscribed ? <Bell className="h-4 w-4 fill-primary" /> : <BellOff className="h-4 w-4" />}
+                </button>
+              </div>
             );
           })}
         </div>

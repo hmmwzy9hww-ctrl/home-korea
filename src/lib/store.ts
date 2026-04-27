@@ -79,12 +79,21 @@ export function addListing(listing: Omit<Listing, "id" | "createdAt">) {
   };
   memoryStore = [newL, ...memoryStore];
   persist();
+  // Notify subscribers of this city about the new listing.
+  notifyNewListing(newL);
   return newL;
 }
 
 export function updateListing(id: string, patch: Partial<Listing>) {
   ensureInit();
+  const before = memoryStore.find((l) => l.id === id);
   memoryStore = memoryStore.map((l) => (l.id === id ? { ...l, ...patch } : l));
+  const after = memoryStore.find((l) => l.id === id);
+  // If a previously available listing is now marked rented, notify users
+  // who saved it.
+  if (before && after && before.status === "available" && after.status === "unavailable") {
+    notifyRented(after);
+  }
   persist();
 }
 
@@ -139,8 +148,12 @@ export function useFavorites(): Set<string> {
 
 export function toggleFavorite(id: string) {
   ensureFavs();
-  if (favs!.has(id)) favs!.delete(id);
-  else favs!.add(id);
+  if (favs!.has(id)) {
+    favs!.delete(id);
+  } else {
+    favs!.add(id);
+    trackSave(id);
+  }
   persistFavs();
 }
 
@@ -238,4 +251,212 @@ export function updateSiteSettings(patch: Partial<SiteSettings>) {
   ensureSettings();
   settingsStore = { ...settingsStore!, ...patch };
   persistSettings();
+}
+
+// ===== Listing views (analytics) =====
+const VIEWS_KEY = "ger.views.v1";
+const SAVES_KEY = "ger.saves.v1";
+
+let viewsStore: Record<string, number> | null = null;
+let savesStore: Record<string, number> | null = null;
+const analyticsListeners = new Set<() => void>();
+
+function loadViews(): Record<string, number> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(VIEWS_KEY);
+    if (raw) return JSON.parse(raw) as Record<string, number>;
+  } catch {}
+  return {};
+}
+function loadSaves(): Record<string, number> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = window.localStorage.getItem(SAVES_KEY);
+    if (raw) return JSON.parse(raw) as Record<string, number>;
+  } catch {}
+  return {};
+}
+function ensureAnalytics() {
+  if (viewsStore === null) viewsStore = loadViews();
+  if (savesStore === null) savesStore = loadSaves();
+}
+function persistAnalytics() {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(VIEWS_KEY, JSON.stringify(viewsStore || {}));
+    window.localStorage.setItem(SAVES_KEY, JSON.stringify(savesStore || {}));
+  } catch {}
+  analyticsListeners.forEach((l) => l());
+}
+
+export function trackView(id: string) {
+  if (!id) return;
+  ensureAnalytics();
+  viewsStore![id] = (viewsStore![id] || 0) + 1;
+  persistAnalytics();
+}
+export function trackSave(id: string) {
+  if (!id) return;
+  ensureAnalytics();
+  savesStore![id] = (savesStore![id] || 0) + 1;
+  persistAnalytics();
+}
+
+function getAnalyticsSnapshot() {
+  ensureAnalytics();
+  return { views: viewsStore!, saves: savesStore! };
+}
+function subAnalytics(cb: () => void) {
+  analyticsListeners.add(cb);
+  return () => {
+    analyticsListeners.delete(cb);
+  };
+}
+export function useAnalytics() {
+  return useSyncExternalStore(
+    subAnalytics,
+    getAnalyticsSnapshot,
+    () => ({ views: {}, saves: {} }) as { views: Record<string, number>; saves: Record<string, number> },
+  );
+}
+
+// ===== City notification subscriptions =====
+const SUBS_KEY = "ger.subs.v1";
+let subsStore: Set<string> | null = null;
+const subsListeners = new Set<() => void>();
+
+function loadSubs(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = window.localStorage.getItem(SUBS_KEY);
+    if (raw) return new Set(JSON.parse(raw) as string[]);
+  } catch {}
+  return new Set();
+}
+function ensureSubs() {
+  if (subsStore === null) subsStore = loadSubs();
+}
+function persistSubs() {
+  if (typeof window === "undefined" || !subsStore) return;
+  try {
+    window.localStorage.setItem(SUBS_KEY, JSON.stringify([...subsStore]));
+  } catch {}
+  subsListeners.forEach((l) => l());
+}
+function getSubsSnapshot(): Set<string> {
+  ensureSubs();
+  return subsStore!;
+}
+function subSubs(cb: () => void) {
+  subsListeners.add(cb);
+  return () => {
+    subsListeners.delete(cb);
+  };
+}
+export function useCitySubscriptions(): Set<string> {
+  return useSyncExternalStore(subSubs, getSubsSnapshot, () => new Set<string>());
+}
+export function toggleCitySubscription(city: string) {
+  ensureSubs();
+  if (subsStore!.has(city)) subsStore!.delete(city);
+  else subsStore!.add(city);
+  persistSubs();
+}
+
+// ===== Notifications inbox =====
+export interface AppNotification {
+  id: string;
+  kind: "newListing" | "rented";
+  title: string;
+  message: string;
+  listingId?: string;
+  city?: string;
+  createdAt: number;
+  read: boolean;
+}
+
+const NOTIF_KEY = "ger.notifs.v1";
+let notifStore: AppNotification[] | null = null;
+const notifListeners = new Set<() => void>();
+
+function loadNotifs(): AppNotification[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(NOTIF_KEY);
+    if (raw) return JSON.parse(raw) as AppNotification[];
+  } catch {}
+  return [];
+}
+function ensureNotifs() {
+  if (notifStore === null) notifStore = loadNotifs();
+}
+function persistNotifs() {
+  if (typeof window === "undefined" || !notifStore) return;
+  try {
+    window.localStorage.setItem(NOTIF_KEY, JSON.stringify(notifStore));
+  } catch {}
+  notifListeners.forEach((l) => l());
+}
+function pushNotif(n: Omit<AppNotification, "id" | "createdAt" | "read">) {
+  ensureNotifs();
+  const full: AppNotification = {
+    ...n,
+    id: `n_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    createdAt: Date.now(),
+    read: false,
+  };
+  notifStore = [full, ...notifStore!].slice(0, 200);
+  persistNotifs();
+}
+function getNotifsSnapshot(): AppNotification[] {
+  ensureNotifs();
+  return notifStore!;
+}
+function subNotifs(cb: () => void) {
+  notifListeners.add(cb);
+  return () => {
+    notifListeners.delete(cb);
+  };
+}
+export function useNotifications(): AppNotification[] {
+  return useSyncExternalStore(subNotifs, getNotifsSnapshot, () => []);
+}
+export function markNotificationRead(id: string) {
+  ensureNotifs();
+  notifStore = notifStore!.map((n) => (n.id === id ? { ...n, read: true } : n));
+  persistNotifs();
+}
+export function markAllNotificationsRead() {
+  ensureNotifs();
+  notifStore = notifStore!.map((n) => ({ ...n, read: true }));
+  persistNotifs();
+}
+export function clearNotifications() {
+  notifStore = [];
+  persistNotifs();
+}
+
+function notifyNewListing(listing: Listing) {
+  ensureSubs();
+  if (!subsStore!.has(listing.city)) return;
+  pushNotif({
+    kind: "newListing",
+    title: "Шинэ байр нэмэгдлээ",
+    message: listing.title,
+    listingId: listing.id,
+    city: listing.city,
+  });
+}
+
+function notifyRented(listing: Listing) {
+  ensureFavs();
+  if (!favs!.has(listing.id)) return;
+  pushNotif({
+    kind: "rented",
+    title: "Хадгалсан байр түрээслэгдсэн",
+    message: listing.title,
+    listingId: listing.id,
+    city: listing.city,
+  });
 }
