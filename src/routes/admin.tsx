@@ -282,6 +282,9 @@ function AdminPage() {
           </button>
         </div>
 
+        {/* Editable site texts */}
+        <TextEditor settings={settings} />
+
         <button
           type="button"
           onClick={openAdd}
