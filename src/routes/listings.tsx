@@ -398,95 +398,75 @@ function ToggleRow({
 
 function MapView({
   listings,
+  city,
   selectedId,
   onSelect,
 }: {
   listings: Listing[];
+  city: City | undefined;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
 }) {
   const { t } = useI18n();
-  const selected = listings.find((l) => l.id === selectedId) || listings[0];
-  const focusQuery = selected
-    ? getListingLocationText(selected) || t(`city.${selected.city}`)
-    : "Korea";
-  // Google Maps embed (no API key needed for /maps?q=&output=embed)
-  const embedSrc = `https://www.google.com/maps?q=${encodeURIComponent(focusQuery)}&z=14&output=embed`;
-  const externalUrl = selected
-    ? buildNaverMapSearchUrl(getListingLocationText(selected) || t(`city.${selected.city}`))
-    : "";
+  const selected = listings.find((l) => l.id === selectedId) || null;
 
   return (
-    <div className="space-y-3">
-      <div className="relative w-full overflow-hidden rounded-2xl border bg-muted aspect-[4/3] sm:aspect-[16/9]">
-        <iframe
-          key={focusQuery}
-          src={embedSrc}
-          title="map"
-          loading="lazy"
-          referrerPolicy="no-referrer-when-downgrade"
-          className="absolute inset-0 h-full w-full"
+    <div className="relative">
+      <Suspense
+        fallback={
+          <div className="h-[60vh] min-h-[360px] w-full grid place-items-center rounded-2xl border bg-muted text-sm text-muted-foreground">
+            …
+          </div>
+        }
+      >
+        <LeafletMap
+          listings={listings}
+          city={city}
+          selectedId={selectedId}
+          onSelect={(id) => onSelect(id)}
         />
-      </div>
+      </Suspense>
 
-      {externalUrl && (
-        <a
-          href={externalUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-primary"
-        >
-          <ExternalLink className="h-3.5 w-3.5" />
-          {t("map.openExternal")}
-        </a>
-      )}
-
-      <ul className="space-y-2">
-        {listings.map((l) => {
-          const active = selected?.id === l.id;
-          return (
-            <li key={l.id}>
-              <button
-                type="button"
-                onClick={() => onSelect(l.id)}
-                className={cn(
-                  "w-full text-left flex items-start gap-3 rounded-2xl border p-3 transition-colors",
-                  active ? "border-primary bg-primary/5" : "bg-card hover:bg-secondary",
-                )}
+      {selected && (
+        <div className="absolute left-3 right-3 bottom-3 z-[400] rounded-2xl border bg-background shadow-lg overflow-hidden">
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={() => onSelect(null)}
+            className="absolute right-2 top-2 z-10 grid place-items-center h-7 w-7 rounded-full bg-background/90 border"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+          <div className="flex gap-3 p-3">
+            {selected.photos[0] && (
+              <img
+                src={selected.photos[0]}
+                alt={selected.title}
+                className="h-20 w-20 rounded-lg object-cover bg-muted shrink-0"
+                loading="lazy"
+              />
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold truncate pr-6">{selected.title}</div>
+              <div className="text-xs text-muted-foreground truncate">
+                {[t(`city.${selected.city}`), t(`room.${selected.roomType}`)]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </div>
+              <div className="mt-1 text-base font-bold text-primary">
+                {formatWon(selected.monthlyRent)}
+              </div>
+              <Link
+                to="/listing/$id"
+                params={{ id: selected.id }}
+                className="mt-2 inline-flex items-center justify-center px-3 py-1.5 rounded-full bg-primary text-primary-foreground text-xs font-semibold"
               >
-                <span
-                  className={cn(
-                    "grid h-8 w-8 shrink-0 place-items-center rounded-full",
-                    active ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground",
-                  )}
-                >
-                  <MapPin className="h-4 w-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold truncate">{l.title}</span>
-                    <span className="text-sm font-bold text-primary whitespace-nowrap">
-                      {formatWon(l.monthlyRent)}
-                    </span>
-                  </div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    {[t(`city.${l.city}`), l.area || l.address].filter(Boolean).join(" · ")}
-                  </div>
-                  {active && (
-                    <Link
-                      to="/listing/$id"
-                      params={{ id: l.id }}
-                      className="mt-2 inline-block text-xs font-medium text-primary"
-                    >
-                      {t("card.viewDetail")} →
-                    </Link>
-                  )}
-                </div>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+                {t("card.viewDetail")}
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
