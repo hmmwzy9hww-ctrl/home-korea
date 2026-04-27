@@ -245,6 +245,9 @@ function AdminPage() {
           </button>
         </div>
 
+        {/* Analytics dashboard */}
+        <AnalyticsPanel listings={listings} analytics={analytics} subs={subs} />
+
         {/* Cover image setting */}
         <div className="mb-4 rounded-2xl border bg-card p-3">
           <h2 className="text-sm font-bold mb-2">{t("admin.cover.title")}</h2>
