@@ -24,8 +24,10 @@ import {
   loginAdmin,
   logoutAdmin,
   updateListing,
+  updateSiteSettings,
   useAdmin,
   useListings,
+  useSiteSettings,
 } from "@/lib/store";
 import type { City, Listing, ListingStatus, RoomType } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -76,12 +78,18 @@ function AdminPage() {
   const { t } = useI18n();
   const isAdmin = useAdmin();
   const listings = useListings();
+  const settings = useSiteSettings();
   const [pw, setPw] = useState("");
   const [err, setErr] = useState("");
   const [editor, setEditor] = useState<EditorState>(null);
   const [form, setForm] = useState<ListingForm>(createEmptyListing());
   const [optionsStr, setOptionsStr] = useState("");
   const [photoInputs, setPhotoInputs] = useState<string[]>(() => createPhotoInputs());
+  const [coverDraft, setCoverDraft] = useState(settings.coverImageUrl);
+
+  useEffect(() => {
+    setCoverDraft(settings.coverImageUrl);
+  }, [settings.coverImageUrl]);
 
   const editingListing = useMemo(() => {
     if (!editor || editor.mode !== "edit") return undefined;
