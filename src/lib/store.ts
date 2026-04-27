@@ -166,7 +166,7 @@ export async function addListing(listing: Omit<Listing, "id" | "createdAt">) {
   // Optimistic update
   memoryStore = [newL, ...memoryStore];
   emit();
-  const { error } = await supabase.from("listings").insert(listingToRow(newL));
+  const { error } = await supabase.from("listings").insert(listingToRow(newL) as never);
   if (error) {
     console.error("[listings] insert failed", error);
     memoryStore = memoryStore.filter((x) => x.id !== newL.id);
@@ -183,7 +183,7 @@ export async function updateListing(id: string, patch: Partial<Listing>) {
   memoryStore = memoryStore.map((l) => (l.id === id ? { ...l, ...patch } : l));
   const after = memoryStore.find((l) => l.id === id);
   emit();
-  const { error } = await supabase.from("listings").update(listingToRow(patch)).eq("id", id);
+  const { error } = await supabase.from("listings").update(listingToRow(patch) as never).eq("id", id);
   if (error) {
     console.error("[listings] update failed", error);
     // Reload from server to recover.
