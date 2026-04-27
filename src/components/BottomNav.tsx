@@ -1,5 +1,5 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, Search, Heart, Shield } from "lucide-react";
+import { Home, Search, Heart } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
@@ -10,12 +10,11 @@ export function BottomNav() {
     { to: "/", icon: Home, label: t("nav.home") },
     { to: "/listings", icon: Search, label: t("nav.search") },
     { to: "/favorites", icon: Heart, label: t("nav.favorites") },
-    { to: "/admin", icon: Shield, label: t("nav.admin") },
   ] as const;
 
   return (
     <nav className="fixed bottom-0 inset-x-0 z-40 bg-background/95 backdrop-blur border-t safe-bottom">
-      <ul className="grid grid-cols-4 max-w-3xl mx-auto">
+      <ul className="grid grid-cols-3 max-w-3xl mx-auto">
         {items.map((it) => {
           const active =
             it.to === "/"
