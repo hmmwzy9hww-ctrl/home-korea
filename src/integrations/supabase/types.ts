@@ -14,7 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      listings: {
+        Row: {
+          address: string
+          area: string
+          available_from: string
+          bus_minutes: number
+          bus_stop: string
+          city: string
+          created_at: number
+          deposit: number
+          description: string
+          featured: boolean
+          floor: string
+          id: string
+          maintenance_fee: number
+          maintenance_included: boolean | null
+          messenger_url: string | null
+          monthly_rent: number
+          naver_map_url: string | null
+          options: Json
+          photos: Json
+          room_type: string
+          size: number
+          status: string
+          subway_minutes: number
+          subway_station: string
+          title: string
+        }
+        Insert: {
+          address?: string
+          area?: string
+          available_from?: string
+          bus_minutes?: number
+          bus_stop?: string
+          city: string
+          created_at?: number
+          deposit?: number
+          description?: string
+          featured?: boolean
+          floor?: string
+          id: string
+          maintenance_fee?: number
+          maintenance_included?: boolean | null
+          messenger_url?: string | null
+          monthly_rent?: number
+          naver_map_url?: string | null
+          options?: Json
+          photos?: Json
+          room_type: string
+          size?: number
+          status?: string
+          subway_minutes?: number
+          subway_station?: string
+          title: string
+        }
+        Update: {
+          address?: string
+          area?: string
+          available_from?: string
+          bus_minutes?: number
+          bus_stop?: string
+          city?: string
+          created_at?: number
+          deposit?: number
+          description?: string
+          featured?: boolean
+          floor?: string
+          id?: string
+          maintenance_fee?: number
+          maintenance_included?: boolean | null
+          messenger_url?: string | null
+          monthly_rent?: number
+          naver_map_url?: string | null
+          options?: Json
+          photos?: Json
+          room_type?: string
+          size?: number
+          status?: string
+          subway_minutes?: number
+          subway_station?: string
+          title?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
