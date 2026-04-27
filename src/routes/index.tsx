@@ -186,10 +186,10 @@ function HomePage() {
             className="p-3 rounded-2xl border bg-card hover:shadow-card-hover transition-shadow"
           >
             <div className="text-xs text-muted-foreground inline-flex items-center gap-1">
-              <Wallet className="h-3 w-3" /> 50만 ₩
+              <Wallet className="h-3 w-3" /> 500,000원
             </div>
             <div className="text-base font-bold mt-0.5">
-              {t("summary.under", { price: "50만", count: countUnder(500000) })}
+              {t("summary.under", { price: "500,000원", count: countUnder(500000) })}
             </div>
           </Link>
           <Link
