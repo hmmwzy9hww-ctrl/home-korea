@@ -70,48 +70,57 @@ function EditPage() {
 
   const readFiles = async (files: FileList | null) => {
     if (!files?.length) return;
-    const images = Array.from(files).slice(0, 5);
-    const dataUrls = await Promise.all(
-      images.map(
-        (file) =>
-          new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-              const raw = typeof reader.result === "string" ? reader.result : "";
-              if (!raw) {
-                resolve("");
-                return;
-              }
-
-              const image = new Image();
-              image.onload = () => {
-                const maxSide = 1600;
-                const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
-                const canvas = document.createElement("canvas");
-                canvas.width = Math.max(1, Math.round(image.width * scale));
-                canvas.height = Math.max(1, Math.round(image.height * scale));
-                const ctx = canvas.getContext("2d");
-                if (!ctx) {
-                  resolve(raw);
+    const remaining = MAX_PHOTOS - photos.length;
+    if (remaining <= 0) {
+      toast.error(`Max ${MAX_PHOTOS} photos`);
+      return;
+    }
+    const images = Array.from(files).slice(0, remaining);
+    setUploading(true);
+    try {
+      const dataUrls = await Promise.all(
+        images.map(
+          (file) =>
+            new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                const raw = typeof reader.result === "string" ? reader.result : "";
+                if (!raw) {
+                  resolve("");
                   return;
                 }
-                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-                resolve(canvas.toDataURL("image/jpeg", 0.82));
+                const image = new Image();
+                image.onload = () => {
+                  const maxSide = 1600;
+                  const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+                  const canvas = document.createElement("canvas");
+                  canvas.width = Math.max(1, Math.round(image.width * scale));
+                  canvas.height = Math.max(1, Math.round(image.height * scale));
+                  const ctx = canvas.getContext("2d");
+                  if (!ctx) {
+                    resolve(raw);
+                    return;
+                  }
+                  ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+                  resolve(canvas.toDataURL("image/jpeg", 0.82));
+                };
+                image.onerror = () => resolve(raw);
+                image.src = raw;
               };
-              image.onerror = () => resolve(raw);
-              image.src = raw;
-            };
-            reader.onerror = () => reject(new Error("read failed"));
-            reader.readAsDataURL(file);
-          }),
-      ),
-    );
+              reader.onerror = () => reject(new Error("read failed"));
+              reader.readAsDataURL(file);
+            }),
+        ),
+      );
+      setPhotos((prev) => [...prev, ...dataUrls.filter(Boolean)].slice(0, MAX_PHOTOS));
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
-    setPhoto0(dataUrls[0] || "");
-    setPhoto1(dataUrls[1] || "");
-    setPhoto2(dataUrls[2] || "");
-    setPhoto3(dataUrls[3] || "");
-    setPhoto4(dataUrls[4] || "");
+  const removePhoto = (i: number) => {
+    setPhotos((prev) => prev.filter((_, idx) => idx !== i));
   };
 
   if (!isAdmin) {
