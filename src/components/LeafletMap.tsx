@@ -13,6 +13,8 @@ interface Props {
   city?: Listing["city"];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  className?: string;
+  initialZoom?: number;
 }
 
 function pricePinIcon(rent: number, active: boolean) {
@@ -33,7 +35,7 @@ function pricePinIcon(rent: number, active: boolean) {
   });
 }
 
-export function LeafletMap({ listings, city, selectedId, onSelect }: Props) {
+export function LeafletMap({ listings, city, selectedId, onSelect, className, initialZoom }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const clusterRef = useRef<L.MarkerClusterGroup | null>(null);
@@ -46,7 +48,7 @@ export function LeafletMap({ listings, city, selectedId, onSelect }: Props) {
     if (!containerRef.current || mapRef.current) return;
     const map = L.map(containerRef.current, {
       center: getCityCenter(city),
-      zoom: 12,
+      zoom: initialZoom ?? 12,
       scrollWheelZoom: true,
     });
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -74,8 +76,8 @@ export function LeafletMap({ listings, city, selectedId, onSelect }: Props) {
   // Re-center on city change
   useEffect(() => {
     if (!mapRef.current) return;
-    mapRef.current.setView(getCityCenter(city), 12, { animate: true });
-  }, [city]);
+    mapRef.current.setView(getCityCenter(city), initialZoom ?? 12, { animate: true });
+  }, [city, initialZoom]);
 
   // Sync markers with listings
   useEffect(() => {
@@ -98,7 +100,9 @@ export function LeafletMap({ listings, city, selectedId, onSelect }: Props) {
   return (
     <div
       ref={containerRef}
-      className="h-[60vh] min-h-[360px] w-full overflow-hidden rounded-2xl border bg-muted z-0"
+      className={
+        className ?? "h-[60vh] min-h-[360px] w-full overflow-hidden rounded-2xl border bg-muted z-0"
+      }
     />
   );
 }
