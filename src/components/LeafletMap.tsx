@@ -48,7 +48,7 @@ export function LeafletMap({ listings, city, selectedId, onSelect, className, in
     if (!containerRef.current || mapRef.current) return;
     const map = L.map(containerRef.current, {
       center: getCityCenter(city),
-      zoom: 12,
+      zoom: initialZoom ?? 12,
       scrollWheelZoom: true,
     });
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
