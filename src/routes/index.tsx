@@ -3,19 +3,30 @@ import { ArrowRight, Train, Wallet } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ListingCard } from "@/components/ListingCard";
 import { useI18n } from "@/lib/i18n";
-import { useListings } from "@/lib/store";
+import { useListings, useSiteSettings } from "@/lib/store";
 import type { City } from "@/lib/types";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
+// Sort: available first (newest first), unavailable last (newest first).
+function sortAvailableFirst<T extends { status: string; createdAt: number }>(items: T[]): T[] {
+  return [...items].sort((a, b) => {
+    const aA = a.status === "available" ? 0 : 1;
+    const bA = b.status === "available" ? 0 : 1;
+    if (aA !== bA) return aA - bA;
+    return b.createdAt - a.createdAt;
+  });
+}
+
 function HomePage() {
   const { t } = useI18n();
   const all = useListings();
+  const settings = useSiteSettings();
 
   const featured = all.filter((l) => l.featured && l.status === "available").slice(0, 4);
-  const latest = [...all].sort((a, b) => b.createdAt - a.createdAt).slice(0, 4);
+  const latest = sortAvailableFirst(all).slice(0, 4);
 
   const cities: { code: City; emoji: string }[] = [
     { code: "seoul", emoji: "🏙️" },
