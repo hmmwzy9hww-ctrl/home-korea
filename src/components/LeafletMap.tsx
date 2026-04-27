@@ -76,8 +76,8 @@ export function LeafletMap({ listings, city, selectedId, onSelect, className, in
   // Re-center on city change
   useEffect(() => {
     if (!mapRef.current) return;
-    mapRef.current.setView(getCityCenter(city), 12, { animate: true });
-  }, [city]);
+    mapRef.current.setView(getCityCenter(city), initialZoom ?? 12, { animate: true });
+  }, [city, initialZoom]);
 
   // Sync markers with listings
   useEffect(() => {
