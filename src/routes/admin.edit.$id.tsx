@@ -49,35 +49,21 @@ function EditPage() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState<Omit<Listing, "id" | "createdAt">>(empty());
-  const [photo0, setPhoto0] = useState("");
-  const [photo1, setPhoto1] = useState("");
-  const [photo2, setPhoto2] = useState("");
-  const [photo3, setPhoto3] = useState("");
-  const [photo4, setPhoto4] = useState("");
+  const [photos, setPhotos] = useState<string[]>([]);
   const [optionsStr, setOptionsStr] = useState("");
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const photoFields = useMemo(
-    () => [photo0, photo1, photo2, photo3, photo4].map((p) => p.trim()).filter(Boolean),
-    [photo0, photo1, photo2, photo3, photo4],
-  );
+  const MAX_PHOTOS = 5;
 
   useEffect(() => {
     if (!isNew && existing) {
       const { id: _id, createdAt: _c, ...rest } = existing;
       setForm(rest);
-      setPhoto0(existing.photos[0] || "");
-      setPhoto1(existing.photos[1] || "");
-      setPhoto2(existing.photos[2] || "");
-      setPhoto3(existing.photos[3] || "");
-      setPhoto4(existing.photos[4] || "");
+      setPhotos(existing.photos.slice(0, MAX_PHOTOS));
       setOptionsStr(existing.options.join(", "));
     } else if (isNew) {
       setForm(empty());
-      setPhoto0("");
-      setPhoto1("");
-      setPhoto2("");
-      setPhoto3("");
-      setPhoto4("");
+      setPhotos([]);
       setOptionsStr("");
     }
   }, [existing, isNew]);
