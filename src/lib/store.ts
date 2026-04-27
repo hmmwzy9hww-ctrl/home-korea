@@ -198,6 +198,9 @@ const SETTINGS_KEY = "ger.settings.v1";
 
 export interface SiteSettings {
   coverImageUrl: string;
+  // Per-language text overrides. Shape: { [lang]: { [key]: value } }
+  // Empty string or missing key = use default from i18n dictionaries.
+  textOverrides?: Record<string, Record<string, string>>;
 }
 
 export const DEFAULT_COVER_IMAGE =
@@ -205,6 +208,7 @@ export const DEFAULT_COVER_IMAGE =
 
 const defaultSettings: SiteSettings = {
   coverImageUrl: DEFAULT_COVER_IMAGE,
+  textOverrides: {},
 };
 
 let settingsStore: SiteSettings | null = null;
@@ -250,6 +254,18 @@ export function useSiteSettings(): SiteSettings {
 export function updateSiteSettings(patch: Partial<SiteSettings>) {
   ensureSettings();
   settingsStore = { ...settingsStore!, ...patch };
+  persistSettings();
+}
+
+export function setTextOverride(lang: string, key: string, value: string) {
+  ensureSettings();
+  const overrides = { ...(settingsStore!.textOverrides || {}) };
+  const langMap = { ...(overrides[lang] || {}) };
+  const trimmed = value.trim();
+  if (trimmed) langMap[key] = value;
+  else delete langMap[key];
+  overrides[lang] = langMap;
+  settingsStore = { ...settingsStore!, textOverrides: overrides };
   persistSettings();
 }
 
