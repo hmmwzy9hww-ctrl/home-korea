@@ -99,6 +99,10 @@ function ListingDetailPage() {
             <MapPin className="h-3.5 w-3.5" />
             {listing.area ? `${t(`city.${listing.city}`)} · ${listing.area}` : t(`city.${listing.city}`)}
           </p>
+          <p className="mt-1 text-xs text-muted-foreground inline-flex items-center gap-1">
+            <Eye className="h-3 w-3" />
+            {t("card.views", { count: analytics.views[listing.id] || 0 })}
+          </p>
         </div>
 
         {/* Price block */}
