@@ -1,48 +1,129 @@
-// Listings store with localStorage. Easy to swap for Lovable Cloud later.
+// Listings store backed by Lovable Cloud (Supabase) with realtime sync.
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { sampleListings } from "./sampleData";
-import type { Listing } from "./types";
-
-const KEY = "ger.listings.v1";
-const SEED_KEY = "ger.seeded.v1";
+import type { City, Listing, ListingStatus, RoomType } from "./types";
 
 let memoryStore: Listing[] = [];
 let initialized = false;
+let loaded = false;
 const listeners = new Set<() => void>();
 
-function load(): Listing[] {
-  if (typeof window === "undefined") return sampleListings;
-  try {
-    const raw = window.localStorage.getItem(KEY);
-    if (raw) return JSON.parse(raw) as Listing[];
-  } catch {
-    // ignore
-  }
-  return [];
+// Map a Supabase row (snake_case) to our Listing type (camelCase).
+function rowToListing(row: Record<string, unknown>): Listing {
+  return {
+    id: String(row.id),
+    title: String(row.title ?? ""),
+    roomType: (row.room_type as RoomType) ?? "oneRoom",
+    city: (row.city as City) ?? "other",
+    area: String(row.area ?? ""),
+    address: String(row.address ?? ""),
+    monthlyRent: Number(row.monthly_rent ?? 0),
+    deposit: Number(row.deposit ?? 0),
+    maintenanceFee: Number(row.maintenance_fee ?? 0),
+    maintenanceIncluded: Boolean(row.maintenance_included),
+    floor: String(row.floor ?? ""),
+    size: Number(row.size ?? 0),
+    subwayStation: String(row.subway_station ?? ""),
+    subwayMinutes: Number(row.subway_minutes ?? 0),
+    busStop: String(row.bus_stop ?? ""),
+    busMinutes: Number(row.bus_minutes ?? 0),
+    availableFrom: String(row.available_from ?? ""),
+    options: Array.isArray(row.options) ? (row.options as string[]) : [],
+    description: String(row.description ?? ""),
+    photos: Array.isArray(row.photos) ? (row.photos as string[]) : [],
+    naverMapUrl: row.naver_map_url ? String(row.naver_map_url) : undefined,
+    messengerUrl: row.messenger_url ? String(row.messenger_url) : undefined,
+    status: (row.status as ListingStatus) ?? "available",
+    featured: Boolean(row.featured),
+    createdAt: Number(row.created_at ?? Date.now()),
+  };
 }
 
-function persist() {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(KEY, JSON.stringify(memoryStore));
-  } catch {
-    // ignore persistence failures so the UI still updates in-memory on Safari/private mode
-  }
+function listingToRow(l: Partial<Listing>): Record<string, unknown> {
+  const row: Record<string, unknown> = {};
+  if (l.id !== undefined) row.id = l.id;
+  if (l.title !== undefined) row.title = l.title;
+  if (l.roomType !== undefined) row.room_type = l.roomType;
+  if (l.city !== undefined) row.city = l.city;
+  if (l.area !== undefined) row.area = l.area;
+  if (l.address !== undefined) row.address = l.address;
+  if (l.monthlyRent !== undefined) row.monthly_rent = l.monthlyRent;
+  if (l.deposit !== undefined) row.deposit = l.deposit;
+  if (l.maintenanceFee !== undefined) row.maintenance_fee = l.maintenanceFee;
+  if (l.maintenanceIncluded !== undefined) row.maintenance_included = l.maintenanceIncluded;
+  if (l.floor !== undefined) row.floor = l.floor;
+  if (l.size !== undefined) row.size = l.size;
+  if (l.subwayStation !== undefined) row.subway_station = l.subwayStation;
+  if (l.subwayMinutes !== undefined) row.subway_minutes = l.subwayMinutes;
+  if (l.busStop !== undefined) row.bus_stop = l.busStop;
+  if (l.busMinutes !== undefined) row.bus_minutes = l.busMinutes;
+  if (l.availableFrom !== undefined) row.available_from = l.availableFrom;
+  if (l.options !== undefined) row.options = l.options;
+  if (l.description !== undefined) row.description = l.description;
+  if (l.photos !== undefined) row.photos = l.photos;
+  if (l.naverMapUrl !== undefined) row.naver_map_url = l.naverMapUrl || null;
+  if (l.messengerUrl !== undefined) row.messenger_url = l.messengerUrl || null;
+  if (l.status !== undefined) row.status = l.status;
+  if (l.featured !== undefined) row.featured = l.featured;
+  if (l.createdAt !== undefined) row.created_at = l.createdAt;
+  return row;
+}
+
+function emit() {
   listeners.forEach((l) => l());
+}
+
+async function fetchAll() {
+  const { data, error } = await supabase
+    .from("listings")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) {
+    console.error("[listings] fetch failed", error);
+    return;
+  }
+  memoryStore = (data ?? []).map((r) => rowToListing(r as Record<string, unknown>));
+  loaded = true;
+  emit();
 }
 
 function ensureInit() {
   if (initialized || typeof window === "undefined") return;
   initialized = true;
-  const seeded = window.localStorage.getItem(SEED_KEY);
-  const existing = load();
-  if (!seeded || existing.length === 0) {
-    memoryStore = [...sampleListings];
-    window.localStorage.setItem(SEED_KEY, "1");
-    persist();
-  } else {
-    memoryStore = existing;
-  }
+  void fetchAll();
+  // Realtime subscription so all devices stay in sync.
+  supabase
+    .channel("listings-changes")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "listings" },
+      (payload) => {
+        if (payload.eventType === "INSERT" && payload.new) {
+          const l = rowToListing(payload.new as Record<string, unknown>);
+          if (!memoryStore.some((x) => x.id === l.id)) {
+            memoryStore = [l, ...memoryStore];
+            emit();
+            notifyNewListing(l);
+          }
+        } else if (payload.eventType === "UPDATE" && payload.new) {
+          const l = rowToListing(payload.new as Record<string, unknown>);
+          const before = memoryStore.find((x) => x.id === l.id);
+          memoryStore = memoryStore.map((x) => (x.id === l.id ? l : x));
+          emit();
+          if (before && before.status === "available" && l.status === "unavailable") {
+            notifyRented(l);
+          }
+        } else if (payload.eventType === "DELETE" && payload.old) {
+          const oldId = String((payload.old as { id?: unknown }).id ?? "");
+          if (oldId) {
+            memoryStore = memoryStore.filter((x) => x.id !== oldId);
+            emit();
+          }
+        }
+      },
+    )
+    .subscribe();
 }
 
 function subscribe(cb: () => void) {
@@ -57,9 +138,14 @@ function getSnapshot(): Listing[] {
   return memoryStore;
 }
 
+const EMPTY_LISTINGS: Listing[] = [];
 function getServerSnapshot(): Listing[] {
-  return sampleListings;
+  return loaded ? memoryStore : EMPTY_LISTINGS;
 }
+
+// Stable empty array for SSR / initial render before data loads.
+const SAMPLE_FALLBACK = sampleListings;
+void SAMPLE_FALLBACK;
 
 export function useListings(): Listing[] {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
@@ -70,37 +156,57 @@ export function useListing(id: string | undefined): Listing | undefined {
   return all.find((l) => l.id === id);
 }
 
-export function addListing(listing: Omit<Listing, "id" | "createdAt">) {
+export async function addListing(listing: Omit<Listing, "id" | "createdAt">) {
   ensureInit();
   const newL: Listing = {
     ...listing,
     id: `l_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     createdAt: Date.now(),
   };
+  // Optimistic update
   memoryStore = [newL, ...memoryStore];
-  persist();
-  // Notify subscribers of this city about the new listing.
+  emit();
+  const { error } = await supabase.from("listings").insert(listingToRow(newL) as never);
+  if (error) {
+    console.error("[listings] insert failed", error);
+    memoryStore = memoryStore.filter((x) => x.id !== newL.id);
+    emit();
+    throw error;
+  }
   notifyNewListing(newL);
   return newL;
 }
 
-export function updateListing(id: string, patch: Partial<Listing>) {
+export async function updateListing(id: string, patch: Partial<Listing>) {
   ensureInit();
   const before = memoryStore.find((l) => l.id === id);
   memoryStore = memoryStore.map((l) => (l.id === id ? { ...l, ...patch } : l));
   const after = memoryStore.find((l) => l.id === id);
-  // If a previously available listing is now marked rented, notify users
-  // who saved it.
+  emit();
+  const { error } = await supabase.from("listings").update(listingToRow(patch) as never).eq("id", id);
+  if (error) {
+    console.error("[listings] update failed", error);
+    // Reload from server to recover.
+    void fetchAll();
+    throw error;
+  }
   if (before && after && before.status === "available" && after.status === "unavailable") {
     notifyRented(after);
   }
-  persist();
 }
 
-export function deleteListing(id: string) {
+export async function deleteListing(id: string) {
   ensureInit();
+  const prev = memoryStore;
   memoryStore = memoryStore.filter((l) => l.id !== id);
-  persist();
+  emit();
+  const { error } = await supabase.from("listings").delete().eq("id", id);
+  if (error) {
+    console.error("[listings] delete failed", error);
+    memoryStore = prev;
+    emit();
+    throw error;
+  }
 }
 
 // ===== Favorites =====
