@@ -49,9 +49,10 @@ function ListingDetailPage() {
   }
 
   const isFav = favs.has(listing.id);
-  const listingUrl =
-    typeof window !== "undefined" ? window.location.href : `/listing/${listing.id}`;
-  const messenger = buildMessengerUrl({ listingTitle: listing.title, listingUrl });
+  const messenger = buildMessengerUrl({
+    listingId: listing.id,
+    listingTitle: listing.title,
+  });
   const mapUrl = listing.address?.trim() ? buildNaverMapSearchUrl(listing.address.trim()) : "";
 
   return (
