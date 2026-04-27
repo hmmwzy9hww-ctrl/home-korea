@@ -3,7 +3,7 @@ import { Heart, MapPin, Train, Bus, MessageCircle, ExternalLink } from "lucide-r
 import { useI18n } from "@/lib/i18n";
 import { useFavorites, toggleFavorite } from "@/lib/store";
 import { buildMessengerUrl } from "@/lib/config";
-import { buildGoogleMapsSearchUrl, getListingLocationText } from "@/lib/maps";
+import { buildNaverMapSearchUrl } from "@/lib/maps";
 import type { Listing } from "@/lib/types";
 import { formatWon } from "@/lib/format";
 import { PhotoCarousel } from "./PhotoCarousel";
@@ -16,13 +16,8 @@ export function ListingCard({ listing }: { listing: Listing }) {
   const origin =
     typeof window !== "undefined" ? window.location.origin : "";
   const listingUrl = `${origin}/listing/${listing.id}`;
-  const messenger = buildMessengerUrl({
-    listingTitle: listing.title,
-    listingUrl,
-    override: listing.messengerUrl,
-  });
-  const locationText = getListingLocationText(listing);
-  const mapsUrl = locationText ? buildGoogleMapsSearchUrl(locationText) : "";
+  const messenger = buildMessengerUrl({ listingTitle: listing.title, listingUrl });
+  const mapsUrl = listing.address?.trim() ? buildNaverMapSearchUrl(listing.address.trim()) : "";
 
   return (
     <article className="group bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover transition-shadow border">
