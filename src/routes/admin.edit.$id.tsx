@@ -144,7 +144,7 @@ function EditPage() {
     }
     const cleanPhotos = photos.filter(Boolean).slice(0, MAX_PHOTOS);
     const options = optionsStr.split(",").map((o) => o.trim()).filter(Boolean);
-    const payload = { ...form, photos, options };
+    const payload = { ...form, photos: cleanPhotos, options };
 
     if (isNew) {
       addListing(payload);
