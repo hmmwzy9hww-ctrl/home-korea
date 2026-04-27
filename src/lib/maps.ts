@@ -7,6 +7,6 @@ export function getListingLocationText(listing: Pick<Listing, "address" | "area"
   return [listing.area?.trim(), listing.subwayStation?.trim()].filter(Boolean).join(" ");
 }
 
-export function buildGoogleMapsSearchUrl(location: string): string {
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
+export function buildNaverMapSearchUrl(address: string): string {
+  return `https://map.naver.com/p/search/${encodeURIComponent(address)}`;
 }
