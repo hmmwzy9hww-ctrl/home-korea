@@ -148,8 +148,12 @@ export function useFavorites(): Set<string> {
 
 export function toggleFavorite(id: string) {
   ensureFavs();
-  if (favs!.has(id)) favs!.delete(id);
-  else favs!.add(id);
+  if (favs!.has(id)) {
+    favs!.delete(id);
+  } else {
+    favs!.add(id);
+    trackSave(id);
+  }
   persistFavs();
 }
 
