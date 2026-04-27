@@ -346,8 +346,8 @@ function EditPage() {
             />
           </Field>
 
-          <Field label={t("form.photos")}>
-            <div className="space-y-2">
+          <Field label={`${t("form.photos")} (${photos.length}/${MAX_PHOTOS})`}>
+            <div className="space-y-3">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -356,37 +356,43 @@ function EditPage() {
                 onChange={(e) => {
                   void readFiles(e.target.files).catch(() => toast.error(t("form.imageError")));
                 }}
-                className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-secondary file:px-3 file:py-2 file:text-sm file:font-medium"
+                className="hidden"
               />
-              {photoFields.length > 0 && (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading || photos.length >= MAX_PHOTOS}
+                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 text-sm font-medium text-primary hover:bg-primary/10 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Upload className="h-4 w-4" />
+                {uploading
+                  ? "..."
+                  : photos.length >= MAX_PHOTOS
+                    ? `Max ${MAX_PHOTOS}`
+                    : t("form.photo.upload") || "Зураг оруулах"}
+              </button>
+              {photos.length > 0 && (
                 <div className="grid grid-cols-3 gap-2">
-                  {photoFields.map((photo, i) => (
-                    <img
-                      key={`${photo.slice(0, 20)}-${i}`}
-                      src={photo}
-                      alt={`${form.title || t("form.title")}-${i + 1}`}
-                      className="aspect-square w-full rounded-lg border object-cover bg-muted"
-                      loading="lazy"
-                    />
+                  {photos.map((photo, i) => (
+                    <div key={i} className="relative group">
+                      <img
+                        src={photo}
+                        alt={`${form.title || t("form.title")}-${i + 1}`}
+                        className="aspect-square w-full rounded-lg border object-cover bg-muted"
+                        loading="lazy"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(i)}
+                        aria-label="Remove"
+                        className="absolute top-1 right-1 inline-flex items-center justify-center h-7 w-7 rounded-full bg-background/90 border shadow-sm text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
-              {[
-                [photo0, setPhoto0],
-                [photo1, setPhoto1],
-                [photo2, setPhoto2],
-                [photo3, setPhoto3],
-                [photo4, setPhoto4],
-              ].map(([val, setVal], i) => (
-                <input
-                  key={i}
-                  type="url"
-                  value={val as string}
-                  onChange={(e) => (setVal as (s: string) => void)(e.target.value)}
-                  placeholder={t("form.photo.ph")}
-                  className={inputCls}
-                />
-              ))}
             </div>
           </Field>
 
