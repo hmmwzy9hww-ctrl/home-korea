@@ -1,11 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, SlidersHorizontal, X } from "lucide-react";
+import { ArrowLeft, ExternalLink, List, Map as MapIcon, MapPin, SlidersHorizontal, X } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ListingCard } from "@/components/ListingCard";
 import { useI18n } from "@/lib/i18n";
 import { useListings } from "@/lib/store";
-import type { City, RoomType, SortKey } from "@/lib/types";
+import { buildNaverMapSearchUrl, getListingLocationText } from "@/lib/maps";
+import { formatWon } from "@/lib/format";
+import type { City, Listing, RoomType, SortKey } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface ListingsSearch {
