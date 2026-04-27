@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Save, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, Save, X, Upload, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { useI18n } from "@/lib/i18n";
@@ -49,83 +49,78 @@ function EditPage() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState<Omit<Listing, "id" | "createdAt">>(empty());
-  const [photo0, setPhoto0] = useState("");
-  const [photo1, setPhoto1] = useState("");
-  const [photo2, setPhoto2] = useState("");
-  const [photo3, setPhoto3] = useState("");
-  const [photo4, setPhoto4] = useState("");
+  const [photos, setPhotos] = useState<string[]>([]);
   const [optionsStr, setOptionsStr] = useState("");
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const photoFields = useMemo(
-    () => [photo0, photo1, photo2, photo3, photo4].map((p) => p.trim()).filter(Boolean),
-    [photo0, photo1, photo2, photo3, photo4],
-  );
+  const MAX_PHOTOS = 5;
 
   useEffect(() => {
     if (!isNew && existing) {
       const { id: _id, createdAt: _c, ...rest } = existing;
       setForm(rest);
-      setPhoto0(existing.photos[0] || "");
-      setPhoto1(existing.photos[1] || "");
-      setPhoto2(existing.photos[2] || "");
-      setPhoto3(existing.photos[3] || "");
-      setPhoto4(existing.photos[4] || "");
+      setPhotos(existing.photos.slice(0, MAX_PHOTOS));
       setOptionsStr(existing.options.join(", "));
     } else if (isNew) {
       setForm(empty());
-      setPhoto0("");
-      setPhoto1("");
-      setPhoto2("");
-      setPhoto3("");
-      setPhoto4("");
+      setPhotos([]);
       setOptionsStr("");
     }
   }, [existing, isNew]);
 
   const readFiles = async (files: FileList | null) => {
     if (!files?.length) return;
-    const images = Array.from(files).slice(0, 5);
-    const dataUrls = await Promise.all(
-      images.map(
-        (file) =>
-          new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-              const raw = typeof reader.result === "string" ? reader.result : "";
-              if (!raw) {
-                resolve("");
-                return;
-              }
-
-              const image = new Image();
-              image.onload = () => {
-                const maxSide = 1600;
-                const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
-                const canvas = document.createElement("canvas");
-                canvas.width = Math.max(1, Math.round(image.width * scale));
-                canvas.height = Math.max(1, Math.round(image.height * scale));
-                const ctx = canvas.getContext("2d");
-                if (!ctx) {
-                  resolve(raw);
+    const remaining = MAX_PHOTOS - photos.length;
+    if (remaining <= 0) {
+      toast.error(`Max ${MAX_PHOTOS} photos`);
+      return;
+    }
+    const images = Array.from(files).slice(0, remaining);
+    setUploading(true);
+    try {
+      const dataUrls = await Promise.all(
+        images.map(
+          (file) =>
+            new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                const raw = typeof reader.result === "string" ? reader.result : "";
+                if (!raw) {
+                  resolve("");
                   return;
                 }
-                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-                resolve(canvas.toDataURL("image/jpeg", 0.82));
+                const image = new Image();
+                image.onload = () => {
+                  const maxSide = 1600;
+                  const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+                  const canvas = document.createElement("canvas");
+                  canvas.width = Math.max(1, Math.round(image.width * scale));
+                  canvas.height = Math.max(1, Math.round(image.height * scale));
+                  const ctx = canvas.getContext("2d");
+                  if (!ctx) {
+                    resolve(raw);
+                    return;
+                  }
+                  ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+                  resolve(canvas.toDataURL("image/jpeg", 0.82));
+                };
+                image.onerror = () => resolve(raw);
+                image.src = raw;
               };
-              image.onerror = () => resolve(raw);
-              image.src = raw;
-            };
-            reader.onerror = () => reject(new Error("read failed"));
-            reader.readAsDataURL(file);
-          }),
-      ),
-    );
+              reader.onerror = () => reject(new Error("read failed"));
+              reader.readAsDataURL(file);
+            }),
+        ),
+      );
+      setPhotos((prev) => [...prev, ...dataUrls.filter(Boolean)].slice(0, MAX_PHOTOS));
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
-    setPhoto0(dataUrls[0] || "");
-    setPhoto1(dataUrls[1] || "");
-    setPhoto2(dataUrls[2] || "");
-    setPhoto3(dataUrls[3] || "");
-    setPhoto4(dataUrls[4] || "");
+  const removePhoto = (i: number) => {
+    setPhotos((prev) => prev.filter((_, idx) => idx !== i));
   };
 
   if (!isAdmin) {
@@ -147,9 +142,9 @@ function EditPage() {
       toast.error(t("form.required") + ": " + t("form.title"));
       return;
     }
-    const photos = photoFields;
+    const cleanPhotos = photos.filter(Boolean).slice(0, MAX_PHOTOS);
     const options = optionsStr.split(",").map((o) => o.trim()).filter(Boolean);
-    const payload = { ...form, photos, options };
+    const payload = { ...form, photos: cleanPhotos, options };
 
     if (isNew) {
       addListing(payload);
@@ -351,8 +346,8 @@ function EditPage() {
             />
           </Field>
 
-          <Field label={t("form.photos")}>
-            <div className="space-y-2">
+          <Field label={`${t("form.photos")} (${photos.length}/${MAX_PHOTOS})`}>
+            <div className="space-y-3">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -361,37 +356,43 @@ function EditPage() {
                 onChange={(e) => {
                   void readFiles(e.target.files).catch(() => toast.error(t("form.imageError")));
                 }}
-                className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-secondary file:px-3 file:py-2 file:text-sm file:font-medium"
+                className="hidden"
               />
-              {photoFields.length > 0 && (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading || photos.length >= MAX_PHOTOS}
+                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 text-sm font-medium text-primary hover:bg-primary/10 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Upload className="h-4 w-4" />
+                {uploading
+                  ? "..."
+                  : photos.length >= MAX_PHOTOS
+                    ? `Max ${MAX_PHOTOS}`
+                    : t("form.photo.upload") || "Зураг оруулах"}
+              </button>
+              {photos.length > 0 && (
                 <div className="grid grid-cols-3 gap-2">
-                  {photoFields.map((photo, i) => (
-                    <img
-                      key={`${photo.slice(0, 20)}-${i}`}
-                      src={photo}
-                      alt={`${form.title || t("form.title")}-${i + 1}`}
-                      className="aspect-square w-full rounded-lg border object-cover bg-muted"
-                      loading="lazy"
-                    />
+                  {photos.map((photo, i) => (
+                    <div key={i} className="relative group">
+                      <img
+                        src={photo}
+                        alt={`${form.title || t("form.title")}-${i + 1}`}
+                        className="aspect-square w-full rounded-lg border object-cover bg-muted"
+                        loading="lazy"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(i)}
+                        aria-label="Remove"
+                        className="absolute top-1 right-1 inline-flex items-center justify-center h-7 w-7 rounded-full bg-background/90 border shadow-sm text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
-              {[
-                [photo0, setPhoto0],
-                [photo1, setPhoto1],
-                [photo2, setPhoto2],
-                [photo3, setPhoto3],
-                [photo4, setPhoto4],
-              ].map(([val, setVal], i) => (
-                <input
-                  key={i}
-                  type="url"
-                  value={val as string}
-                  onChange={(e) => (setVal as (s: string) => void)(e.target.value)}
-                  placeholder={t("form.photo.ph")}
-                  className={inputCls}
-                />
-              ))}
             </div>
           </Field>
 
