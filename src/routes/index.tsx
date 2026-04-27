@@ -97,15 +97,13 @@ function HomePage() {
             <div className="h-[300px] sm:h-[380px] w-full rounded-2xl border bg-muted" />
           }
         >
-          {() => (
-            <Suspense
-              fallback={
-                <div className="h-[300px] sm:h-[380px] w-full rounded-2xl border bg-muted" />
-              }
-            >
-              <HomeMap listings={all} />
-            </Suspense>
-          )}
+          <Suspense
+            fallback={
+              <div className="h-[300px] sm:h-[380px] w-full rounded-2xl border bg-muted" />
+            }
+          >
+            <HomeMap listings={all} />
+          </Suspense>
         </ClientOnly>
       </section>
 
