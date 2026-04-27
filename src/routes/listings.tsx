@@ -1,14 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { ArrowLeft, ExternalLink, List, Map as MapIcon, MapPin, SlidersHorizontal, X } from "lucide-react";
+import { lazy, Suspense, useMemo, useState } from "react";
+import { ArrowLeft, List, Map as MapIcon, SlidersHorizontal, X } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ListingCard } from "@/components/ListingCard";
 import { useI18n } from "@/lib/i18n";
 import { useListings } from "@/lib/store";
-import { buildNaverMapSearchUrl, getListingLocationText } from "@/lib/maps";
 import { formatWon } from "@/lib/format";
 import type { City, Listing, RoomType, SortKey } from "@/lib/types";
 import { cn } from "@/lib/utils";
+
+const LeafletMap = lazy(() =>
+  import("@/components/LeafletMap").then((m) => ({ default: m.LeafletMap })),
+);
+
 
 interface ListingsSearch {
   q?: string;
