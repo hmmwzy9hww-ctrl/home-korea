@@ -202,6 +202,7 @@ function ListingsPage() {
         ) : (
           <MapView
             listings={filtered}
+            city={search.city}
             selectedId={selectedPin}
             onSelect={setSelectedPin}
           />
