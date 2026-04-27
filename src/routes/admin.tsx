@@ -24,8 +24,10 @@ import {
   loginAdmin,
   logoutAdmin,
   updateListing,
+  updateSiteSettings,
   useAdmin,
   useListings,
+  useSiteSettings,
 } from "@/lib/store";
 import type { City, Listing, ListingStatus, RoomType } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -76,12 +78,18 @@ function AdminPage() {
   const { t } = useI18n();
   const isAdmin = useAdmin();
   const listings = useListings();
+  const settings = useSiteSettings();
   const [pw, setPw] = useState("");
   const [err, setErr] = useState("");
   const [editor, setEditor] = useState<EditorState>(null);
   const [form, setForm] = useState<ListingForm>(createEmptyListing());
   const [optionsStr, setOptionsStr] = useState("");
   const [photoInputs, setPhotoInputs] = useState<string[]>(() => createPhotoInputs());
+  const [coverDraft, setCoverDraft] = useState(settings.coverImageUrl);
+
+  useEffect(() => {
+    setCoverDraft(settings.coverImageUrl);
+  }, [settings.coverImageUrl]);
 
   const editingListing = useMemo(() => {
     if (!editor || editor.mode !== "edit") return undefined;
@@ -230,6 +238,38 @@ function AdminPage() {
           >
             <LogOut className="h-3.5 w-3.5" />
             {t("admin.logout")}
+          </button>
+        </div>
+
+        {/* Cover image setting */}
+        <div className="mb-4 rounded-2xl border bg-card p-3">
+          <h2 className="text-sm font-bold mb-2">{t("admin.cover.title")}</h2>
+          {coverDraft && (
+            <div className="mb-2 overflow-hidden rounded-xl border bg-muted aspect-[16/9]">
+              <img
+                src={coverDraft}
+                alt="cover"
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
+            </div>
+          )}
+          <input
+            type="url"
+            value={coverDraft}
+            onChange={(e) => setCoverDraft(e.target.value)}
+            placeholder="https://…"
+            className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              updateSiteSettings({ coverImageUrl: coverDraft.trim() });
+              toast.success(t("form.saved"));
+            }}
+            className="mt-2 w-full rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
+          >
+            {t("admin.cover.save")}
           </button>
         </div>
 

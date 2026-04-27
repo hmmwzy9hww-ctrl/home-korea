@@ -76,6 +76,12 @@ function ListingsPage() {
     if (search.sort === "priceAsc") r.sort((a, b) => a.monthlyRent - b.monthlyRent);
     else if (search.sort === "priceDesc") r.sort((a, b) => b.monthlyRent - a.monthlyRent);
     else r.sort((a, b) => b.createdAt - a.createdAt);
+    // Always push unavailable (rented) listings to the bottom regardless of sort.
+    r.sort((a, b) => {
+      const aA = a.status === "available" ? 0 : 1;
+      const bA = b.status === "available" ? 0 : 1;
+      return aA - bA;
+    });
     return r;
   }, [all, search]);
 
