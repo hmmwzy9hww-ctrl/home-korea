@@ -1,9 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Train, Wallet } from "lucide-react";
+import { ArrowRight, Bell, BellOff, Train, Wallet } from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { ListingCard } from "@/components/ListingCard";
 import { useI18n } from "@/lib/i18n";
-import { useListings, useSiteSettings } from "@/lib/store";
+import {
+  toggleCitySubscription,
+  useCitySubscriptions,
+  useListings,
+  useSiteSettings,
+} from "@/lib/store";
 import type { City } from "@/lib/types";
 
 export const Route = createFileRoute("/")({
@@ -24,6 +30,7 @@ function HomePage() {
   const { t } = useI18n();
   const all = useListings();
   const settings = useSiteSettings();
+  const subs = useCitySubscriptions();
 
   const featured = all.filter((l) => l.featured && l.status === "available").slice(0, 4);
   const latest = sortAvailableFirst(all).slice(0, 4);
