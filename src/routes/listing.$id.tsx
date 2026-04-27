@@ -5,7 +5,7 @@ import { PhotoCarousel } from "@/components/PhotoCarousel";
 import { useI18n } from "@/lib/i18n";
 import { useListing, useFavorites, toggleFavorite } from "@/lib/store";
 import { buildMessengerUrl } from "@/lib/config";
-import { buildGoogleMapsSearchUrl, getListingLocationText } from "@/lib/maps";
+import { buildNaverMapSearchUrl } from "@/lib/maps";
 import { formatWon } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -45,13 +45,8 @@ function ListingDetailPage() {
   const isFav = favs.has(listing.id);
   const listingUrl =
     typeof window !== "undefined" ? window.location.href : `/listing/${listing.id}`;
-  const messenger = buildMessengerUrl({
-    listingTitle: listing.title,
-    listingUrl,
-    override: listing.messengerUrl,
-  });
-  const locationText = getListingLocationText(listing);
-  const mapUrl = locationText ? buildGoogleMapsSearchUrl(locationText) : "";
+  const messenger = buildMessengerUrl({ listingTitle: listing.title, listingUrl });
+  const mapUrl = listing.address?.trim() ? buildNaverMapSearchUrl(listing.address.trim()) : "";
 
   return (
     <AppShell showSearch={false}>
