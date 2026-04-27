@@ -15,14 +15,16 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, translate, LANGS, type Lang } from "@/lib/i18n";
 import { ADMIN_PASSWORD } from "@/lib/config";
 import { formatWon } from "@/lib/format";
+import { EDITABLE_TEXTS } from "@/lib/editableTexts";
 import {
   addListing,
   deleteListing,
   loginAdmin,
   logoutAdmin,
+  setTextOverride,
   updateListing,
   updateSiteSettings,
   useAdmin,
