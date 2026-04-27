@@ -79,12 +79,21 @@ export function addListing(listing: Omit<Listing, "id" | "createdAt">) {
   };
   memoryStore = [newL, ...memoryStore];
   persist();
+  // Notify subscribers of this city about the new listing.
+  notifyNewListing(newL);
   return newL;
 }
 
 export function updateListing(id: string, patch: Partial<Listing>) {
   ensureInit();
+  const before = memoryStore.find((l) => l.id === id);
   memoryStore = memoryStore.map((l) => (l.id === id ? { ...l, ...patch } : l));
+  const after = memoryStore.find((l) => l.id === id);
+  // If a previously available listing is now marked rented, notify users
+  // who saved it.
+  if (before && after && before.status === "available" && after.status === "unavailable") {
+    notifyRented(after);
+  }
   persist();
 }
 
