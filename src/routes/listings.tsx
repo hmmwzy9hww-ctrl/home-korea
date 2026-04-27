@@ -390,3 +390,98 @@ function ToggleRow({
     </label>
   );
 }
+
+function MapView({
+  listings,
+  selectedId,
+  onSelect,
+}: {
+  listings: Listing[];
+  selectedId: string | null;
+  onSelect: (id: string | null) => void;
+}) {
+  const { t } = useI18n();
+  const selected = listings.find((l) => l.id === selectedId) || listings[0];
+  const focusQuery = selected
+    ? getListingLocationText(selected) || t(`city.${selected.city}`)
+    : "Korea";
+  // Google Maps embed (no API key needed for /maps?q=&output=embed)
+  const embedSrc = `https://www.google.com/maps?q=${encodeURIComponent(focusQuery)}&z=14&output=embed`;
+  const externalUrl = selected
+    ? buildNaverMapSearchUrl(getListingLocationText(selected) || t(`city.${selected.city}`))
+    : "";
+
+  return (
+    <div className="space-y-3">
+      <div className="relative w-full overflow-hidden rounded-2xl border bg-muted aspect-[4/3] sm:aspect-[16/9]">
+        <iframe
+          key={focusQuery}
+          src={embedSrc}
+          title="map"
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          className="absolute inset-0 h-full w-full"
+        />
+      </div>
+
+      {externalUrl && (
+        <a
+          href={externalUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-primary"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+          {t("map.openExternal")}
+        </a>
+      )}
+
+      <ul className="space-y-2">
+        {listings.map((l) => {
+          const active = selected?.id === l.id;
+          return (
+            <li key={l.id}>
+              <button
+                type="button"
+                onClick={() => onSelect(l.id)}
+                className={cn(
+                  "w-full text-left flex items-start gap-3 rounded-2xl border p-3 transition-colors",
+                  active ? "border-primary bg-primary/5" : "bg-card hover:bg-secondary",
+                )}
+              >
+                <span
+                  className={cn(
+                    "grid h-8 w-8 shrink-0 place-items-center rounded-full",
+                    active ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground",
+                  )}
+                >
+                  <MapPin className="h-4 w-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-semibold truncate">{l.title}</span>
+                    <span className="text-sm font-bold text-primary whitespace-nowrap">
+                      {formatWon(l.monthlyRent)}
+                    </span>
+                  </div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {[t(`city.${l.city}`), l.area || l.address].filter(Boolean).join(" · ")}
+                  </div>
+                  {active && (
+                    <Link
+                      to="/listing/$id"
+                      params={{ id: l.id }}
+                      className="mt-2 inline-block text-xs font-medium text-primary"
+                    >
+                      {t("card.viewDetail")} →
+                    </Link>
+                  )}
+                </div>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
