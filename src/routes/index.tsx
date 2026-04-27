@@ -1,10 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Bell, BellOff, Train, Wallet } from "lucide-react";
+import { Suspense, lazy } from "react";
+import { ClientOnly } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { ListingCard } from "@/components/ListingCard";
-import { HomeMap } from "@/components/HomeMap";
 import { useI18n } from "@/lib/i18n";
+
+const HomeMap = lazy(() =>
+  import("@/components/HomeMap").then((m) => ({ default: m.HomeMap })),
+);
 import {
   toggleCitySubscription,
   useCitySubscriptions,
