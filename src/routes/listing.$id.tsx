@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Heart, MapPin, Train, Bus, Calendar, Ruler, Building2, MessageCircle, ExternalLink } from "lucide-react";
+import { useEffect } from "react";
+import { ArrowLeft, Heart, MapPin, Train, Bus, Calendar, Ruler, Building2, MessageCircle, ExternalLink, Eye } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
 import { useI18n } from "@/lib/i18n";
-import { useListing, useFavorites, toggleFavorite } from "@/lib/store";
+import { useListing, useFavorites, toggleFavorite, trackView, useAnalytics } from "@/lib/store";
 import { buildMessengerUrl } from "@/lib/config";
 import { buildNaverMapSearchUrl } from "@/lib/maps";
 import { formatWon } from "@/lib/format";
@@ -28,6 +29,11 @@ function ListingDetailPage() {
   const { id } = Route.useParams();
   const listing = useListing(id);
   const favs = useFavorites();
+  const analytics = useAnalytics();
+
+  useEffect(() => {
+    if (id) trackView(id);
+  }, [id]);
 
   if (!listing) {
     return (
