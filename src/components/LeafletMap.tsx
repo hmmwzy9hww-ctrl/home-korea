@@ -35,7 +35,7 @@ function pricePinIcon(rent: number, active: boolean) {
   });
 }
 
-export function LeafletMap({ listings, city, selectedId, onSelect }: Props) {
+export function LeafletMap({ listings, city, selectedId, onSelect, className, initialZoom }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const clusterRef = useRef<L.MarkerClusterGroup | null>(null);
