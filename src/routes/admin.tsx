@@ -26,6 +26,8 @@ import {
   updateListing,
   updateSiteSettings,
   useAdmin,
+  useAnalytics,
+  useCitySubscriptions,
   useListings,
   useSiteSettings,
 } from "@/lib/store";
@@ -79,6 +81,8 @@ function AdminPage() {
   const isAdmin = useAdmin();
   const listings = useListings();
   const settings = useSiteSettings();
+  const analytics = useAnalytics();
+  const subs = useCitySubscriptions();
   const [pw, setPw] = useState("");
   const [err, setErr] = useState("");
   const [editor, setEditor] = useState<EditorState>(null);
