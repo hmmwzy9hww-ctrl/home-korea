@@ -10,18 +10,12 @@ export const ADMIN_PASSWORD = "admin123";
 export function buildMessengerUrl(opts: {
   listingTitle?: string;
   listingUrl?: string;
-  override?: string; // per-listing custom messenger url, if any
+  override?: string;
 }): string {
-  const base = opts.override?.trim() || DEFAULT_MESSENGER_URL;
-
-  // If the admin already provided a fully-formed link with its own ?text=, respect it.
-  if (opts.override && /[?&]text=/.test(opts.override)) return opts.override;
-
   const url = opts.listingUrl || (typeof window !== "undefined" ? window.location.href : "");
   const message = url
     ? `Сайн байна уу, энэ байрыг сонирхож байна: ${url}`
     : `Сайн байна уу, таны зарласан байрыг сонирхож байна.`;
 
-  const sep = base.includes("?") ? "&" : "?";
-  return `${base}${sep}text=${encodeURIComponent(message)}`;
+  return `${DEFAULT_MESSENGER_URL}?text=${encodeURIComponent(message)}`;
 }
