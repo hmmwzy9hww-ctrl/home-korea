@@ -257,6 +257,18 @@ export function updateSiteSettings(patch: Partial<SiteSettings>) {
   persistSettings();
 }
 
+export function setTextOverride(lang: string, key: string, value: string) {
+  ensureSettings();
+  const overrides = { ...(settingsStore!.textOverrides || {}) };
+  const langMap = { ...(overrides[lang] || {}) };
+  const trimmed = value.trim();
+  if (trimmed) langMap[key] = value;
+  else delete langMap[key];
+  overrides[lang] = langMap;
+  settingsStore = { ...settingsStore!, textOverrides: overrides };
+  persistSettings();
+}
+
 // ===== Listing views (analytics) =====
 const VIEWS_KEY = "ger.views.v1";
 const SAVES_KEY = "ger.saves.v1";
