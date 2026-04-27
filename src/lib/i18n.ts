@@ -169,6 +169,35 @@ const mn: Dict = {
   "common.notIncluded": "багтаагүй",
   "common.now": "Одоо",
   "lang.label": "Хэл",
+
+  // Map / list toggle
+  "view.list": "Жагсаалт",
+  "view.map": "Газрын зураг",
+  "map.empty": "Газрын зурагт харуулах байр алга байна.",
+  "map.openExternal": "Naver Map дээр харах",
+
+  // Views
+  "card.views": "{count} удаа үзсэн",
+
+  // Notifications
+  "notif.title": "Мэдэгдэл",
+  "notif.empty": "Мэдэгдэл алга байна.",
+  "notif.markAll": "Бүгдийг уншсан болгох",
+  "notif.clear": "Цэвэрлэх",
+  "notif.subscribed": "{city}-ийн шинэ байрны мэдэгдэл асаалаа",
+  "notif.unsubscribed": "{city}-ийн мэдэгдлийг унтраалаа",
+  "subscribe.on": "Мэдэгдэл асаах",
+  "subscribe.off": "Мэдэгдэл унтраах",
+
+  // Admin analytics
+  "admin.analytics.title": "Аналитик",
+  "admin.analytics.totalViews": "Нийт үзэлт",
+  "admin.analytics.totalSaves": "Нийт хадгалалт",
+  "admin.analytics.subscribers": "Хотын захиалагчид",
+  "admin.analytics.byListing": "Байр тус бүрээр",
+  "admin.analytics.cityInterest": "Хотын сонирхол",
+  "admin.analytics.views": "Үзэлт",
+  "admin.analytics.saves": "Хадгалалт",
 };
 
 const ko: Dict = {
