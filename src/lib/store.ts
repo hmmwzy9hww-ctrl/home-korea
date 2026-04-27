@@ -179,3 +179,63 @@ export function useAdmin(): boolean {
   }, []);
   return v;
 }
+
+// ===== Site settings (cover image, etc.) =====
+const SETTINGS_KEY = "ger.settings.v1";
+
+export interface SiteSettings {
+  coverImageUrl: string;
+}
+
+export const DEFAULT_COVER_IMAGE =
+  "https://images.unsplash.com/photo-1538669715315-155098f0fb1d?auto=format&fit=crop&w=1600&q=80";
+
+const defaultSettings: SiteSettings = {
+  coverImageUrl: DEFAULT_COVER_IMAGE,
+};
+
+let settingsStore: SiteSettings | null = null;
+const settingsListeners = new Set<() => void>();
+
+function loadSettings(): SiteSettings {
+  if (typeof window === "undefined") return defaultSettings;
+  try {
+    const raw = window.localStorage.getItem(SETTINGS_KEY);
+    if (raw) return { ...defaultSettings, ...(JSON.parse(raw) as Partial<SiteSettings>) };
+  } catch {}
+  return defaultSettings;
+}
+
+function ensureSettings() {
+  if (settingsStore === null) settingsStore = loadSettings();
+}
+
+function persistSettings() {
+  if (typeof window === "undefined" || !settingsStore) return;
+  try {
+    window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(settingsStore));
+  } catch {}
+  settingsListeners.forEach((l) => l());
+}
+
+function subSettings(cb: () => void) {
+  settingsListeners.add(cb);
+  return () => {
+    settingsListeners.delete(cb);
+  };
+}
+
+function getSettingsSnapshot(): SiteSettings {
+  ensureSettings();
+  return settingsStore!;
+}
+
+export function useSiteSettings(): SiteSettings {
+  return useSyncExternalStore(subSettings, getSettingsSnapshot, () => defaultSettings);
+}
+
+export function updateSiteSettings(patch: Partial<SiteSettings>) {
+  ensureSettings();
+  settingsStore = { ...settingsStore!, ...patch };
+  persistSettings();
+}
