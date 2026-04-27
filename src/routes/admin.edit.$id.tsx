@@ -53,7 +53,7 @@ function EditPage() {
   const [optionsStr, setOptionsStr] = useState("");
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const MAX_PHOTOS = 5;
+  const MAX_PHOTOS = 20;
 
   useEffect(() => {
     if (!isNew && existing) {
