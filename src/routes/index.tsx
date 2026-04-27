@@ -92,7 +92,21 @@ function HomePage() {
       {/* Map — interactive listings map (replaces city filter grid) */}
       <section className="px-4 pt-4 pb-6">
         <h2 className="text-base font-bold mb-3">{t("home.section.cities")}</h2>
-        <HomeMap listings={all} />
+        <ClientOnly
+          fallback={
+            <div className="h-[300px] sm:h-[380px] w-full rounded-2xl border bg-muted" />
+          }
+        >
+          {() => (
+            <Suspense
+              fallback={
+                <div className="h-[300px] sm:h-[380px] w-full rounded-2xl border bg-muted" />
+              }
+            >
+              <HomeMap listings={all} />
+            </Suspense>
+          )}
+        </ClientOnly>
       </section>
 
       {/* City stats — live counts */}
