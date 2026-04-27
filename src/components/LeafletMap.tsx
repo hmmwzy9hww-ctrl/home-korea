@@ -13,6 +13,8 @@ interface Props {
   city?: Listing["city"];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  className?: string;
+  initialZoom?: number;
 }
 
 function pricePinIcon(rent: number, active: boolean) {
