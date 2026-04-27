@@ -6,7 +6,7 @@ import type { Listing } from "@/lib/types";
 import { getCityCenter, getListingCoords } from "@/lib/coords";
 import { formatWon } from "@/lib/format";
 
-type LeafletModule = typeof import("leaflet")["default"];
+type LeafletModule = typeof import("leaflet");
 type LeafletMapInstance = import("leaflet").Map;
 type LeafletMarker = import("leaflet").Marker;
 type LeafletClusterGroup = import("leaflet").MarkerClusterGroup;
@@ -59,9 +59,11 @@ export function LeafletMap({ listings, city, selectedId, onSelect, className, in
     async function initMap() {
       if (!containerRef.current || mapRef.current || typeof window === "undefined") return;
 
-      const { default: L } = await import("leaflet");
+      const leafletModule = await import("leaflet");
       await import("leaflet.markercluster");
       if (cancelled || !containerRef.current) return;
+
+      const L = ("default" in leafletModule ? leafletModule.default : leafletModule) as LeafletModule;
 
       leafletRef.current = L;
       const map = L.map(containerRef.current, {
