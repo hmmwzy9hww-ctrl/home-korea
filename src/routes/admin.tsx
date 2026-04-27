@@ -783,3 +783,152 @@ function AnalyticsPanel({
     </div>
   );
 }
+
+// ===== Editable site text panel =====
+function TextEditor({ settings }: { settings: ReturnType<typeof useSiteSettings> }) {
+  const { lang: currentLang } = useI18n();
+  const [editLang, setEditLang] = useState<Lang>(currentLang);
+  const [open, setOpen] = useState(false);
+
+  // Group editable items by their group label
+  const groups = useMemo(() => {
+    const map = new Map<string, typeof EDITABLE_TEXTS>();
+    for (const item of EDITABLE_TEXTS) {
+      const arr = map.get(item.group) || [];
+      arr.push(item);
+      map.set(item.group, arr);
+    }
+    return Array.from(map.entries());
+  }, []);
+
+  const overrides = settings.textOverrides?.[editLang] || {};
+
+  return (
+    <div className="mb-4 rounded-2xl border bg-card">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between p-3 text-left"
+      >
+        <span className="text-sm font-bold">Site texts (editable)</span>
+        <span className="text-xs text-muted-foreground">{open ? "▲" : "▼"}</span>
+      </button>
+
+      {open && (
+        <div className="border-t p-3 space-y-3">
+          <div className="flex flex-wrap gap-1.5">
+            {LANGS.map((l) => (
+              <button
+                key={l.code}
+                type="button"
+                onClick={() => setEditLang(l.code)}
+                className={cn(
+                  "rounded-full border px-2.5 py-1 text-xs",
+                  editLang === l.code
+                    ? "border-primary bg-primary/10 text-primary font-semibold"
+                    : "hover:bg-secondary",
+                )}
+              >
+                {l.flag} {l.label}
+              </button>
+            ))}
+          </div>
+
+          <p className="text-[11px] text-muted-foreground">
+            Leave a field empty to use the default text. Saved overrides apply instantly to all visitors on this device.
+          </p>
+
+          {groups.map(([groupName, items]) => (
+            <div key={groupName} className="rounded-xl border bg-background p-2">
+              <h4 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                {groupName}
+              </h4>
+              <div className="space-y-2">
+                {items.map((item) => (
+                  <TextRow
+                    key={item.key}
+                    item={item}
+                    lang={editLang}
+                    initialValue={overrides[item.key] ?? ""}
+                    placeholder={translate(editLang, item.key)}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TextRow({
+  item,
+  lang,
+  initialValue,
+  placeholder,
+}: {
+  item: (typeof EDITABLE_TEXTS)[number];
+  lang: Lang;
+  initialValue: string;
+  placeholder: string;
+}) {
+  const [value, setValue] = useState(initialValue);
+  const [saved, setSaved] = useState(false);
+
+  // Reset value when switching languages
+  useEffect(() => {
+    setValue(initialValue);
+    setSaved(false);
+  }, [initialValue, lang]);
+
+  const dirty = value !== initialValue;
+
+  const save = () => {
+    setTextOverride(lang, item.key, value);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1200);
+  };
+
+  return (
+    <div>
+      <label className="mb-0.5 block text-[11px] font-medium text-muted-foreground">
+        {item.label} <span className="font-mono opacity-60">· {item.key}</span>
+      </label>
+      <div className="flex items-start gap-1.5">
+        {item.multiline ? (
+          <textarea
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder={placeholder}
+            rows={2}
+            className="flex-1 rounded-lg border bg-background px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        ) : (
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder={placeholder}
+            className="flex-1 rounded-lg border bg-background px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        )}
+        <button
+          type="button"
+          onClick={save}
+          disabled={!dirty && !saved}
+          className={cn(
+            "shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-semibold",
+            saved
+              ? "bg-success/15 text-success"
+              : dirty
+                ? "bg-primary text-primary-foreground hover:opacity-90"
+                : "bg-muted text-muted-foreground",
+          )}
+        >
+          {saved ? "✓" : "Save"}
+        </button>
+      </div>
+    </div>
+  );
+}
