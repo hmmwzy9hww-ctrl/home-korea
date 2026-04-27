@@ -142,7 +142,7 @@ function EditPage() {
       toast.error(t("form.required") + ": " + t("form.title"));
       return;
     }
-    const photos = photoFields;
+    const cleanPhotos = photos.filter(Boolean).slice(0, MAX_PHOTOS);
     const options = optionsStr.split(",").map((o) => o.trim()).filter(Boolean);
     const payload = { ...form, photos, options };
 
