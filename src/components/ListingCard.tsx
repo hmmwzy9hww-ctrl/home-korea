@@ -13,10 +13,10 @@ export function ListingCard({ listing }: { listing: Listing }) {
   const { t } = useI18n();
   const favs = useFavorites();
   const isFav = favs.has(listing.id);
-  const origin =
-    typeof window !== "undefined" ? window.location.origin : "";
-  const listingUrl = `${origin}/listing/${listing.id}`;
-  const messenger = buildMessengerUrl({ listingTitle: listing.title, listingUrl });
+  const messenger = buildMessengerUrl({
+    listingId: listing.id,
+    listingTitle: listing.title,
+  });
   const mapsUrl = listing.address?.trim() ? buildNaverMapSearchUrl(listing.address.trim()) : "";
 
   return (
