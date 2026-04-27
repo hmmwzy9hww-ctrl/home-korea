@@ -329,12 +329,13 @@ function subAnalytics(cb: () => void) {
     analyticsListeners.delete(cb);
   };
 }
+const EMPTY_ANALYTICS: { views: Record<string, number>; saves: Record<string, number> } = {
+  views: {},
+  saves: {},
+};
+const getAnalyticsServerSnapshot = () => EMPTY_ANALYTICS;
 export function useAnalytics() {
-  return useSyncExternalStore(
-    subAnalytics,
-    getAnalyticsSnapshot,
-    () => ({ views: {}, saves: {} }) as { views: Record<string, number>; saves: Record<string, number> },
-  );
+  return useSyncExternalStore(subAnalytics, getAnalyticsSnapshot, getAnalyticsServerSnapshot);
 }
 
 // ===== City notification subscriptions =====
@@ -370,8 +371,10 @@ function subSubs(cb: () => void) {
     subsListeners.delete(cb);
   };
 }
+const EMPTY_SUBS: Set<string> = new Set();
+const getSubsServerSnapshot = (): Set<string> => EMPTY_SUBS;
 export function useCitySubscriptions(): Set<string> {
-  return useSyncExternalStore(subSubs, getSubsSnapshot, () => new Set<string>());
+  return useSyncExternalStore(subSubs, getSubsSnapshot, getSubsServerSnapshot);
 }
 export function toggleCitySubscription(city: string) {
   ensureSubs();
@@ -435,8 +438,10 @@ function subNotifs(cb: () => void) {
     notifListeners.delete(cb);
   };
 }
+const EMPTY_NOTIFS: AppNotification[] = [];
+const getNotifsServerSnapshot = (): AppNotification[] => EMPTY_NOTIFS;
 export function useNotifications(): AppNotification[] {
-  return useSyncExternalStore(subNotifs, getNotifsSnapshot, () => []);
+  return useSyncExternalStore(subNotifs, getNotifsSnapshot, getNotifsServerSnapshot);
 }
 export function markNotificationRead(id: string) {
   ensureNotifs();
