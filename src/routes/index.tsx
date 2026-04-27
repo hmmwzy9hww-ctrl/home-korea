@@ -84,23 +84,10 @@ function HomePage() {
         </Link>
       </section>
 
-      {/* Cities */}
+      {/* Map — interactive listings map (replaces city filter grid) */}
       <section className="px-4 pt-4 pb-6">
         <h2 className="text-base font-bold mb-3">{t("home.section.cities")}</h2>
-        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-          {cities.map((c) => (
-            <Link
-              key={c.code}
-              to="/listings"
-              search={{ city: c.code } as never}
-              className="flex flex-col items-center gap-1 py-3 rounded-2xl border bg-card hover:bg-secondary transition-colors"
-            >
-              <span className="text-2xl">{c.emoji}</span>
-              <span className="text-xs font-medium">{t(`city.${c.code}`)}</span>
-              <span className="text-[10px] text-muted-foreground">{countByCity(c.code)}</span>
-            </Link>
-          ))}
-        </div>
+        <HomeMap listings={all} />
       </section>
 
       {/* City stats — live counts */}
