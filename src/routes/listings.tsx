@@ -50,6 +50,8 @@ function ListingsPage() {
   const navigate = useNavigate();
   const all = useListings();
   const [filterOpen, setFilterOpen] = useState(false);
+  const [view, setView] = useState<"list" | "map">("list");
+  const [selectedPin, setSelectedPin] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     let r = all.slice();
@@ -152,19 +154,53 @@ function ListingsPage() {
       </div>
 
       <div className="px-4 py-3">
-        <p className="text-xs text-muted-foreground mb-3">
-          {t("listings.count", { count: filtered.length })}
-        </p>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground">
+            {t("listings.count", { count: filtered.length })}
+          </p>
+          {/* List/map toggle */}
+          <div className="inline-flex rounded-full border bg-card p-0.5 text-xs font-medium">
+            <button
+              type="button"
+              onClick={() => setView("list")}
+              className={cn(
+                "inline-flex items-center gap-1 px-3 py-1 rounded-full",
+                view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+              )}
+            >
+              <List className="h-3.5 w-3.5" />
+              {t("view.list")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("map")}
+              className={cn(
+                "inline-flex items-center gap-1 px-3 py-1 rounded-full",
+                view === "map" ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+              )}
+            >
+              <MapIcon className="h-3.5 w-3.5" />
+              {t("view.map")}
+            </button>
+          </div>
+        </div>
+
         {filtered.length === 0 ? (
           <div className="py-16 text-center text-sm text-muted-foreground">
             {t("listings.empty")}
           </div>
-        ) : (
+        ) : view === "list" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {filtered.map((l) => (
               <ListingCard key={l.id} listing={l} />
             ))}
           </div>
+        ) : (
+          <MapView
+            listings={filtered}
+            selectedId={selectedPin}
+            onSelect={setSelectedPin}
+          />
         )}
       </div>
 
