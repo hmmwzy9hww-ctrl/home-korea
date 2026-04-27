@@ -1,10 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Bell, BellOff, Train, Wallet } from "lucide-react";
+import { Suspense, lazy } from "react";
+import { ClientOnly } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { ListingCard } from "@/components/ListingCard";
-import { HomeMap } from "@/components/HomeMap";
 import { useI18n } from "@/lib/i18n";
+
+const HomeMap = lazy(() =>
+  import("@/components/HomeMap").then((m) => ({ default: m.HomeMap })),
+);
 import {
   toggleCitySubscription,
   useCitySubscriptions,
@@ -87,7 +92,19 @@ function HomePage() {
       {/* Map — interactive listings map (replaces city filter grid) */}
       <section className="px-4 pt-4 pb-6">
         <h2 className="text-base font-bold mb-3">{t("home.section.cities")}</h2>
-        <HomeMap listings={all} />
+        <ClientOnly
+          fallback={
+            <div className="h-[300px] sm:h-[380px] w-full rounded-2xl border bg-muted" />
+          }
+        >
+          <Suspense
+            fallback={
+              <div className="h-[300px] sm:h-[380px] w-full rounded-2xl border bg-muted" />
+            }
+          >
+            <HomeMap listings={all} />
+          </Suspense>
+        </ClientOnly>
       </section>
 
       {/* City stats — live counts */}
