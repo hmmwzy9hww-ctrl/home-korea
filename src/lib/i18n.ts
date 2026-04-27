@@ -332,6 +332,18 @@ const en: Dict = {
   "common.back": "Back", "common.share": "Share",
   "common.included": "included", "common.notIncluded": "separate",
   "common.now": "Now", "lang.label": "Language",
+  "view.list": "List", "view.map": "Map",
+  "map.empty": "No listings to show on the map.", "map.openExternal": "Open in Naver Map",
+  "card.views": "{count} views",
+  "notif.title": "Notifications", "notif.empty": "No notifications.",
+  "notif.markAll": "Mark all read", "notif.clear": "Clear",
+  "notif.subscribed": "Subscribed to {city} alerts",
+  "notif.unsubscribed": "Unsubscribed from {city}",
+  "subscribe.on": "Get alerts", "subscribe.off": "Stop alerts",
+  "admin.analytics.title": "Analytics", "admin.analytics.totalViews": "Total views",
+  "admin.analytics.totalSaves": "Total saves", "admin.analytics.subscribers": "City subscribers",
+  "admin.analytics.byListing": "Per listing", "admin.analytics.cityInterest": "City interest",
+  "admin.analytics.views": "Views", "admin.analytics.saves": "Saves",
 };
 
 const ru: Dict = {
