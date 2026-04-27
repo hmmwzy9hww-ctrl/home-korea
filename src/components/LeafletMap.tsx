@@ -100,7 +100,9 @@ export function LeafletMap({ listings, city, selectedId, onSelect, className, in
   return (
     <div
       ref={containerRef}
-      className="h-[60vh] min-h-[360px] w-full overflow-hidden rounded-2xl border bg-muted z-0"
+      className={
+        className ?? "h-[60vh] min-h-[360px] w-full overflow-hidden rounded-2xl border bg-muted z-0"
+      }
     />
   );
 }
