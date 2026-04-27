@@ -3,6 +3,7 @@ import { ArrowRight, Bell, BellOff, Train, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { ListingCard } from "@/components/ListingCard";
+import { HomeMap } from "@/components/HomeMap";
 import { useI18n } from "@/lib/i18n";
 import {
   toggleCitySubscription,
