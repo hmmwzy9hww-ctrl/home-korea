@@ -349,11 +349,30 @@ function ListingDetailPage() {
                 </button>
               </div>
             </div>
-          ) : (
-            <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
-              {listing.description || (isAdmin ? "—" : "")}
-            </p>
-          )}
+          ) : (() => {
+            const translations = listing.descriptionTranslations || {};
+            const translated = lang !== "mn" ? translations[lang] : "";
+            const display = translated || listing.description;
+            const showOriginal = !!translated && !!listing.description && translated !== listing.description;
+            return (
+              <div className="space-y-2">
+                <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
+                  {display || (isAdmin ? "—" : "")}
+                </p>
+                {translated && (
+                  <p className="text-[10px] text-muted-foreground italic">
+                    🌐 AI translation
+                  </p>
+                )}
+                {showOriginal && (
+                  <details className="text-xs text-muted-foreground">
+                    <summary className="cursor-pointer">Эх (Монгол)</summary>
+                    <p className="mt-1 whitespace-pre-line">{listing.description}</p>
+                  </details>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Map */}
