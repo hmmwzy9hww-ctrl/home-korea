@@ -378,7 +378,7 @@ const en: Dict = {
 };
 
 const ru: Dict = {
-  "brand": "Гэр Finder", "tagline": "Аренда жилья для монголов в Корее",
+  "brand": "Жильё в Корее", "tagline": "Аренда жилья для монголов в Корее",
   "nav.home": "Главная", "nav.search": "Поиск", "nav.favorites": "Избранное", "nav.admin": "Админ",
   "search.placeholder": "Район, метро, ключевое слово…",
   "filter.title": "Фильтры", "filter.city": "Город", "filter.area": "Район",
