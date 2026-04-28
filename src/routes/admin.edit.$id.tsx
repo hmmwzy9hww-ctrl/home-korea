@@ -268,8 +268,36 @@ function EditPage() {
               />
             </Field>
           </div>
-          <p className="-mt-1 text-xs text-muted-foreground">
-            비워두면 주소로 자동 검색됩니다. 핀 위치가 정확하지 않으면 직접 입력하세요. (Kakao Map → 우클릭 → 좌표 복사)
+          <div className="-mt-1 flex flex-wrap items-center gap-2">
+            <a
+              href={
+                form.address || form.area
+                  ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${form.address || ""} ${form.area || ""}`.trim())}`
+                  : "https://www.google.com/maps"
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-2.5 py-1 text-xs font-medium text-foreground hover:bg-accent"
+            >
+              📍 Google Maps에서 좌표 찾기
+            </a>
+            <a
+              href={
+                form.address || form.area
+                  ? `https://map.kakao.com/?q=${encodeURIComponent(`${form.address || ""} ${form.area || ""}`.trim())}`
+                  : "https://map.kakao.com"
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-2.5 py-1 text-xs font-medium text-foreground hover:bg-accent"
+            >
+              🗺️ Kakao Map
+            </a>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            비워두면 주소로 자동 검색됩니다. 정확하지 않으면 지도에서 핀을 우클릭 → 좌표 복사 후 직접 입력하세요.
+            <br />
+            Google Maps: 우클릭 시 첫 번째 항목이 (위도, 경도)
           </p>
 
           <div className="grid grid-cols-3 gap-3">
