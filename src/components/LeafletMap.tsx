@@ -3,7 +3,8 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import type { Listing } from "@/lib/types";
-import { getCityCenter, getListingCoords } from "@/lib/coords";
+import { getCityCenter } from "@/lib/coords";
+import { geocodeListing, getDisplayCoords } from "@/lib/geocode";
 import { formatWon } from "@/lib/format";
 
 type LeafletModule = typeof import("leaflet");
@@ -106,7 +107,7 @@ export function LeafletMap({ listings, city, selectedId, onSelect, className, in
     mapRef.current.setView(getCityCenter(city), initialZoom ?? 12, { animate: true });
   }, [city, initialZoom, ready]);
 
-  // Sync markers with listings
+  // Sync markers with listings (geocode addresses for exact pin placement)
   useEffect(() => {
     const cluster = clusterRef.current;
     const L = leafletRef.current;
@@ -114,15 +115,39 @@ export function LeafletMap({ listings, city, selectedId, onSelect, className, in
     cluster.clearLayers();
     markersRef.current.clear();
 
-    listings.forEach((l) => {
-      const coords = getListingCoords(l);
-      const marker = L.marker(coords, {
-        icon: pricePinIcon(L, l.monthlyRent, l.id === selectedId),
+    let cancelled = false;
+
+    const addMarker = (l: Listing, coords: [number, number]) => {
+      const c = clusterRef.current;
+      const lib = leafletRef.current;
+      if (cancelled || !c || !lib) return;
+      const existing = markersRef.current.get(l.id);
+      if (existing) c.removeLayer(existing);
+      const marker = lib.marker(coords, {
+        icon: pricePinIcon(lib, l.monthlyRent, l.id === selectedId),
       });
       marker.on("click", () => onSelectRef.current(l.id));
       markersRef.current.set(l.id, marker);
-      cluster.addLayer(marker);
-    });
+      c.addLayer(marker);
+    };
+
+    // Initial pass: use cached precise coords if available, else city fallback
+    listings.forEach((l) => addMarker(l, getDisplayCoords(l)));
+
+    // Async pass: geocode any listings without cached precise coords
+    (async () => {
+      for (const l of listings) {
+        if (cancelled) return;
+        if (!l.address?.trim() && !l.area?.trim()) continue;
+        const precise = await geocodeListing(l);
+        if (cancelled) return;
+        if (precise) addMarker(l, precise);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [listings, selectedId, ready]);
 
   return (
