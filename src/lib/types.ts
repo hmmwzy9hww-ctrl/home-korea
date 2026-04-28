@@ -41,6 +41,8 @@ export interface Listing {
   status: ListingStatus;
   featured: boolean;
   paymentType?: PaymentType;
+  latitude?: number | null;
+  longitude?: number | null;
   createdAt: number;
 }
 
