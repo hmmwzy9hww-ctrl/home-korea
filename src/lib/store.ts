@@ -36,6 +36,7 @@ function rowToListing(row: Record<string, unknown>): Listing {
     messengerUrl: row.messenger_url ? String(row.messenger_url) : undefined,
     status: (row.status as ListingStatus) ?? "available",
     featured: Boolean(row.featured),
+    paymentType: (row.payment_type as "monthly" | "quarterly") ?? "monthly",
     createdAt: Number(row.created_at ?? Date.now()),
   };
 }
@@ -66,6 +67,7 @@ function listingToRow(l: Partial<Listing>): Record<string, unknown> {
   if (l.messengerUrl !== undefined) row.messenger_url = l.messengerUrl || null;
   if (l.status !== undefined) row.status = l.status;
   if (l.featured !== undefined) row.featured = l.featured;
+  if (l.paymentType !== undefined) row.payment_type = l.paymentType;
   if (l.createdAt !== undefined) row.created_at = l.createdAt;
   return row;
 }
