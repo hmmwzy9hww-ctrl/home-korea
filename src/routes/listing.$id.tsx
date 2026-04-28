@@ -1,10 +1,35 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect } from "react";
-import { ArrowLeft, Heart, MapPin, Train, Bus, Calendar, Ruler, Building2, MessageCircle, ExternalLink, Eye } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  ArrowLeft,
+  Heart,
+  MapPin,
+  Train,
+  Bus,
+  Calendar,
+  Ruler,
+  Building2,
+  MessageCircle,
+  ExternalLink,
+  Eye,
+  CreditCard,
+  Pencil,
+  Save,
+  X,
+} from "lucide-react";
+import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
 import { useI18n } from "@/lib/i18n";
-import { useListing, useFavorites, toggleFavorite, trackView, useAnalytics } from "@/lib/store";
+import {
+  useListing,
+  useFavorites,
+  toggleFavorite,
+  trackView,
+  useAnalytics,
+  useAdmin,
+  updateListing,
+} from "@/lib/store";
 import { buildMessengerUrl } from "@/lib/config";
 import { buildNaverMapSearchUrl } from "@/lib/maps";
 import { formatWon } from "@/lib/format";
@@ -30,6 +55,13 @@ function ListingDetailPage() {
   const listing = useListing(id);
   const favs = useFavorites();
   const analytics = useAnalytics();
+  const isAdmin = useAdmin();
+
+  // Inline edit state for admin
+  const [editingDesc, setEditingDesc] = useState(false);
+  const [descDraft, setDescDraft] = useState("");
+  const [editingOpts, setEditingOpts] = useState(false);
+  const [optsDraft, setOptsDraft] = useState("");
 
   useEffect(() => {
     if (id) trackView(id);
@@ -54,6 +86,39 @@ function ListingDetailPage() {
     listingTitle: listing.title,
   });
   const mapUrl = listing.address?.trim() ? buildNaverMapSearchUrl(listing.address.trim()) : "";
+  const paymentType = listing.paymentType ?? "monthly";
+
+  const startEditDesc = () => {
+    setDescDraft(listing.description || "");
+    setEditingDesc(true);
+  };
+  const saveDesc = async () => {
+    try {
+      await updateListing(listing.id, { description: descDraft.trim() });
+      toast.success(t("form.saved"));
+      setEditingDesc(false);
+    } catch {
+      toast.error("Error");
+    }
+  };
+
+  const startEditOpts = () => {
+    setOptsDraft((listing.options || []).join(", "));
+    setEditingOpts(true);
+  };
+  const saveOpts = async () => {
+    try {
+      const options = optsDraft
+        .split(",")
+        .map((o) => o.trim())
+        .filter(Boolean);
+      await updateListing(listing.id, { options });
+      toast.success(t("form.saved"));
+      setEditingOpts(false);
+    } catch {
+      toast.error("Error");
+    }
+  };
 
   return (
     <AppShell showSearch={false}>
@@ -106,6 +171,41 @@ function ListingDetailPage() {
           </p>
         </div>
 
+        {/* Payment type highlight */}
+        <div className="rounded-2xl border border-primary/30 bg-primary/5 p-3 flex items-center gap-3">
+          <div className="grid h-9 w-9 place-items-center rounded-full bg-primary/15 text-primary shrink-0">
+            <CreditCard className="h-4 w-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+              {t("card.paymentType")}
+            </div>
+            <div className="text-sm font-semibold">
+              {paymentType === "quarterly" ? t("payment.quarterly") : t("payment.monthly")}
+            </div>
+          </div>
+          {isAdmin && (
+            <select
+              value={paymentType}
+              onChange={async (e) => {
+                try {
+                  await updateListing(listing.id, {
+                    paymentType: e.target.value as "monthly" | "quarterly",
+                  });
+                  toast.success(t("form.saved"));
+                } catch {
+                  toast.error("Error");
+                }
+              }}
+              className="text-xs rounded-md border bg-background px-2 py-1"
+              aria-label={t("form.paymentType")}
+            >
+              <option value="monthly">{t("payment.monthly")}</option>
+              <option value="quarterly">{t("payment.quarterly")}</option>
+            </select>
+          )}
+        </div>
+
         {/* Price block */}
         <div className="rounded-2xl border p-4 bg-card grid grid-cols-3 divide-x">
           <div className="px-2">
@@ -135,10 +235,53 @@ function ListingDetailPage() {
           <InfoRow icon={MapPin} label={t("card.address")} value={listing.address} />
         </div>
 
-        {/* Options */}
-        {listing.options.length > 0 && (
-          <div>
-            <h2 className="font-bold text-sm mb-2">{t("card.options")}</h2>
+        {/* Options (editable by admin) */}
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="font-bold text-sm">{t("card.options")}</h2>
+            {isAdmin && !editingOpts && (
+              <button
+                type="button"
+                onClick={startEditOpts}
+                className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium hover:bg-secondary"
+              >
+                <Pencil className="h-3 w-3" />
+                {t("admin.edit")}
+              </button>
+            )}
+          </div>
+
+          {editingOpts ? (
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={optsDraft}
+                onChange={(e) => setOptsDraft(e.target.value)}
+                placeholder={t("form.options.ph")}
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                autoFocus
+              />
+              <p className="text-[11px] text-muted-foreground">{t("form.options")}</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={saveOpts}
+                  className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
+                >
+                  <Save className="h-3.5 w-3.5" />
+                  {t("form.save")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingOpts(false)}
+                  className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  {t("form.cancel")}
+                </button>
+              </div>
+            </div>
+          ) : listing.options.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
               {listing.options.map((o) => (
                 <span key={o} className="text-xs px-2.5 py-1 rounded-full bg-secondary">
@@ -146,13 +289,61 @@ function ListingDetailPage() {
                 </span>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="text-xs text-muted-foreground">—</p>
+          )}
+        </div>
 
-        {/* Description */}
+        {/* Description (editable by admin) */}
         <div>
-          <h2 className="font-bold text-sm mb-2">{t("card.description")}</h2>
-          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">{listing.description}</p>
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="font-bold text-sm">{t("card.description")}</h2>
+            {isAdmin && !editingDesc && (
+              <button
+                type="button"
+                onClick={startEditDesc}
+                className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium hover:bg-secondary"
+              >
+                <Pencil className="h-3 w-3" />
+                {t("admin.edit")}
+              </button>
+            )}
+          </div>
+
+          {editingDesc ? (
+            <div className="space-y-2">
+              <textarea
+                value={descDraft}
+                onChange={(e) => setDescDraft(e.target.value)}
+                placeholder={t("form.description.ph")}
+                rows={6}
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                autoFocus
+              />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={saveDesc}
+                  className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
+                >
+                  <Save className="h-3.5 w-3.5" />
+                  {t("form.save")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingDesc(false)}
+                  className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  {t("form.cancel")}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
+              {listing.description || (isAdmin ? "—" : "")}
+            </p>
+          )}
         </div>
 
         {/* Map */}

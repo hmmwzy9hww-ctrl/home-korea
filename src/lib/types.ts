@@ -1,7 +1,19 @@
 export type City = "seoul" | "incheon" | "gyeonggi" | "busan" | "other";
-export type RoomType = "oneRoom" | "twoRoom" | "threeRoom" | "officetel" | "studio" | "share";
+export type RoomType =
+  | "oneRoom"
+  | "twoRoom"
+  | "threeRoom"
+  | "officetel"
+  | "studio"
+  | "share"
+  | "dorm"
+  | "twoRoomSeparated"
+  | "villa"
+  | "apartment"
+  | "gosiwon";
 export type ListingStatus = "available" | "unavailable";
 export type SortKey = "newest" | "priceAsc" | "priceDesc";
+export type PaymentType = "monthly" | "quarterly";
 
 export interface Listing {
   id: string;
@@ -28,6 +40,7 @@ export interface Listing {
   messengerUrl?: string;
   status: ListingStatus;
   featured: boolean;
+  paymentType?: PaymentType;
   createdAt: number;
 }
 

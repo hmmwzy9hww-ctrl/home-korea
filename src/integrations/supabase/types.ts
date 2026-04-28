@@ -34,6 +34,7 @@ export type Database = {
           monthly_rent: number
           naver_map_url: string | null
           options: Json
+          payment_type: string
           photos: Json
           room_type: string
           size: number
@@ -61,6 +62,7 @@ export type Database = {
           monthly_rent?: number
           naver_map_url?: string | null
           options?: Json
+          payment_type?: string
           photos?: Json
           room_type: string
           size?: number
@@ -88,6 +90,7 @@ export type Database = {
           monthly_rent?: number
           naver_map_url?: string | null
           options?: Json
+          payment_type?: string
           photos?: Json
           room_type?: string
           size?: number

@@ -42,7 +42,19 @@ export const Route = createFileRoute("/admin")({
 });
 
 const cities: City[] = ["seoul", "incheon", "gyeonggi", "busan", "other"];
-const roomTypes: RoomType[] = ["oneRoom", "twoRoom", "threeRoom", "officetel", "studio", "share"];
+const roomTypes: RoomType[] = [
+  "oneRoom",
+  "twoRoom",
+  "threeRoom",
+  "officetel",
+  "studio",
+  "share",
+  "dorm",
+  "twoRoomSeparated",
+  "villa",
+  "apartment",
+  "gosiwon",
+];
 
 type ListingForm = Omit<Listing, "id" | "createdAt">;
 type EditorState = { mode: "add" } | { mode: "edit"; id: string } | null;
@@ -72,6 +84,7 @@ function createEmptyListing(): ListingForm {
     messengerUrl: "",
     status: "available",
     featured: false,
+    paymentType: "monthly",
   };
 }
 
@@ -636,6 +649,19 @@ function AdminPage() {
                     onChange={(e) => setForm({ ...form, availableFrom: e.target.value })}
                     className={inputCls}
                   />
+                </Field>
+
+                <Field label={t("form.paymentType")}>
+                  <select
+                    value={form.paymentType ?? "monthly"}
+                    onChange={(e) =>
+                      setForm({ ...form, paymentType: e.target.value as "monthly" | "quarterly" })
+                    }
+                    className={inputCls}
+                  >
+                    <option value="monthly">{t("payment.monthly")}</option>
+                    <option value="quarterly">{t("payment.quarterly")}</option>
+                  </select>
                 </Field>
 
                 <Field label={t("form.options")}>
