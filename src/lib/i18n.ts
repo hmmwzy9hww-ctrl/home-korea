@@ -17,7 +17,7 @@ type Dict = Record<string, string>;
 // Монгол хэл нь Солонгос дахь Монгол хүний жинхэнэ ярианы өнгөтэй.
 // Солонгос үг (won, ванрүм, метро, нийтийн зардал гэх мэт) кириллээр хэвээр.
 const mn: Dict = {
-  "brand": "Гэр Олох",
+  "brand": "Солонгос дахь байр",
   "tagline": "Солонгос дахь Монголчуудын байрны самбар",
 
   // Bottom nav
@@ -212,7 +212,7 @@ const mn: Dict = {
 };
 
 const ko: Dict = {
-  "brand": "게르 찾기",
+  "brand": "한국의 집",
   "tagline": "한국 거주 몽골인을 위한 부동산",
   "nav.home": "홈", "nav.search": "검색", "nav.favorites": "찜", "nav.admin": "관리",
   "search.placeholder": "지역, 지하철역, 키워드…",
@@ -296,7 +296,7 @@ const ko: Dict = {
 };
 
 const en: Dict = {
-  "brand": "Ger Finder", "tagline": "Rentals for Mongolians in South Korea",
+  "brand": "Housing in Korea", "tagline": "Rentals for Mongolians in South Korea",
   "nav.home": "Home", "nav.search": "Search", "nav.favorites": "Favorites", "nav.admin": "Admin",
   "search.placeholder": "Area, metro station, keyword…",
   "filter.title": "Filters", "filter.city": "City", "filter.area": "Area",
@@ -378,7 +378,7 @@ const en: Dict = {
 };
 
 const ru: Dict = {
-  "brand": "Гэр Finder", "tagline": "Аренда жилья для монголов в Корее",
+  "brand": "Жильё в Корее", "tagline": "Аренда жилья для монголов в Корее",
   "nav.home": "Главная", "nav.search": "Поиск", "nav.favorites": "Избранное", "nav.admin": "Админ",
   "search.placeholder": "Район, метро, ключевое слово…",
   "filter.title": "Фильтры", "filter.city": "Город", "filter.area": "Район",
@@ -458,7 +458,7 @@ const ru: Dict = {
 };
 
 const zh: Dict = {
-  "brand": "蒙古租房", "tagline": "在韩蒙古人租房平台",
+  "brand": "韩国租房", "tagline": "在韩蒙古人租房平台",
   "nav.home": "首页", "nav.search": "搜索", "nav.favorites": "收藏", "nav.admin": "管理",
   "search.placeholder": "地区、地铁站、关键词…",
   "filter.title": "筛选", "filter.city": "城市", "filter.area": "区域",
@@ -538,7 +538,7 @@ const zh: Dict = {
 };
 
 const vi: Dict = {
-  "brand": "Ger Finder", "tagline": "Cho thuê nhà cho người Mông Cổ tại Hàn Quốc",
+  "brand": "Nhà ở Hàn Quốc", "tagline": "Cho thuê nhà cho người Mông Cổ tại Hàn Quốc",
   "nav.home": "Trang chủ", "nav.search": "Tìm", "nav.favorites": "Yêu thích", "nav.admin": "Quản trị",
   "search.placeholder": "Khu vực, ga tàu, từ khoá…",
   "filter.title": "Bộ lọc", "filter.city": "Thành phố", "filter.area": "Khu vực",
