@@ -281,6 +281,18 @@ const ko: Dict = {
   "form.required": "필수 입력",
   "common.back": "뒤로", "common.share": "공유", "common.included": "포함",
   "common.notIncluded": "별도", "common.now": "즉시", "lang.label": "언어",
+  "view.list": "목록", "view.map": "지도",
+  "map.empty": "지도에 표시할 매물이 없습니다.", "map.openExternal": "Naver Map에서 열기",
+  "card.views": "조회수 {count}회",
+  "notif.title": "알림", "notif.empty": "알림이 없습니다.",
+  "notif.markAll": "모두 읽음 처리", "notif.clear": "지우기",
+  "notif.subscribed": "{city} 알림이 켜졌습니다",
+  "notif.unsubscribed": "{city} 알림이 꺼졌습니다",
+  "subscribe.on": "알림 받기", "subscribe.off": "알림 끄기",
+  "admin.analytics.title": "분석", "admin.analytics.totalViews": "총 조회수",
+  "admin.analytics.totalSaves": "총 찜 수", "admin.analytics.subscribers": "도시 구독자",
+  "admin.analytics.byListing": "매물별", "admin.analytics.cityInterest": "도시별 관심도",
+  "admin.analytics.views": "조회수", "admin.analytics.saves": "찜",
 };
 
 const en: Dict = {
@@ -431,6 +443,18 @@ const ru: Dict = {
   "common.back": "Назад", "common.share": "Поделиться",
   "common.included": "входит", "common.notIncluded": "отдельно",
   "common.now": "Сейчас", "lang.label": "Язык",
+  "view.list": "Список", "view.map": "Карта",
+  "map.empty": "Нет объявлений для отображения на карте.", "map.openExternal": "Открыть в Naver Map",
+  "card.views": "{count} просмотров",
+  "notif.title": "Уведомления", "notif.empty": "Нет уведомлений.",
+  "notif.markAll": "Отметить все прочитанными", "notif.clear": "Очистить",
+  "notif.subscribed": "Подписка на {city} включена",
+  "notif.unsubscribed": "Подписка на {city} отключена",
+  "subscribe.on": "Включить уведомления", "subscribe.off": "Отключить уведомления",
+  "admin.analytics.title": "Аналитика", "admin.analytics.totalViews": "Всего просмотров",
+  "admin.analytics.totalSaves": "Всего сохранений", "admin.analytics.subscribers": "Подписчики городов",
+  "admin.analytics.byListing": "По объявлениям", "admin.analytics.cityInterest": "Интерес по городам",
+  "admin.analytics.views": "Просмотры", "admin.analytics.saves": "Сохранения",
 };
 
 const zh: Dict = {
@@ -499,6 +523,18 @@ const zh: Dict = {
   "common.back": "返回", "common.share": "分享",
   "common.included": "含", "common.notIncluded": "另付",
   "common.now": "立即", "lang.label": "语言",
+  "view.list": "列表", "view.map": "地图",
+  "map.empty": "地图上没有可显示的房源。", "map.openExternal": "在 Naver Map 打开",
+  "card.views": "浏览 {count} 次",
+  "notif.title": "通知", "notif.empty": "暂无通知。",
+  "notif.markAll": "全部标为已读", "notif.clear": "清空",
+  "notif.subscribed": "已开启 {city} 通知",
+  "notif.unsubscribed": "已关闭 {city} 通知",
+  "subscribe.on": "开启通知", "subscribe.off": "关闭通知",
+  "admin.analytics.title": "分析", "admin.analytics.totalViews": "总浏览量",
+  "admin.analytics.totalSaves": "总收藏数", "admin.analytics.subscribers": "城市订阅者",
+  "admin.analytics.byListing": "按房源", "admin.analytics.cityInterest": "城市关注度",
+  "admin.analytics.views": "浏览", "admin.analytics.saves": "收藏",
 };
 
 const vi: Dict = {
@@ -567,6 +603,18 @@ const vi: Dict = {
   "common.back": "Quay lại", "common.share": "Chia sẻ",
   "common.included": "đã gồm", "common.notIncluded": "tính riêng",
   "common.now": "Ngay", "lang.label": "Ngôn ngữ",
+  "view.list": "Danh sách", "view.map": "Bản đồ",
+  "map.empty": "Không có tin đăng nào để hiển thị trên bản đồ.", "map.openExternal": "Mở trong Naver Map",
+  "card.views": "{count} lượt xem",
+  "notif.title": "Thông báo", "notif.empty": "Chưa có thông báo.",
+  "notif.markAll": "Đánh dấu đã đọc", "notif.clear": "Xoá",
+  "notif.subscribed": "Đã bật thông báo {city}",
+  "notif.unsubscribed": "Đã tắt thông báo {city}",
+  "subscribe.on": "Bật thông báo", "subscribe.off": "Tắt thông báo",
+  "admin.analytics.title": "Phân tích", "admin.analytics.totalViews": "Tổng lượt xem",
+  "admin.analytics.totalSaves": "Tổng lượt lưu", "admin.analytics.subscribers": "Người đăng ký theo thành phố",
+  "admin.analytics.byListing": "Theo tin đăng", "admin.analytics.cityInterest": "Quan tâm theo thành phố",
+  "admin.analytics.views": "Lượt xem", "admin.analytics.saves": "Lượt lưu",
 };
 
 export const dictionaries: Record<Lang, Dict> = { mn, ko, en, ru, zh, vi };
