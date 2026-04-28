@@ -101,6 +101,27 @@ export type Database = {
         }
         Relationships: []
       }
+      site_settings: {
+        Row: {
+          cover_image_url: string
+          id: string
+          text_overrides: Json
+          updated_at: string
+        }
+        Insert: {
+          cover_image_url?: string
+          id?: string
+          text_overrides?: Json
+          updated_at?: string
+        }
+        Update: {
+          cover_image_url?: string
+          id?: string
+          text_overrides?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
