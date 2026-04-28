@@ -324,36 +324,14 @@ function AdminPage() {
         <AnalyticsPanel listings={listings} analytics={analytics} subs={subs} />
 
         {/* Cover image setting */}
-        <div className="mb-4 rounded-2xl border bg-card p-3">
-          <h2 className="text-sm font-bold mb-2">{t("admin.cover.title")}</h2>
-          {coverDraft && (
-            <div className="mb-2 overflow-hidden rounded-xl border bg-muted aspect-[16/9]">
-              <img
-                src={coverDraft}
-                alt="cover"
-                className="h-full w-full object-cover"
-                loading="lazy"
-              />
-            </div>
-          )}
-          <input
-            type="url"
-            value={coverDraft}
-            onChange={(e) => setCoverDraft(e.target.value)}
-            placeholder="https://…"
-            className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              updateSiteSettings({ coverImageUrl: coverDraft.trim() });
-              toast.success(t("form.saved"));
-            }}
-            className="mt-2 w-full rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
-          >
-            {t("admin.cover.save")}
-          </button>
-        </div>
+        <CoverImageEditor
+          currentUrl={settings.coverImageUrl}
+          onSaved={(url) => {
+            updateSiteSettings({ coverImageUrl: url });
+            setCoverDraft(url);
+            toast.success(t("form.saved"));
+          }}
+        />
 
         {/* Editable site texts */}
         <TextEditor settings={settings} />
