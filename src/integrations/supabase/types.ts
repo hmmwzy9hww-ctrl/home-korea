@@ -28,6 +28,8 @@ export type Database = {
           featured: boolean
           floor: string
           id: string
+          latitude: number | null
+          longitude: number | null
           maintenance_fee: number
           maintenance_included: boolean | null
           messenger_url: string | null
@@ -56,6 +58,8 @@ export type Database = {
           featured?: boolean
           floor?: string
           id: string
+          latitude?: number | null
+          longitude?: number | null
           maintenance_fee?: number
           maintenance_included?: boolean | null
           messenger_url?: string | null
@@ -84,6 +88,8 @@ export type Database = {
           featured?: boolean
           floor?: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           maintenance_fee?: number
           maintenance_included?: boolean | null
           messenger_url?: string | null
