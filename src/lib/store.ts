@@ -353,8 +353,16 @@ function getSettingsSnapshot(): SiteSettings {
   return settingsStore!;
 }
 
+const getSettingsServerSnapshot = (): SiteSettings => defaultSettings;
 export function useSiteSettings(): SiteSettings {
-  return useSyncExternalStore(subSettings, getSettingsSnapshot, () => defaultSettings);
+  // Use defaultSettings on first render to match SSR, then hydrate from
+  // localStorage after mount to avoid hydration mismatches.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  const live = useSyncExternalStore(subSettings, getSettingsSnapshot, getSettingsServerSnapshot);
+  return mounted ? live : defaultSettings;
 }
 
 export function updateSiteSettings(patch: Partial<SiteSettings>) {
