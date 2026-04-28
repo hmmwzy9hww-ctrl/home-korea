@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
   CheckCircle2,
   Lock,
@@ -10,6 +10,7 @@ import {
   Star,
   StarOff,
   Trash2,
+  Upload,
   X,
   XCircle,
 } from "lucide-react";
