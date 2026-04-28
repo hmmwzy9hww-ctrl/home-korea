@@ -51,6 +51,8 @@ const empty = (): Omit<Listing, "id" | "createdAt"> => ({
   status: "available",
   featured: false,
   paymentType: "monthly",
+  latitude: null,
+  longitude: null,
 });
 
 function EditPage() {
