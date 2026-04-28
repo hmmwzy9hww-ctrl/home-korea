@@ -212,7 +212,7 @@ const mn: Dict = {
 };
 
 const ko: Dict = {
-  "brand": "게르 찾기",
+  "brand": "한국의 집",
   "tagline": "한국 거주 몽골인을 위한 부동산",
   "nav.home": "홈", "nav.search": "검색", "nav.favorites": "찜", "nav.admin": "관리",
   "search.placeholder": "지역, 지하철역, 키워드…",
