@@ -281,6 +281,18 @@ const ko: Dict = {
   "form.required": "필수 입력",
   "common.back": "뒤로", "common.share": "공유", "common.included": "포함",
   "common.notIncluded": "별도", "common.now": "즉시", "lang.label": "언어",
+  "view.list": "목록", "view.map": "지도",
+  "map.empty": "지도에 표시할 매물이 없습니다.", "map.openExternal": "Naver Map에서 열기",
+  "card.views": "조회수 {count}회",
+  "notif.title": "알림", "notif.empty": "알림이 없습니다.",
+  "notif.markAll": "모두 읽음 처리", "notif.clear": "지우기",
+  "notif.subscribed": "{city} 알림이 켜졌습니다",
+  "notif.unsubscribed": "{city} 알림이 꺼졌습니다",
+  "subscribe.on": "알림 받기", "subscribe.off": "알림 끄기",
+  "admin.analytics.title": "분석", "admin.analytics.totalViews": "총 조회수",
+  "admin.analytics.totalSaves": "총 찜 수", "admin.analytics.subscribers": "도시 구독자",
+  "admin.analytics.byListing": "매물별", "admin.analytics.cityInterest": "도시별 관심도",
+  "admin.analytics.views": "조회수", "admin.analytics.saves": "찜",
 };
 
 const en: Dict = {
