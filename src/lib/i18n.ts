@@ -538,7 +538,7 @@ const zh: Dict = {
 };
 
 const vi: Dict = {
-  "brand": "Ger Finder", "tagline": "Cho thuê nhà cho người Mông Cổ tại Hàn Quốc",
+  "brand": "Nhà ở Hàn Quốc", "tagline": "Cho thuê nhà cho người Mông Cổ tại Hàn Quốc",
   "nav.home": "Trang chủ", "nav.search": "Tìm", "nav.favorites": "Yêu thích", "nav.admin": "Quản trị",
   "search.placeholder": "Khu vực, ga tàu, từ khoá…",
   "filter.title": "Bộ lọc", "filter.city": "Thành phố", "filter.area": "Khu vực",
