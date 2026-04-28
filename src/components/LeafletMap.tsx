@@ -117,7 +117,28 @@ export function LeafletMap({ listings, city, selectedId, onSelect, className, in
 
     let cancelled = false;
 
-    const addMarker = (l: Listing, coords: [number, number]) => {
+    const preciseIds = new Set<string>();
+
+    const extractDong = (l: Listing): string => {
+      // Find tokens ending with 구 or 동 from address/area
+      const text = `${l.address ?? ""} ${l.area ?? ""}`.trim();
+      if (!text) return "";
+      const tokens = text.split(/[\s,]+/).filter(Boolean);
+      const matches = tokens.filter((t) => /[구동]$/.test(t));
+      if (matches.length > 0) return matches.slice(0, 2).join(" ");
+      return l.area ?? "";
+    };
+
+    const fitToMarkers = () => {
+      const map = mapRef.current;
+      const lib = leafletRef.current;
+      if (!map || !lib || markersRef.current.size === 0) return;
+      const latlngs = Array.from(markersRef.current.values()).map((m) => m.getLatLng());
+      const bounds = lib.latLngBounds(latlngs);
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16, animate: true });
+    };
+
+    const addMarker = (l: Listing, coords: [number, number], precise: boolean) => {
       const c = clusterRef.current;
       const lib = leafletRef.current;
       if (cancelled || !c || !lib) return;
@@ -126,23 +147,47 @@ export function LeafletMap({ listings, city, selectedId, onSelect, className, in
       const marker = lib.marker(coords, {
         icon: pricePinIcon(lib, l.monthlyRent, l.id === selectedId),
       });
+      const dong = extractDong(l);
+      if (dong) {
+        marker.bindTooltip(dong, {
+          direction: "top",
+          offset: [0, -28],
+          opacity: 0.95,
+          className: "ger-dong-tooltip",
+        });
+      }
       marker.on("click", () => onSelectRef.current(l.id));
       markersRef.current.set(l.id, marker);
+      if (precise) preciseIds.add(l.id);
       c.addLayer(marker);
     };
 
     // Initial pass: use cached precise coords if available, else city fallback
-    listings.forEach((l) => addMarker(l, getDisplayCoords(l)));
+    listings.forEach((l) => {
+      const cached = getDisplayCoords(l);
+      addMarker(l, cached, false);
+    });
+
+    // Auto-fit to current markers on load
+    if (!hasAutoFittedRef.current && listings.length > 0) {
+      hasAutoFittedRef.current = true;
+      fitToMarkers();
+    }
 
     // Async pass: geocode any listings without cached precise coords
     (async () => {
+      let updated = false;
       for (const l of listings) {
         if (cancelled) return;
         if (!l.address?.trim() && !l.area?.trim()) continue;
         const precise = await geocodeListing(l);
         if (cancelled) return;
-        if (precise) addMarker(l, precise);
+        if (precise) {
+          addMarker(l, precise, true);
+          updated = true;
+        }
       }
+      if (updated && !cancelled) fitToMarkers();
     })();
 
     return () => {
