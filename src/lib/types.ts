@@ -43,6 +43,8 @@ export interface Listing {
   paymentType?: PaymentType;
   latitude?: number | null;
   longitude?: number | null;
+  /** AI-generated translations of `description`, keyed by language code (ko, en, ru, zh, vi). */
+  descriptionTranslations?: Record<string, string>;
   createdAt: number;
 }
 
