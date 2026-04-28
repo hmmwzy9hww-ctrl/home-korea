@@ -1017,3 +1017,74 @@ function TextRow({
     </div>
   );
 }
+
+function CoverImageEditor({
+  currentUrl,
+  onSaved,
+}: {
+  currentUrl: string;
+  onSaved: (url: string) => void;
+}) {
+  const { t } = useI18n();
+  const [preview, setPreview] = useState(currentUrl);
+  const [uploading, setUploading] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    setPreview(currentUrl);
+  }, [currentUrl]);
+
+  const handleFile = async (file: File | null | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Зураг файл сонгоно уу");
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `cover/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error } = await supabase.storage
+        .from("site-assets")
+        .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+      if (error) throw error;
+      const { data } = supabase.storage.from("site-assets").getPublicUrl(path);
+      const publicUrl = data.publicUrl;
+      setPreview(publicUrl);
+      onSaved(publicUrl);
+    } catch (err) {
+      console.error(err);
+      toast.error("Зураг хуулахад алдаа гарлаа");
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  };
+
+  return (
+    <div className="mb-4 rounded-2xl border bg-card p-3">
+      <h2 className="text-sm font-bold mb-2">{t("admin.cover.title")}</h2>
+      {preview && (
+        <div className="mb-2 overflow-hidden rounded-xl border bg-muted aspect-[16/9]">
+          <img src={preview} alt="cover" className="h-full w-full object-cover" loading="lazy" />
+        </div>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => handleFile(e.target.files?.[0])}
+      />
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={uploading}
+        className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border bg-background py-3 text-sm font-semibold hover:bg-muted disabled:opacity-50"
+      >
+        <Upload className="h-4 w-4" />
+        {uploading ? "Хуулж байна…" : "Зураг оруулах"}
+      </button>
+    </div>
+  );
+}
