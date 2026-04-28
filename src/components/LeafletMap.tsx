@@ -48,6 +48,7 @@ export function LeafletMap({ listings, city, selectedId, onSelect, className, in
   const onSelectRef = useRef(onSelect);
   const cityRef = useRef(city);
   const zoomRef = useRef(initialZoom);
+  const hasAutoFittedRef = useRef(false);
   const [ready, setReady] = useState(false);
   onSelectRef.current = onSelect;
   cityRef.current = city;
