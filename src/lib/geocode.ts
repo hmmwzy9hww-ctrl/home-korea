@@ -4,7 +4,7 @@ import { geocodeAddress } from "@/server/geocode.functions";
 
 type Coords = [number, number];
 
-const STORAGE_KEY = "geocode-cache-v4";
+const STORAGE_KEY = "geocode-cache-v5";
 const memCache = new Map<string, Coords>();
 const inflight = new Map<string, Promise<Coords | null>>();
 

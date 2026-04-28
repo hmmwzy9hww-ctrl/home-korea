@@ -103,14 +103,15 @@ export const geocodeAddress = createServerFn({ method: "POST" })
     ].filter(Boolean);
 
     if (key) {
-      // Pass 1: Kakao address API with analyze_type=exact (precise 도로명/지번 match)
-      for (const q of candidates) {
-        const r = await kakaoAddress(q, key, true);
-        if (r) return r;
-      }
-      // Pass 2: Kakao address API with analyze_type=similar (tolerant fallback)
+      // Pass 1: Kakao address API with analyze_type=similar (best for 지번 like "독산동 1058")
+      // pickBest prefers road_address coords within the matched document.
       for (const q of candidates) {
         const r = await kakaoAddress(q, key, false);
+        if (r) return r;
+      }
+      // Pass 2: Kakao address API with analyze_type=exact
+      for (const q of candidates) {
+        const r = await kakaoAddress(q, key, true);
         if (r) return r;
       }
       // Pass 3: keyword search (POIs / building names)
