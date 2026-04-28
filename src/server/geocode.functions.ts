@@ -103,12 +103,17 @@ export const geocodeAddress = createServerFn({ method: "POST" })
     ].filter(Boolean);
 
     if (key) {
-      // Try Kakao address API first (handles both 도로명 and 지번)
+      // Pass 1: Kakao address API with analyze_type=exact (precise 도로명/지번 match)
       for (const q of candidates) {
-        const r = await kakaoAddress(q, key);
+        const r = await kakaoAddress(q, key, true);
         if (r) return r;
       }
-      // Fallback to keyword search (POIs / building names)
+      // Pass 2: Kakao address API with analyze_type=similar (tolerant fallback)
+      for (const q of candidates) {
+        const r = await kakaoAddress(q, key, false);
+        if (r) return r;
+      }
+      // Pass 3: keyword search (POIs / building names)
       for (const q of candidates) {
         const r = await kakaoKeyword(q, key);
         if (r) return r;
