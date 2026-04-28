@@ -78,6 +78,10 @@ function createPhotoInputs(photos: string[] = []): string[] {
   return Array.from({ length: 5 }, (_, index) => photos[index] || "");
 }
 
+function arraysEqual(a: string[], b: string[]) {
+  return a.length === b.length && a.every((value, index) => value === b[index]);
+}
+
 function AdminPage() {
   const { t } = useI18n();
   const isAdmin = useAdmin();
@@ -94,7 +98,7 @@ function AdminPage() {
   const [coverDraft, setCoverDraft] = useState(settings.coverImageUrl);
 
   useEffect(() => {
-    setCoverDraft(settings.coverImageUrl);
+    setCoverDraft((current) => (current === settings.coverImageUrl ? current : settings.coverImageUrl));
   }, [settings.coverImageUrl]);
 
   const editingListing = useMemo(() => {
@@ -111,9 +115,15 @@ function AdminPage() {
     if (!editor) return;
 
     if (editor.mode === "add") {
-      setForm(createEmptyListing());
-      setOptionsStr("");
-      setPhotoInputs(createPhotoInputs());
+      setForm((current) => {
+        const empty = createEmptyListing();
+        return JSON.stringify(current) === JSON.stringify(empty) ? current : empty;
+      });
+      setOptionsStr((current) => (current === "" ? current : ""));
+      setPhotoInputs((current) => {
+        const empty = createPhotoInputs();
+        return arraysEqual(current, empty) ? current : empty;
+      });
       return;
     }
 
@@ -123,9 +133,15 @@ function AdminPage() {
     }
 
     const { id: _id, createdAt: _createdAt, ...rest } = editingListing;
-    setForm(rest);
-    setOptionsStr(rest.options.join(", "));
-    setPhotoInputs(createPhotoInputs(rest.photos));
+    setForm((current) => (JSON.stringify(current) === JSON.stringify(rest) ? current : rest));
+    setOptionsStr((current) => {
+      const next = rest.options.join(", ");
+      return current === next ? current : next;
+    });
+    setPhotoInputs((current) => {
+      const next = createPhotoInputs(rest.photos);
+      return arraysEqual(current, next) ? current : next;
+    });
   }, [editor, editingListing]);
 
   const setPhotoInput = (index: number, value: string) => {
