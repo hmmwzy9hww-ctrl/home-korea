@@ -658,31 +658,51 @@ function AdminPage() {
                   />
                 </Field>
 
-                <Field label={t("form.photos")}>
+                <Field label={`${t("form.photos")} (${photos.length}/${MAX_PHOTOS})`}>
                   <div className="space-y-2">
-                    {previewPhotos.length > 0 && (
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => readFiles(e.target.files)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading || photos.length >= MAX_PHOTOS}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-dashed bg-secondary/40 py-3 text-sm font-medium hover:bg-secondary disabled:opacity-50"
+                    >
+                      <Upload className="h-4 w-4" />
+                      {uploading
+                        ? "..."
+                        : photos.length >= MAX_PHOTOS
+                          ? `Хамгийн ихдээ ${MAX_PHOTOS}`
+                          : "Зураг оруулах"}
+                    </button>
+                    {photos.length > 0 && (
                       <div className="grid grid-cols-3 gap-2">
-                        {previewPhotos.map((photo, index) => (
-                          <img
-                            key={`${photo}-${index}`}
-                            src={photo}
-                            alt={`${form.title || t("form.title")}-${index + 1}`}
-                            className="aspect-square w-full rounded-lg border bg-muted object-cover"
-                            loading="lazy"
-                          />
+                        {photos.map((photo, i) => (
+                          <div key={i} className="relative">
+                            <img
+                              src={photo}
+                              alt={`photo-${i + 1}`}
+                              className="aspect-square w-full rounded-lg border bg-muted object-cover"
+                              loading="lazy"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removePhoto(i)}
+                              className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-foreground/70 text-background hover:bg-foreground"
+                              aria-label="remove"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
                         ))}
                       </div>
                     )}
-                    {photoInputs.map((photo, index) => (
-                      <input
-                        key={index}
-                        type="url"
-                        value={photo}
-                        onChange={(e) => setPhotoInput(index, e.target.value)}
-                        placeholder={t("form.photo.ph")}
-                        className={inputCls}
-                      />
-                    ))}
                   </div>
                 </Field>
 
