@@ -523,6 +523,18 @@ const zh: Dict = {
   "common.back": "返回", "common.share": "分享",
   "common.included": "含", "common.notIncluded": "另付",
   "common.now": "立即", "lang.label": "语言",
+  "view.list": "列表", "view.map": "地图",
+  "map.empty": "地图上没有可显示的房源。", "map.openExternal": "在 Naver Map 打开",
+  "card.views": "浏览 {count} 次",
+  "notif.title": "通知", "notif.empty": "暂无通知。",
+  "notif.markAll": "全部标为已读", "notif.clear": "清空",
+  "notif.subscribed": "已开启 {city} 通知",
+  "notif.unsubscribed": "已关闭 {city} 通知",
+  "subscribe.on": "开启通知", "subscribe.off": "关闭通知",
+  "admin.analytics.title": "分析", "admin.analytics.totalViews": "总浏览量",
+  "admin.analytics.totalSaves": "总收藏数", "admin.analytics.subscribers": "城市订阅者",
+  "admin.analytics.byListing": "按房源", "admin.analytics.cityInterest": "城市关注度",
+  "admin.analytics.views": "浏览", "admin.analytics.saves": "收藏",
 };
 
 const vi: Dict = {
