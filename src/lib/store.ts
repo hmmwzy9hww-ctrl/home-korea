@@ -37,6 +37,8 @@ function rowToListing(row: Record<string, unknown>): Listing {
     status: (row.status as ListingStatus) ?? "available",
     featured: Boolean(row.featured),
     paymentType: (row.payment_type as "monthly" | "quarterly") ?? "monthly",
+    latitude: row.latitude == null ? null : Number(row.latitude),
+    longitude: row.longitude == null ? null : Number(row.longitude),
     createdAt: Number(row.created_at ?? Date.now()),
   };
 }
