@@ -319,28 +319,92 @@ const defaultSettings: SiteSettings = {
   textOverrides: {},
 };
 
+const SETTINGS_ROW_ID = "global";
+const SETTINGS_CACHE_KEY = "ger.settings.cache.v2";
+
 let settingsStore: SiteSettings | null = null;
+let settingsInitialized = false;
+let settingsLoaded = false;
 const settingsListeners = new Set<() => void>();
 
-function loadSettings(): SiteSettings {
+function rowToSettings(row: Record<string, unknown>): SiteSettings {
+  const cover = String(row.cover_image_url ?? "") || DEFAULT_COVER_IMAGE;
+  const overrides =
+    row.text_overrides && typeof row.text_overrides === "object"
+      ? (row.text_overrides as Record<string, Record<string, string>>)
+      : {};
+  return { coverImageUrl: cover, textOverrides: overrides };
+}
+
+function loadCachedSettings(): SiteSettings {
   if (typeof window === "undefined") return defaultSettings;
   try {
-    const raw = window.localStorage.getItem(SETTINGS_KEY);
+    const raw = window.localStorage.getItem(SETTINGS_CACHE_KEY);
     if (raw) return { ...defaultSettings, ...(JSON.parse(raw) as Partial<SiteSettings>) };
   } catch {}
   return defaultSettings;
 }
 
-function ensureSettings() {
-  if (settingsStore === null) settingsStore = loadSettings();
+function cacheSettings(s: SiteSettings) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(s));
+  } catch {}
 }
 
-function persistSettings() {
-  if (typeof window === "undefined" || !settingsStore) return;
-  try {
-    window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(settingsStore));
-  } catch {}
-  settingsListeners.forEach((l) => l());
+async function fetchSettings() {
+  const { data, error } = await supabase
+    .from("site_settings")
+    .select("*")
+    .eq("id", SETTINGS_ROW_ID)
+    .maybeSingle();
+  if (error) {
+    console.error("[site_settings] fetch failed", error);
+    return;
+  }
+  if (data) {
+    settingsStore = rowToSettings(data as Record<string, unknown>);
+    settingsLoaded = true;
+    cacheSettings(settingsStore);
+    settingsListeners.forEach((l) => l());
+  }
+}
+
+function ensureSettings() {
+  if (settingsStore === null) settingsStore = loadCachedSettings();
+  if (settingsInitialized || typeof window === "undefined") return;
+  settingsInitialized = true;
+  void fetchSettings();
+  supabase
+    .channel("site-settings-changes")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "site_settings" },
+      (payload) => {
+        if ((payload.eventType === "INSERT" || payload.eventType === "UPDATE") && payload.new) {
+          settingsStore = rowToSettings(payload.new as Record<string, unknown>);
+          settingsLoaded = true;
+          cacheSettings(settingsStore);
+          settingsListeners.forEach((l) => l());
+        }
+      },
+    )
+    .subscribe();
+}
+
+async function persistSettingsRemote(s: SiteSettings) {
+  const { error } = await supabase
+    .from("site_settings")
+    .upsert(
+      {
+        id: SETTINGS_ROW_ID,
+        cover_image_url: s.coverImageUrl,
+        text_overrides: s.textOverrides ?? {},
+        updated_at: new Date().toISOString(),
+      } as never,
+      { onConflict: "id" },
+    );
+  if (error) console.error("[site_settings] upsert failed", error);
 }
 
 function subSettings(cb: () => void) {
@@ -357,8 +421,6 @@ function getSettingsSnapshot(): SiteSettings {
 
 const getSettingsServerSnapshot = (): SiteSettings => defaultSettings;
 export function useSiteSettings(): SiteSettings {
-  // Use defaultSettings on first render to match SSR, then hydrate from
-  // localStorage after mount to avoid hydration mismatches.
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
@@ -377,7 +439,9 @@ export function updateSiteSettings(patch: Partial<SiteSettings>) {
     return;
   }
   settingsStore = next;
-  persistSettings();
+  cacheSettings(settingsStore);
+  settingsListeners.forEach((l) => l());
+  void persistSettingsRemote(settingsStore);
 }
 
 export function setTextOverride(lang: string, key: string, value: string) {
@@ -391,8 +455,14 @@ export function setTextOverride(lang: string, key: string, value: string) {
   else delete langMap[key];
   overrides[lang] = langMap;
   settingsStore = { ...settingsStore!, textOverrides: overrides };
-  persistSettings();
+  cacheSettings(settingsStore);
+  settingsListeners.forEach((l) => l());
+  void persistSettingsRemote(settingsStore);
 }
+
+// Suppress unused warning for legacy key
+void SETTINGS_KEY;
+void settingsLoaded;
 
 // ===== Listing views (analytics) =====
 const VIEWS_KEY = "ger.views.v1";
