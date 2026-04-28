@@ -93,7 +93,9 @@ function AdminPage() {
   const [editor, setEditor] = useState<EditorState>(null);
   const [form, setForm] = useState<ListingForm>(createEmptyListing());
   const [optionsStr, setOptionsStr] = useState("");
-  const [photoInputs, setPhotoInputs] = useState<string[]>(() => createPhotoInputs());
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [coverDraft, setCoverDraft] = useState(settings.coverImageUrl);
 
   useEffect(() => {
@@ -105,11 +107,6 @@ function AdminPage() {
     return listings.find((listing) => listing.id === editor.id);
   }, [editor, listings]);
 
-  const previewPhotos = useMemo(
-    () => photoInputs.map((photo) => photo.trim()).filter(Boolean),
-    [photoInputs],
-  );
-
   useEffect(() => {
     if (!editor) return;
 
@@ -119,10 +116,7 @@ function AdminPage() {
         return JSON.stringify(current) === JSON.stringify(empty) ? current : empty;
       });
       setOptionsStr((current) => (current === "" ? current : ""));
-      setPhotoInputs((current) => {
-        const empty = createPhotoInputs();
-        return arraysEqual(current, empty) ? current : empty;
-      });
+      setPhotos((current) => (current.length === 0 ? current : []));
       return;
     }
 
@@ -137,14 +131,65 @@ function AdminPage() {
       const next = rest.options.join(", ");
       return current === next ? current : next;
     });
-    setPhotoInputs((current) => {
-      const next = createPhotoInputs(rest.photos);
+    setPhotos((current) => {
+      const next = rest.photos.slice(0, MAX_PHOTOS);
       return arraysEqual(current, next) ? current : next;
     });
   }, [editor, editingListing]);
 
-  const setPhotoInput = (index: number, value: string) => {
-    setPhotoInputs((current) => current.map((item, itemIndex) => (itemIndex === index ? value : item)));
+  const readFiles = async (files: FileList | null) => {
+    if (!files?.length) return;
+    const remaining = MAX_PHOTOS - photos.length;
+    if (remaining <= 0) {
+      toast.error(`Хамгийн ихдээ ${MAX_PHOTOS} зураг`);
+      return;
+    }
+    const images = Array.from(files).slice(0, remaining);
+    setUploading(true);
+    try {
+      const dataUrls = await Promise.all(
+        images.map(
+          (file) =>
+            new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                const raw = typeof reader.result === "string" ? reader.result : "";
+                if (!raw) {
+                  resolve("");
+                  return;
+                }
+                const image = new Image();
+                image.onload = () => {
+                  const maxSide = 1600;
+                  const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+                  const canvas = document.createElement("canvas");
+                  canvas.width = Math.max(1, Math.round(image.width * scale));
+                  canvas.height = Math.max(1, Math.round(image.height * scale));
+                  const ctx = canvas.getContext("2d");
+                  if (!ctx) {
+                    resolve(raw);
+                    return;
+                  }
+                  ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+                  resolve(canvas.toDataURL("image/jpeg", 0.82));
+                };
+                image.onerror = () => resolve(raw);
+                image.src = raw;
+              };
+              reader.onerror = () => reject(new Error("read failed"));
+              reader.readAsDataURL(file);
+            }),
+        ),
+      );
+      setPhotos((prev) => [...prev, ...dataUrls.filter(Boolean)].slice(0, MAX_PHOTOS));
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const removePhoto = (i: number) => {
+    setPhotos((prev) => prev.filter((_, idx) => idx !== i));
   };
 
   const closeEditor = () => {
