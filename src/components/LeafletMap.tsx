@@ -3,7 +3,8 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import type { Listing } from "@/lib/types";
-import { getCityCenter, getListingCoords } from "@/lib/coords";
+import { getCityCenter } from "@/lib/coords";
+import { geocodeListing, getDisplayCoords } from "@/lib/geocode";
 import { formatWon } from "@/lib/format";
 
 type LeafletModule = typeof import("leaflet");
