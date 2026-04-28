@@ -39,6 +39,10 @@ function rowToListing(row: Record<string, unknown>): Listing {
     paymentType: (row.payment_type as "monthly" | "quarterly") ?? "monthly",
     latitude: row.latitude == null ? null : Number(row.latitude),
     longitude: row.longitude == null ? null : Number(row.longitude),
+    descriptionTranslations:
+      row.description_translations && typeof row.description_translations === "object"
+        ? (row.description_translations as Record<string, string>)
+        : {},
     createdAt: Number(row.created_at ?? Date.now()),
   };
 }
@@ -72,6 +76,8 @@ function listingToRow(l: Partial<Listing>): Record<string, unknown> {
   if (l.paymentType !== undefined) row.payment_type = l.paymentType;
   if (l.latitude !== undefined) row.latitude = l.latitude;
   if (l.longitude !== undefined) row.longitude = l.longitude;
+  if (l.descriptionTranslations !== undefined)
+    row.description_translations = l.descriptionTranslations ?? {};
   if (l.createdAt !== undefined) row.created_at = l.createdAt;
   return row;
 }

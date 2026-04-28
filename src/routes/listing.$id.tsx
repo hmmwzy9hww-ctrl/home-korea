@@ -30,6 +30,7 @@ import {
   useAdmin,
   updateListing,
 } from "@/lib/store";
+import { translateDescription } from "@/server/translate.functions";
 import { buildMessengerUrl } from "@/lib/config";
 import { buildNaverMapSearchUrl } from "@/lib/maps";
 import { formatWon } from "@/lib/format";
@@ -50,7 +51,7 @@ export const Route = createFileRoute("/listing/$id")({
 });
 
 function ListingDetailPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { id } = Route.useParams();
   const listing = useListing(id);
   const favs = useFavorites();
@@ -94,7 +95,16 @@ function ListingDetailPage() {
   };
   const saveDesc = async () => {
     try {
-      await updateListing(listing.id, { description: descDraft.trim() });
+      const text = descDraft.trim();
+      let descriptionTranslations: Record<string, string> = {};
+      if (text) {
+        try {
+          descriptionTranslations = (await translateDescription({ data: { text } })) ?? {};
+        } catch (err) {
+          console.error("translate failed", err);
+        }
+      }
+      await updateListing(listing.id, { description: text, descriptionTranslations });
       toast.success(t("form.saved"));
       setEditingDesc(false);
     } catch {
@@ -339,11 +349,30 @@ function ListingDetailPage() {
                 </button>
               </div>
             </div>
-          ) : (
-            <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
-              {listing.description || (isAdmin ? "—" : "")}
-            </p>
-          )}
+          ) : (() => {
+            const translations = listing.descriptionTranslations || {};
+            const translated = lang !== "mn" ? translations[lang] : "";
+            const display = translated || listing.description;
+            const showOriginal = !!translated && !!listing.description && translated !== listing.description;
+            return (
+              <div className="space-y-2">
+                <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
+                  {display || (isAdmin ? "—" : "")}
+                </p>
+                {translated && (
+                  <p className="text-[10px] text-muted-foreground italic">
+                    🌐 AI translation
+                  </p>
+                )}
+                {showOriginal && (
+                  <details className="text-xs text-muted-foreground">
+                    <summary className="cursor-pointer">Эх (Монгол)</summary>
+                    <p className="mt-1 whitespace-pre-line">{listing.description}</p>
+                  </details>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Map */}
