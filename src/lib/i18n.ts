@@ -458,7 +458,7 @@ const ru: Dict = {
 };
 
 const zh: Dict = {
-  "brand": "蒙古租房", "tagline": "在韩蒙古人租房平台",
+  "brand": "韩国租房", "tagline": "在韩蒙古人租房平台",
   "nav.home": "首页", "nav.search": "搜索", "nav.favorites": "收藏", "nav.admin": "管理",
   "search.placeholder": "地区、地铁站、关键词…",
   "filter.title": "筛选", "filter.city": "城市", "filter.area": "区域",
