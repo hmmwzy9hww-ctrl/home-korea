@@ -871,8 +871,6 @@ function AnalyticsPanel({
 
 // ===== Editable site text panel =====
 function TextEditor({ settings }: { settings: ReturnType<typeof useSiteSettings> }) {
-  const { lang: currentLang } = useI18n();
-  const [editLang, setEditLang] = useState<Lang>(currentLang);
   const [open, setOpen] = useState(false);
 
   // Group editable items by their group label
@@ -885,8 +883,6 @@ function TextEditor({ settings }: { settings: ReturnType<typeof useSiteSettings>
     }
     return Array.from(map.entries());
   }, []);
-
-  const overrides = settings.textOverrides?.[editLang] || {};
 
   return (
     <div className="mb-4 rounded-2xl border bg-card">
@@ -901,26 +897,8 @@ function TextEditor({ settings }: { settings: ReturnType<typeof useSiteSettings>
 
       {open && (
         <div className="border-t p-3 space-y-3">
-          <div className="flex flex-wrap gap-1.5">
-            {LANGS.map((l) => (
-              <button
-                key={l.code}
-                type="button"
-                onClick={() => setEditLang(l.code)}
-                className={cn(
-                  "rounded-full border px-2.5 py-1 text-xs",
-                  editLang === l.code
-                    ? "border-primary bg-primary/10 text-primary font-semibold"
-                    : "hover:bg-secondary",
-                )}
-              >
-                {l.flag} {l.label}
-              </button>
-            ))}
-          </div>
-
           <p className="text-[11px] text-muted-foreground">
-            Leave a field empty to use the default text. Saved overrides apply instantly to all visitors on this device.
+            Each text has tabs for all 6 languages. Leave a field empty to use the default. Changes apply instantly.
           </p>
 
           {groups.map(([groupName, items]) => (
@@ -928,14 +906,12 @@ function TextEditor({ settings }: { settings: ReturnType<typeof useSiteSettings>
               <h4 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 {groupName}
               </h4>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {items.map((item) => (
                   <TextRow
                     key={item.key}
                     item={item}
-                    lang={editLang}
-                    initialValue={overrides[item.key] ?? ""}
-                    placeholder={translate(editLang, item.key)}
+                    overrides={settings.textOverrides}
                   />
                 ))}
               </div>
@@ -949,43 +925,58 @@ function TextEditor({ settings }: { settings: ReturnType<typeof useSiteSettings>
 
 function TextRow({
   item,
-  lang,
-  initialValue,
-  placeholder,
+  overrides,
 }: {
   item: (typeof EDITABLE_TEXTS)[number];
-  lang: Lang;
-  initialValue: string;
-  placeholder: string;
+  overrides: Record<string, Record<string, string>> | undefined;
 }) {
+  const [activeLang, setActiveLang] = useState<Lang>(LANGS[0].code);
+  const initialValue = overrides?.[activeLang]?.[item.key] ?? "";
   const [value, setValue] = useState(initialValue);
   const [saved, setSaved] = useState(false);
 
-  // Reset value when switching languages
+  // Reset value when switching languages or when overrides change externally
   useEffect(() => {
-    setValue(initialValue);
+    setValue(overrides?.[activeLang]?.[item.key] ?? "");
     setSaved(false);
-  }, [initialValue, lang]);
+  }, [activeLang, item.key, overrides]);
 
-  const dirty = value !== initialValue;
+  const dirty = value !== (overrides?.[activeLang]?.[item.key] ?? "");
 
   const save = () => {
-    setTextOverride(lang, item.key, value);
+    setTextOverride(activeLang, item.key, value);
     setSaved(true);
     setTimeout(() => setSaved(false), 1200);
   };
 
   return (
-    <div>
-      <label className="mb-0.5 block text-[11px] font-medium text-muted-foreground">
+    <div className="rounded-lg border bg-card p-2">
+      <label className="mb-1 block text-[11px] font-medium text-muted-foreground">
         {item.label} <span className="font-mono opacity-60">· {item.key}</span>
       </label>
+      <div className="mb-1.5 flex flex-wrap gap-1">
+        {LANGS.map((l) => (
+          <button
+            key={l.code}
+            type="button"
+            onClick={() => setActiveLang(l.code)}
+            className={cn(
+              "rounded-md border px-2 py-0.5 text-[10px] font-semibold uppercase",
+              activeLang === l.code
+                ? "border-primary bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-secondary",
+            )}
+          >
+            {l.flag} {l.code}
+          </button>
+        ))}
+      </div>
       <div className="flex items-start gap-1.5">
         {item.multiline ? (
           <textarea
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            placeholder={placeholder}
+            placeholder={translate(activeLang, item.key)}
             rows={2}
             className="flex-1 rounded-lg border bg-background px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
           />
@@ -994,7 +985,7 @@ function TextRow({
             type="text"
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            placeholder={placeholder}
+            placeholder={translate(activeLang, item.key)}
             className="flex-1 rounded-lg border bg-background px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-ring"
           />
         )}
