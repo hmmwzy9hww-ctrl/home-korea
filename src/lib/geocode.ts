@@ -3,7 +3,7 @@ import { getCityCenter, getListingCoords } from "./coords";
 
 type Coords = [number, number];
 
-const STORAGE_KEY = "geocode-cache-v1";
+const STORAGE_KEY = "geocode-cache-v2";
 const memCache = new Map<string, Coords>();
 const inflight = new Map<string, Promise<Coords | null>>();
 
@@ -35,11 +35,83 @@ function persist() {
   }
 }
 
-function buildQuery(listing: Listing): string {
-  const parts = [listing.address, listing.area].filter((s) => s && s.trim());
-  const q = parts.join(", ").trim();
-  // Bias to South Korea for better matches
-  return q ? `${q}, South Korea` : "";
+/**
+ * Clean a Korean address by removing building names, unit/floor numbers,
+ * and parenthetical notes that confuse Nominatim.
+ *
+ * Keeps tokens that are admin areas (시/도/구/군/동/읍/면/리/로/길) or
+ * pure jibun numbers like "378-1" / "1058".
+ */
+function cleanAddress(raw: string): string {
+  if (!raw) return "";
+  // Remove parentheses and their contents: "1158(라온)" -> "1158"
+  let s = raw.replace(/\([^)]*\)/g, " ");
+  // Drop common unit/floor markers and what follows them on that token
+  // e.g. "1006호", "101동", "4층", "B1", "지하1"
+  const tokens = s.split(/\s+/).filter(Boolean);
+  const adminSuffix = /(시|도|구|군|동|읍|면|리|로|길|가)$/;
+  const jibun = /^\d+(-\d+)?$/;
+  const kept: string[] = [];
+  for (const t of tokens) {
+    // Stop including tokens once we hit a building/unit marker
+    if (/(호|층|동$|실|관|빌딩|빌라|아파트|오피스텔|상가|건물)/.test(t)) {
+      // "101동" is ambiguous (could be admin 동 or building 동). Treat
+      // pure-numeric-prefixed 동 as a building unit.
+      if (/^\d+동$/.test(t)) break;
+      if (t.endsWith("동") && !/^\d/.test(t)) {
+        kept.push(t);
+        continue;
+      }
+      break;
+    }
+    if (adminSuffix.test(t) || jibun.test(t)) {
+      kept.push(t);
+    } else if (kept.length === 0) {
+      // Allow leading non-matching tokens (rare); still useful context
+      kept.push(t);
+    }
+  }
+  return kept.join(" ").trim();
+}
+
+/** Extract the dong/gu portion of an address as a coarse fallback. */
+function extractDongGu(raw: string): string {
+  if (!raw) return "";
+  const cleaned = cleanAddress(raw);
+  const tokens = cleaned.split(/\s+/).filter(Boolean);
+  const adminOnly = tokens.filter((t) => /(시|도|구|군|동|읍|면|리)$/.test(t));
+  return adminOnly.join(" ").trim();
+}
+
+/**
+ * Build an ordered list of geocoding queries from most specific to least.
+ * The first one returning a hit is cached and used.
+ */
+function buildQueries(listing: Listing): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const push = (q: string) => {
+    const k = q.trim();
+    if (k && !seen.has(k)) {
+      seen.add(k);
+      out.push(k);
+    }
+  };
+
+  const addr = (listing.address || "").trim();
+  const area = (listing.area || "").trim();
+
+  // 1) Full cleaned address
+  if (addr) push(`${cleanAddress(addr)}, South Korea`);
+  // 2) Cleaned address + area (helps when address omits the city/gu)
+  if (addr && area) push(`${cleanAddress(addr)}, ${area}, South Korea`);
+  // 3) Dong/gu of address (fallback)
+  const dongGu = extractDongGu(addr);
+  if (dongGu) push(`${dongGu}, South Korea`);
+  // 4) Area field as last resort
+  if (area) push(`${cleanAddress(area)}, South Korea`);
+
+  return out;
 }
 
 // Throttle to respect Nominatim usage policy (1 req/sec)
@@ -56,7 +128,7 @@ async function fetchNominatim(query: string): Promise<Coords | null> {
   try {
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
       query,
-    )}&format=json&limit=1`;
+    )}&format=json&limit=1&accept-language=ko&countrycodes=kr`;
     const res = await fetch(url, {
       headers: { Accept: "application/json" },
     });
@@ -72,32 +144,44 @@ async function fetchNominatim(query: string): Promise<Coords | null> {
   }
 }
 
+/** Stable cache key per listing (independent of query variant chosen). */
+function cacheKey(listing: Listing): string {
+  return `${(listing.address || "").trim()}|${(listing.area || "").trim()}`;
+}
+
 export function getCachedCoords(listing: Listing): Coords | null {
   loadCache();
-  const q = buildQuery(listing);
-  if (!q) return null;
-  return memCache.get(q) ?? null;
+  const k = cacheKey(listing);
+  if (!k.replace("|", "")) return null;
+  return memCache.get(k) ?? null;
 }
 
 export async function geocodeListing(listing: Listing): Promise<Coords | null> {
   loadCache();
-  const q = buildQuery(listing);
-  if (!q) return null;
-  if (memCache.has(q)) return memCache.get(q)!;
-  if (inflight.has(q)) return inflight.get(q)!;
+  const k = cacheKey(listing);
+  if (!k.replace("|", "")) return null;
+  if (memCache.has(k)) return memCache.get(k)!;
+  if (inflight.has(k)) return inflight.get(k)!;
+
+  const queries = buildQueries(listing);
+  if (queries.length === 0) return null;
+
   const p = (async () => {
-    const coords = await fetchNominatim(q);
-    if (coords) {
-      memCache.set(q, coords);
-      persist();
+    for (const q of queries) {
+      const coords = await fetchNominatim(q);
+      if (coords) {
+        memCache.set(k, coords);
+        persist();
+        return coords;
+      }
     }
-    return coords;
+    return null;
   })();
-  inflight.set(q, p);
+  inflight.set(k, p);
   try {
     return await p;
   } finally {
-    inflight.delete(q);
+    inflight.delete(k);
   }
 }
 
