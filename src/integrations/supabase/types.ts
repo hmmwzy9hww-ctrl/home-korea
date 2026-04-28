@@ -25,6 +25,7 @@ export type Database = {
           created_at: number
           deposit: number
           description: string
+          description_translations: Json
           featured: boolean
           floor: string
           id: string
@@ -55,6 +56,7 @@ export type Database = {
           created_at?: number
           deposit?: number
           description?: string
+          description_translations?: Json
           featured?: boolean
           floor?: string
           id: string
@@ -85,6 +87,7 @@ export type Database = {
           created_at?: number
           deposit?: number
           description?: string
+          description_translations?: Json
           featured?: boolean
           floor?: string
           id?: string
