@@ -367,7 +367,14 @@ export function useSiteSettings(): SiteSettings {
 
 export function updateSiteSettings(patch: Partial<SiteSettings>) {
   ensureSettings();
-  settingsStore = { ...settingsStore!, ...patch };
+  const next = { ...settingsStore!, ...patch };
+  if (
+    next.coverImageUrl === settingsStore!.coverImageUrl &&
+    next.textOverrides === settingsStore!.textOverrides
+  ) {
+    return;
+  }
+  settingsStore = next;
   persistSettings();
 }
 
@@ -376,6 +383,8 @@ export function setTextOverride(lang: string, key: string, value: string) {
   const overrides = { ...(settingsStore!.textOverrides || {}) };
   const langMap = { ...(overrides[lang] || {}) };
   const trimmed = value.trim();
+  const prev = langMap[key] ?? "";
+  if (prev === value || (prev === "" && trimmed === "")) return;
   if (trimmed) langMap[key] = value;
   else delete langMap[key];
   overrides[lang] = langMap;
@@ -423,19 +432,27 @@ function persistAnalytics() {
 export function trackView(id: string) {
   if (!id) return;
   ensureAnalytics();
-  viewsStore![id] = (viewsStore![id] || 0) + 1;
+  viewsStore = { ...viewsStore!, [id]: (viewsStore![id] || 0) + 1 };
   persistAnalytics();
 }
 export function trackSave(id: string) {
   if (!id) return;
   ensureAnalytics();
-  savesStore![id] = (savesStore![id] || 0) + 1;
+  savesStore = { ...savesStore!, [id]: (savesStore![id] || 0) + 1 };
   persistAnalytics();
 }
 
+let analyticsSnapshot: { views: Record<string, number>; saves: Record<string, number> } = {
+  views: {},
+  saves: {},
+};
+
 function getAnalyticsSnapshot() {
   ensureAnalytics();
-  return { views: viewsStore!, saves: savesStore! };
+  if (analyticsSnapshot.views !== viewsStore || analyticsSnapshot.saves !== savesStore) {
+    analyticsSnapshot = { views: viewsStore!, saves: savesStore! };
+  }
+  return analyticsSnapshot;
 }
 function subAnalytics(cb: () => void) {
   analyticsListeners.add(cb);
@@ -492,8 +509,10 @@ export function useCitySubscriptions(): Set<string> {
 }
 export function toggleCitySubscription(city: string) {
   ensureSubs();
-  if (subsStore!.has(city)) subsStore!.delete(city);
-  else subsStore!.add(city);
+  const next = new Set(subsStore);
+  if (next.has(city)) next.delete(city);
+  else next.add(city);
+  subsStore = next;
   persistSubs();
 }
 
