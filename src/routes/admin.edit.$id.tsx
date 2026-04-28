@@ -241,7 +241,7 @@ function EditPage() {
           </Field>
 
           <div className="grid grid-cols-2 gap-3">
-            <Field label="위도 (Latitude)">
+            <Field label="Өргөрөг (Latitude)">
               <input
                 type="number"
                 step="any"
@@ -250,11 +250,11 @@ function EditPage() {
                   const v = e.target.value;
                   setForm({ ...form, latitude: v === "" ? null : Number(v) });
                 }}
-                placeholder="예: 37.4633"
+                placeholder="ж: 37.4633"
                 className={inputCls}
               />
             </Field>
-            <Field label="경도 (Longitude)">
+            <Field label="Уртраг (Longitude)">
               <input
                 type="number"
                 step="any"
@@ -263,7 +263,7 @@ function EditPage() {
                   const v = e.target.value;
                   setForm({ ...form, longitude: v === "" ? null : Number(v) });
                 }}
-                placeholder="예: 126.9001"
+                placeholder="ж: 126.9001"
                 className={inputCls}
               />
             </Field>
@@ -279,7 +279,7 @@ function EditPage() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-2.5 py-1 text-xs font-medium text-foreground hover:bg-accent"
             >
-              📍 Google Maps에서 좌표 찾기
+              📍 Google Maps-аас координат олох
             </a>
             <a
               href={
@@ -295,9 +295,9 @@ function EditPage() {
             </a>
           </div>
           <p className="text-xs text-muted-foreground">
-            비워두면 주소로 자동 검색됩니다. 정확하지 않으면 지도에서 핀을 우클릭 → 좌표 복사 후 직접 입력하세요.
+            Хоосон бол хаягаар автоматаар олдоно. Зөв биш бол газрын зураг дээр пинг дээр хулганы баруун товч → координат хуулж шууд оруулна уу.
             <br />
-            Google Maps: 우클릭 시 첫 번째 항목이 (위도, 경도)
+            Google Maps: баруун товч дарахад эхний утга нь (өргөрөг, уртраг)
           </p>
 
           <div className="grid grid-cols-3 gap-3">
