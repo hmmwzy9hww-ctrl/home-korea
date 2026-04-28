@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import {
   CheckCircle2,
   Lock,
@@ -10,6 +10,7 @@ import {
   Star,
   StarOff,
   Trash2,
+  Upload,
   X,
   XCircle,
 } from "lucide-react";
@@ -74,9 +75,7 @@ function createEmptyListing(): ListingForm {
   };
 }
 
-function createPhotoInputs(photos: string[] = []): string[] {
-  return Array.from({ length: 5 }, (_, index) => photos[index] || "");
-}
+const MAX_PHOTOS = 20;
 
 function arraysEqual(a: string[], b: string[]) {
   return a.length === b.length && a.every((value, index) => value === b[index]);
@@ -94,7 +93,9 @@ function AdminPage() {
   const [editor, setEditor] = useState<EditorState>(null);
   const [form, setForm] = useState<ListingForm>(createEmptyListing());
   const [optionsStr, setOptionsStr] = useState("");
-  const [photoInputs, setPhotoInputs] = useState<string[]>(() => createPhotoInputs());
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [coverDraft, setCoverDraft] = useState(settings.coverImageUrl);
 
   useEffect(() => {
@@ -106,11 +107,6 @@ function AdminPage() {
     return listings.find((listing) => listing.id === editor.id);
   }, [editor, listings]);
 
-  const previewPhotos = useMemo(
-    () => photoInputs.map((photo) => photo.trim()).filter(Boolean),
-    [photoInputs],
-  );
-
   useEffect(() => {
     if (!editor) return;
 
@@ -120,10 +116,7 @@ function AdminPage() {
         return JSON.stringify(current) === JSON.stringify(empty) ? current : empty;
       });
       setOptionsStr((current) => (current === "" ? current : ""));
-      setPhotoInputs((current) => {
-        const empty = createPhotoInputs();
-        return arraysEqual(current, empty) ? current : empty;
-      });
+      setPhotos((current) => (current.length === 0 ? current : []));
       return;
     }
 
@@ -138,14 +131,65 @@ function AdminPage() {
       const next = rest.options.join(", ");
       return current === next ? current : next;
     });
-    setPhotoInputs((current) => {
-      const next = createPhotoInputs(rest.photos);
+    setPhotos((current) => {
+      const next = rest.photos.slice(0, MAX_PHOTOS);
       return arraysEqual(current, next) ? current : next;
     });
   }, [editor, editingListing]);
 
-  const setPhotoInput = (index: number, value: string) => {
-    setPhotoInputs((current) => current.map((item, itemIndex) => (itemIndex === index ? value : item)));
+  const readFiles = async (files: FileList | null) => {
+    if (!files?.length) return;
+    const remaining = MAX_PHOTOS - photos.length;
+    if (remaining <= 0) {
+      toast.error(`Хамгийн ихдээ ${MAX_PHOTOS} зураг`);
+      return;
+    }
+    const images = Array.from(files).slice(0, remaining);
+    setUploading(true);
+    try {
+      const dataUrls = await Promise.all(
+        images.map(
+          (file) =>
+            new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                const raw = typeof reader.result === "string" ? reader.result : "";
+                if (!raw) {
+                  resolve("");
+                  return;
+                }
+                const image = new Image();
+                image.onload = () => {
+                  const maxSide = 1600;
+                  const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+                  const canvas = document.createElement("canvas");
+                  canvas.width = Math.max(1, Math.round(image.width * scale));
+                  canvas.height = Math.max(1, Math.round(image.height * scale));
+                  const ctx = canvas.getContext("2d");
+                  if (!ctx) {
+                    resolve(raw);
+                    return;
+                  }
+                  ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+                  resolve(canvas.toDataURL("image/jpeg", 0.82));
+                };
+                image.onerror = () => resolve(raw);
+                image.src = raw;
+              };
+              reader.onerror = () => reject(new Error("read failed"));
+              reader.readAsDataURL(file);
+            }),
+        ),
+      );
+      setPhotos((prev) => [...prev, ...dataUrls.filter(Boolean)].slice(0, MAX_PHOTOS));
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const removePhoto = (i: number) => {
+    setPhotos((prev) => prev.filter((_, idx) => idx !== i));
   };
 
   const closeEditor = () => {
@@ -194,7 +238,7 @@ function AdminPage() {
         .split(",")
         .map((option) => option.trim())
         .filter(Boolean),
-      photos: photoInputs.map((photo) => photo.trim()).filter(Boolean),
+      photos: photos.filter(Boolean).slice(0, MAX_PHOTOS),
       naverMapUrl: "",
       messengerUrl: "",
     };
@@ -614,31 +658,51 @@ function AdminPage() {
                   />
                 </Field>
 
-                <Field label={t("form.photos")}>
+                <Field label={`${t("form.photos")} (${photos.length}/${MAX_PHOTOS})`}>
                   <div className="space-y-2">
-                    {previewPhotos.length > 0 && (
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => readFiles(e.target.files)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading || photos.length >= MAX_PHOTOS}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-dashed bg-secondary/40 py-3 text-sm font-medium hover:bg-secondary disabled:opacity-50"
+                    >
+                      <Upload className="h-4 w-4" />
+                      {uploading
+                        ? "..."
+                        : photos.length >= MAX_PHOTOS
+                          ? `Хамгийн ихдээ ${MAX_PHOTOS}`
+                          : "Зураг оруулах"}
+                    </button>
+                    {photos.length > 0 && (
                       <div className="grid grid-cols-3 gap-2">
-                        {previewPhotos.map((photo, index) => (
-                          <img
-                            key={`${photo}-${index}`}
-                            src={photo}
-                            alt={`${form.title || t("form.title")}-${index + 1}`}
-                            className="aspect-square w-full rounded-lg border bg-muted object-cover"
-                            loading="lazy"
-                          />
+                        {photos.map((photo, i) => (
+                          <div key={i} className="relative">
+                            <img
+                              src={photo}
+                              alt={`photo-${i + 1}`}
+                              className="aspect-square w-full rounded-lg border bg-muted object-cover"
+                              loading="lazy"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removePhoto(i)}
+                              className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-full bg-foreground/70 text-background hover:bg-foreground"
+                              aria-label="remove"
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
                         ))}
                       </div>
                     )}
-                    {photoInputs.map((photo, index) => (
-                      <input
-                        key={index}
-                        type="url"
-                        value={photo}
-                        onChange={(e) => setPhotoInput(index, e.target.value)}
-                        placeholder={t("form.photo.ph")}
-                        className={inputCls}
-                      />
-                    ))}
                   </div>
                 </Field>
 
