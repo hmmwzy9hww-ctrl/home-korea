@@ -285,9 +285,9 @@ export function logoutAdmin() {
 }
 
 export function useAdmin(): boolean {
-  // Initialize synchronously from localStorage to avoid a false "logged out"
-  // flash on first render of admin pages.
-  const [v, setV] = useState<boolean>(() => isAdmin());
+  // Always start as false on first render to match SSR output and avoid
+  // hydration mismatches. Then sync from localStorage in useEffect.
+  const [v, setV] = useState<boolean>(false);
   useEffect(() => {
     setV(isAdmin());
     const cb = () => setV(isAdmin());
@@ -353,8 +353,16 @@ function getSettingsSnapshot(): SiteSettings {
   return settingsStore!;
 }
 
+const getSettingsServerSnapshot = (): SiteSettings => defaultSettings;
 export function useSiteSettings(): SiteSettings {
-  return useSyncExternalStore(subSettings, getSettingsSnapshot, () => defaultSettings);
+  // Use defaultSettings on first render to match SSR, then hydrate from
+  // localStorage after mount to avoid hydration mismatches.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  const live = useSyncExternalStore(subSettings, getSettingsSnapshot, getSettingsServerSnapshot);
+  return mounted ? live : defaultSettings;
 }
 
 export function updateSiteSettings(patch: Partial<SiteSettings>) {
