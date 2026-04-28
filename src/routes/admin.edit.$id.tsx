@@ -461,6 +461,25 @@ function EditPage() {
               rows={4}
               className={inputCls}
             />
+            <p className="mt-1.5 text-[11px] text-muted-foreground inline-flex items-center gap-1">
+              <Languages className="h-3 w-3" />
+              Хадгалахад AI автоматаар Солонгос, Англи, Орос, Хятад, Вьетнам хэл рүү орчуулна.
+            </p>
+            {form.descriptionTranslations && Object.keys(form.descriptionTranslations).length > 0 && (
+              <details className="mt-2 rounded-md border bg-muted/30 px-2 py-1.5 text-xs">
+                <summary className="cursor-pointer font-medium">
+                  Одоогийн орчуулга ({Object.keys(form.descriptionTranslations).length})
+                </summary>
+                <div className="mt-2 space-y-2">
+                  {Object.entries(form.descriptionTranslations).map(([code, val]) => (
+                    <div key={code}>
+                      <div className="text-[10px] font-semibold uppercase text-muted-foreground">{code}</div>
+                      <div className="whitespace-pre-line text-foreground/90">{val}</div>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
           </Field>
 
           <Field label={`${t("form.photos")} (${photos.length}/${MAX_PHOTOS})`}>
@@ -565,10 +584,11 @@ function EditPage() {
             </Link>
             <button
               type="submit"
-              className="flex-1 inline-flex items-center justify-center gap-1.5 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90"
+              disabled={translating}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-60"
             >
               <Save className="h-4 w-4" />
-              {t("form.save")}
+              {translating ? "AI орчуулж байна…" : t("form.save")}
             </button>
           </div>
         </form>
