@@ -2,14 +2,47 @@ import { createServerFn } from "@tanstack/react-start";
 
 type Coords = { lat: number; lon: number } | null;
 
-async function kakaoAddress(query: string, key: string): Promise<Coords> {
-  const url = `https://dapi.kakao.com/v2/local/search/address.json?query=${encodeURIComponent(query)}&size=1`;
+type KakaoAddrDoc = {
+  x: string;
+  y: string;
+  address_type?: string; // REGION | REGION_ADDR | ROAD_ADDR | ADDR
+  address?: { x: string; y: string; address_name: string } | null;
+  road_address?: { x: string; y: string; address_name: string } | null;
+};
+
+// Pick the most accurate document/coordinate available.
+// Prefer ROAD_ADDR > ADDR > REGION_ADDR > REGION; within a doc, prefer
+// road_address coords, then address (지번) coords, then top-level x/y.
+function pickBest(docs: KakaoAddrDoc[]): Coords {
+  if (!docs?.length) return null;
+  const rank = (t?: string) => {
+    switch (t) {
+      case "ROAD_ADDR": return 4;
+      case "ADDR": return 3;
+      case "REGION_ADDR": return 2;
+      case "REGION": return 1;
+      default: return 0;
+    }
+  };
+  const best = [...docs].sort((a, b) => rank(b.address_type) - rank(a.address_type))[0];
+  const src = best.road_address ?? best.address ?? best;
+  const lat = parseFloat(src.y);
+  const lon = parseFloat(src.x);
+  if (!isFinite(lat) || !isFinite(lon)) return null;
+  return { lat, lon };
+}
+
+async function kakaoAddress(query: string, key: string, exact = true): Promise<Coords> {
+  const params = new URLSearchParams({
+    query,
+    size: "5",
+    analyze_type: exact ? "exact" : "similar",
+  });
+  const url = `https://dapi.kakao.com/v2/local/search/address.json?${params.toString()}`;
   const res = await fetch(url, { headers: { Authorization: `KakaoAK ${key}` } });
   if (!res.ok) return null;
-  const json = (await res.json()) as { documents?: Array<{ x: string; y: string }> };
-  const d = json.documents?.[0];
-  if (!d) return null;
-  return { lat: parseFloat(d.y), lon: parseFloat(d.x) };
+  const json = (await res.json()) as { documents?: KakaoAddrDoc[] };
+  return pickBest(json.documents ?? []);
 }
 
 async function kakaoKeyword(query: string, key: string): Promise<Coords> {
@@ -70,12 +103,17 @@ export const geocodeAddress = createServerFn({ method: "POST" })
     ].filter(Boolean);
 
     if (key) {
-      // Try Kakao address API first (handles both 도로명 and 지번)
+      // Pass 1: Kakao address API with analyze_type=exact (precise 도로명/지번 match)
       for (const q of candidates) {
-        const r = await kakaoAddress(q, key);
+        const r = await kakaoAddress(q, key, true);
         if (r) return r;
       }
-      // Fallback to keyword search (POIs / building names)
+      // Pass 2: Kakao address API with analyze_type=similar (tolerant fallback)
+      for (const q of candidates) {
+        const r = await kakaoAddress(q, key, false);
+        if (r) return r;
+      }
+      // Pass 3: keyword search (POIs / building names)
       for (const q of candidates) {
         const r = await kakaoKeyword(q, key);
         if (r) return r;
