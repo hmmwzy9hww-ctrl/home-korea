@@ -238,7 +238,7 @@ function AdminPage() {
         .split(",")
         .map((option) => option.trim())
         .filter(Boolean),
-      photos: photoInputs.map((photo) => photo.trim()).filter(Boolean),
+      photos: photos.filter(Boolean).slice(0, MAX_PHOTOS),
       naverMapUrl: "",
       messengerUrl: "",
     };
