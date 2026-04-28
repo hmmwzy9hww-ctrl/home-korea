@@ -443,6 +443,18 @@ const ru: Dict = {
   "common.back": "Назад", "common.share": "Поделиться",
   "common.included": "входит", "common.notIncluded": "отдельно",
   "common.now": "Сейчас", "lang.label": "Язык",
+  "view.list": "Список", "view.map": "Карта",
+  "map.empty": "Нет объявлений для отображения на карте.", "map.openExternal": "Открыть в Naver Map",
+  "card.views": "{count} просмотров",
+  "notif.title": "Уведомления", "notif.empty": "Нет уведомлений.",
+  "notif.markAll": "Отметить все прочитанными", "notif.clear": "Очистить",
+  "notif.subscribed": "Подписка на {city} включена",
+  "notif.unsubscribed": "Подписка на {city} отключена",
+  "subscribe.on": "Включить уведомления", "subscribe.off": "Отключить уведомления",
+  "admin.analytics.title": "Аналитика", "admin.analytics.totalViews": "Всего просмотров",
+  "admin.analytics.totalSaves": "Всего сохранений", "admin.analytics.subscribers": "Подписчики городов",
+  "admin.analytics.byListing": "По объявлениям", "admin.analytics.cityInterest": "Интерес по городам",
+  "admin.analytics.views": "Просмотры", "admin.analytics.saves": "Сохранения",
 };
 
 const zh: Dict = {
