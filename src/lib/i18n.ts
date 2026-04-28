@@ -603,6 +603,18 @@ const vi: Dict = {
   "common.back": "Quay lại", "common.share": "Chia sẻ",
   "common.included": "đã gồm", "common.notIncluded": "tính riêng",
   "common.now": "Ngay", "lang.label": "Ngôn ngữ",
+  "view.list": "Danh sách", "view.map": "Bản đồ",
+  "map.empty": "Không có tin đăng nào để hiển thị trên bản đồ.", "map.openExternal": "Mở trong Naver Map",
+  "card.views": "{count} lượt xem",
+  "notif.title": "Thông báo", "notif.empty": "Chưa có thông báo.",
+  "notif.markAll": "Đánh dấu đã đọc", "notif.clear": "Xoá",
+  "notif.subscribed": "Đã bật thông báo {city}",
+  "notif.unsubscribed": "Đã tắt thông báo {city}",
+  "subscribe.on": "Bật thông báo", "subscribe.off": "Tắt thông báo",
+  "admin.analytics.title": "Phân tích", "admin.analytics.totalViews": "Tổng lượt xem",
+  "admin.analytics.totalSaves": "Tổng lượt lưu", "admin.analytics.subscribers": "Người đăng ký theo thành phố",
+  "admin.analytics.byListing": "Theo tin đăng", "admin.analytics.cityInterest": "Quan tâm theo thành phố",
+  "admin.analytics.views": "Lượt xem", "admin.analytics.saves": "Lượt lưu",
 };
 
 export const dictionaries: Record<Lang, Dict> = { mn, ko, en, ru, zh, vi };
