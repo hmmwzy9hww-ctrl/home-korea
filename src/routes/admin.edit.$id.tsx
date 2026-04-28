@@ -461,10 +461,43 @@ function EditPage() {
               rows={4}
               className={inputCls}
             />
-            <p className="mt-1.5 text-[11px] text-muted-foreground inline-flex items-center gap-1">
-              <Languages className="h-3 w-3" />
-              Хадгалахад AI автоматаар Солонгос, Англи, Орос, Хятад, Вьетнам хэл рүү орчуулна.
-            </p>
+            <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
+                <Languages className="h-3 w-3" />
+                Хадгалахад AI автоматаар Солонгос, Англи, Орос, Хятад, Вьетнам хэл рүү орчуулна.
+              </p>
+              <button
+                type="button"
+                disabled={translating || !form.description.trim()}
+                onClick={async () => {
+                  const desc = form.description.trim();
+                  if (!desc) return;
+                  setTranslating(true);
+                  try {
+                    const res = await translateDescription({ data: { text: desc } });
+                    const translations = res ?? {};
+                    setForm((f) => ({ ...f, descriptionTranslations: translations }));
+                    if (!isNew) {
+                      try {
+                        await updateListing(id, { descriptionTranslations: translations });
+                      } catch (e) {
+                        console.error(e);
+                      }
+                    }
+                    toast.success(`번역 새로고침 완료 (${Object.keys(translations).length})`);
+                  } catch (err) {
+                    console.error("[translate] failed", err);
+                    toast.error(`Орчуулга амжилтгүй: ${(err as Error).message || "unknown"}`);
+                  } finally {
+                    setTranslating(false);
+                  }
+                }}
+                className="inline-flex items-center gap-1 rounded-md border border-input bg-background px-2.5 py-1 text-[11px] font-medium hover:bg-accent disabled:opacity-50"
+              >
+                <Languages className="h-3 w-3" />
+                {translating ? "AI орчуулж байна…" : "번역 새로고침"}
+              </button>
+            </div>
             {form.descriptionTranslations && Object.keys(form.descriptionTranslations).length > 0 && (
               <details className="mt-2 rounded-md border bg-muted/30 px-2 py-1.5 text-xs">
                 <summary className="cursor-pointer font-medium">
