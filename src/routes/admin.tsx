@@ -42,7 +42,19 @@ export const Route = createFileRoute("/admin")({
 });
 
 const cities: City[] = ["seoul", "incheon", "gyeonggi", "busan", "other"];
-const roomTypes: RoomType[] = ["oneRoom", "twoRoom", "threeRoom", "officetel", "studio", "share"];
+const roomTypes: RoomType[] = [
+  "oneRoom",
+  "twoRoom",
+  "threeRoom",
+  "officetel",
+  "studio",
+  "share",
+  "dorm",
+  "twoRoomSeparated",
+  "villa",
+  "apartment",
+  "gosiwon",
+];
 
 type ListingForm = Omit<Listing, "id" | "createdAt">;
 type EditorState = { mode: "add" } | { mode: "edit"; id: string } | null;
@@ -72,6 +84,7 @@ function createEmptyListing(): ListingForm {
     messengerUrl: "",
     status: "available",
     featured: false,
+    paymentType: "monthly",
   };
 }
 
