@@ -12,7 +12,19 @@ export const Route = createFileRoute("/admin/edit/$id")({
 });
 
 const cities: City[] = ["seoul", "incheon", "gyeonggi", "busan", "other"];
-const roomTypes: RoomType[] = ["oneRoom", "twoRoom", "threeRoom", "officetel", "studio", "share"];
+const roomTypes: RoomType[] = [
+  "oneRoom",
+  "twoRoom",
+  "threeRoom",
+  "officetel",
+  "studio",
+  "share",
+  "dorm",
+  "twoRoomSeparated",
+  "villa",
+  "apartment",
+  "gosiwon",
+];
 
 const empty = (): Omit<Listing, "id" | "createdAt"> => ({
   title: "",
@@ -38,6 +50,7 @@ const empty = (): Omit<Listing, "id" | "createdAt"> => ({
   messengerUrl: "",
   status: "available",
   featured: false,
+  paymentType: "monthly",
 });
 
 function EditPage() {
@@ -324,6 +337,19 @@ function EditPage() {
               onChange={(e) => setForm({ ...form, availableFrom: e.target.value })}
               className={inputCls}
             />
+          </Field>
+
+          <Field label={t("form.paymentType")}>
+            <select
+              value={form.paymentType ?? "monthly"}
+              onChange={(e) =>
+                setForm({ ...form, paymentType: e.target.value as "monthly" | "quarterly" })
+              }
+              className={inputCls}
+            >
+              <option value="monthly">{t("payment.monthly")}</option>
+              <option value="quarterly">{t("payment.quarterly")}</option>
+            </select>
           </Field>
 
           <Field label={t("form.options")}>
