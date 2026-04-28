@@ -240,6 +240,38 @@ function EditPage() {
             />
           </Field>
 
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="위도 (Latitude)">
+              <input
+                type="number"
+                step="any"
+                value={form.latitude ?? ""}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setForm({ ...form, latitude: v === "" ? null : Number(v) });
+                }}
+                placeholder="예: 37.4633"
+                className={inputCls}
+              />
+            </Field>
+            <Field label="경도 (Longitude)">
+              <input
+                type="number"
+                step="any"
+                value={form.longitude ?? ""}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setForm({ ...form, longitude: v === "" ? null : Number(v) });
+                }}
+                placeholder="예: 126.9001"
+                className={inputCls}
+              />
+            </Field>
+          </div>
+          <p className="-mt-1 text-xs text-muted-foreground">
+            비워두면 주소로 자동 검색됩니다. 핀 위치가 정확하지 않으면 직접 입력하세요. (Kakao Map → 우클릭 → 좌표 복사)
+          </p>
+
           <div className="grid grid-cols-3 gap-3">
             <Field label={t("form.monthly")}>
               <input
