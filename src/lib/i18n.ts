@@ -296,7 +296,7 @@ const ko: Dict = {
 };
 
 const en: Dict = {
-  "brand": "Ger Finder", "tagline": "Rentals for Mongolians in South Korea",
+  "brand": "Housing in Korea", "tagline": "Rentals for Mongolians in South Korea",
   "nav.home": "Home", "nav.search": "Search", "nav.favorites": "Favorites", "nav.admin": "Admin",
   "search.placeholder": "Area, metro station, keyword…",
   "filter.title": "Filters", "filter.city": "City", "filter.area": "Area",
