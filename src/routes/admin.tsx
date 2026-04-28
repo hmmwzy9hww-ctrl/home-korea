@@ -651,6 +651,19 @@ function AdminPage() {
                   />
                 </Field>
 
+                <Field label={t("form.paymentType")}>
+                  <select
+                    value={form.paymentType ?? "monthly"}
+                    onChange={(e) =>
+                      setForm({ ...form, paymentType: e.target.value as "monthly" | "quarterly" })
+                    }
+                    className={inputCls}
+                  >
+                    <option value="monthly">{t("payment.monthly")}</option>
+                    <option value="quarterly">{t("payment.quarterly")}</option>
+                  </select>
+                </Field>
+
                 <Field label={t("form.options")}>
                   <input
                     type="text"
