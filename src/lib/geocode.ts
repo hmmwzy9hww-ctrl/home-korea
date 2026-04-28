@@ -41,6 +41,15 @@ function cacheKey(listing: Listing): string {
 }
 
 export function getCachedCoords(listing: Listing): Coords | null {
+  // Manual override always wins
+  if (
+    typeof listing.latitude === "number" &&
+    typeof listing.longitude === "number" &&
+    !Number.isNaN(listing.latitude) &&
+    !Number.isNaN(listing.longitude)
+  ) {
+    return [listing.latitude, listing.longitude];
+  }
   loadCache();
   const k = cacheKey(listing);
   if (!k.replace("|", "")) return null;
@@ -48,6 +57,15 @@ export function getCachedCoords(listing: Listing): Coords | null {
 }
 
 export async function geocodeListing(listing: Listing): Promise<Coords | null> {
+  // Manual override short-circuits geocoding
+  if (
+    typeof listing.latitude === "number" &&
+    typeof listing.longitude === "number" &&
+    !Number.isNaN(listing.latitude) &&
+    !Number.isNaN(listing.longitude)
+  ) {
+    return [listing.latitude, listing.longitude];
+  }
   loadCache();
   const k = cacheKey(listing);
   if (!k.replace("|", "")) return null;
