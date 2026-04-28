@@ -75,9 +75,7 @@ function createEmptyListing(): ListingForm {
   };
 }
 
-function createPhotoInputs(photos: string[] = []): string[] {
-  return Array.from({ length: 5 }, (_, index) => photos[index] || "");
-}
+const MAX_PHOTOS = 20;
 
 function arraysEqual(a: string[], b: string[]) {
   return a.length === b.length && a.every((value, index) => value === b[index]);
