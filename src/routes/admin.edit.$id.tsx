@@ -1,10 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Save, X, Upload, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, X, Upload, Trash2, Languages } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { useI18n } from "@/lib/i18n";
 import { useAdmin, useListing, addListing, updateListing } from "@/lib/store";
+import { translateDescription } from "@/server/translate.functions";
 import type { City, Listing, ListingStatus, RoomType } from "@/lib/types";
 
 export const Route = createFileRoute("/admin/edit/$id")({
@@ -151,7 +152,9 @@ function EditPage() {
     );
   }
 
-  const handle = (e: React.FormEvent) => {
+  const [translating, setTranslating] = useState(false);
+
+  const handle = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim()) {
       toast.error(t("form.required") + ": " + t("form.title"));
@@ -159,15 +162,41 @@ function EditPage() {
     }
     const cleanPhotos = photos.filter(Boolean).slice(0, MAX_PHOTOS);
     const options = optionsStr.split(",").map((o) => o.trim()).filter(Boolean);
-    const payload = { ...form, photos: cleanPhotos, options };
 
-    if (isNew) {
-      addListing(payload);
-    } else {
-      updateListing(id, payload);
+    // Auto-translate description if it changed (or new) and is non-empty.
+    let descriptionTranslations = form.descriptionTranslations ?? {};
+    const desc = form.description.trim();
+    const prevDesc = (existing?.description || "").trim();
+    const shouldTranslate = desc.length > 0 && (isNew || desc !== prevDesc || Object.keys(descriptionTranslations).length === 0);
+    if (shouldTranslate) {
+      setTranslating(true);
+      try {
+        const res = await translateDescription({ data: { text: desc } });
+        descriptionTranslations = res ?? {};
+        toast.success("AI орчуулга бэлэн");
+      } catch (err) {
+        console.error(err);
+        toast.error("Орчуулга амжилтгүй — үргэлжлүүлж хадгалж байна");
+      } finally {
+        setTranslating(false);
+      }
+    } else if (!desc) {
+      descriptionTranslations = {};
     }
-    toast.success(t("form.saved"));
-    navigate({ to: "/admin" });
+
+    const payload = { ...form, photos: cleanPhotos, options, descriptionTranslations };
+
+    try {
+      if (isNew) {
+        await addListing(payload);
+      } else {
+        await updateListing(id, payload);
+      }
+      toast.success(t("form.saved"));
+      navigate({ to: "/admin" });
+    } catch {
+      toast.error("Error");
+    }
   };
 
   return (
