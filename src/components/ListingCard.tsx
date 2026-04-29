@@ -10,9 +10,10 @@ import { PhotoCarousel } from "./PhotoCarousel";
 import { cn } from "@/lib/utils";
 
 export function ListingCard({ listing }: { listing: Listing }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const favs = useFavorites();
   const isFav = favs.has(listing.id);
+  const displayTitle = (lang !== "mn" && listing.titleTranslations?.[lang]) || listing.title;
   const messenger = buildMessengerUrl({
     listingId: listing.id,
     listingTitle: listing.title,
@@ -22,7 +23,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
   return (
     <article className="group bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover transition-shadow border">
       <div className="relative">
-        <PhotoCarousel photos={listing.photos} alt={listing.title} rounded={false} />
+        <PhotoCarousel photos={listing.photos} alt={displayTitle} rounded={false} />
         <button
           type="button"
           onClick={(e) => {
