@@ -23,6 +23,7 @@ interface Props {
  */
 export function HomeMap({ listings }: Props) {
   const { t } = useI18n();
+  const cityName = useCityName();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = listings.find((l) => l.id === selectedId) || null;
 
