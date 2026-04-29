@@ -19,6 +19,7 @@ import {
 import { useCities, cityLabel } from "@/lib/citiesStore";
 import { useI18n as _useI18n } from "@/lib/i18n";
 void _useI18n;
+import type { City } from "@/lib/types";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
