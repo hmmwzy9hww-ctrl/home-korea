@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import type { Listing } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
+import { useCityName } from "@/lib/useCityName";
 import { formatWon } from "@/lib/format";
 
 const LeafletMap = lazy(() =>
