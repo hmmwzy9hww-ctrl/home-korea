@@ -36,25 +36,22 @@ function sortAvailableFirst<T extends { status: string; createdAt: number }>(ite
 }
 
 function HomePage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const all = useListings();
   const settings = useSiteSettings();
   const subs = useCitySubscriptions();
+  const cities = useCities();
 
   const featured = all.filter((l) => l.featured && l.status === "available").slice(0, 4);
   const latest = sortAvailableFirst(all).slice(0, 4);
 
-  const cities: { code: City; emoji: string }[] = [
-    { code: "seoul", emoji: "🏙️" },
-    { code: "incheon", emoji: "✈️" },
-    { code: "gyeonggi", emoji: "🌆" },
-    { code: "busan", emoji: "🌊" },
-    { code: "other", emoji: "📍" },
-  ];
-
-  const countByCity = (c: City) => all.filter((l) => l.city === c).length;
+  const countByCity = (c: string) => all.filter((l) => l.city === c).length;
   const countUnder = (price: number) => all.filter((l) => l.monthlyRent <= price).length;
   const countNearMetro = all.filter((l) => l.subwayMinutes <= 5).length;
+  const seoulCity = cities.find((c) => c.id === "seoul");
+  const incheonCity = cities.find((c) => c.id === "incheon");
+  const seoulName = seoulCity ? cityLabel(seoulCity, lang) : "Seoul";
+  const incheonName = incheonCity ? cityLabel(incheonCity, lang) : "Incheon";
 
   return (
     <AppShell>
