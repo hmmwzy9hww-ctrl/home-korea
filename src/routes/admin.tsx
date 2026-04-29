@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
+import { OptionsGrid } from "@/components/OptionsGrid";
 import { useI18n, translate, LANGS, type Lang } from "@/lib/i18n";
 import { ADMIN_PASSWORD } from "@/lib/config";
 import { formatWon } from "@/lib/format";
@@ -106,7 +107,7 @@ function AdminPage() {
   const [err, setErr] = useState("");
   const [editor, setEditor] = useState<EditorState>(null);
   const [form, setForm] = useState<ListingForm>(createEmptyListing());
-  const [optionsStr, setOptionsStr] = useState("");
+  // options live on form.options directly
   const [photos, setPhotos] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -248,10 +249,7 @@ function AdminPage() {
       busStop: form.busStop.trim(),
       availableFrom: form.availableFrom.trim(),
       description: form.description.trim(),
-      options: optionsStr
-        .split(",")
-        .map((option) => option.trim())
-        .filter(Boolean),
+      options: (form.options || []).filter(Boolean),
       photos: photos.filter(Boolean).slice(0, MAX_PHOTOS),
       naverMapUrl: "",
       messengerUrl: "",
@@ -644,12 +642,9 @@ function AdminPage() {
                 </Field>
 
                 <Field label={t("form.options")}>
-                  <input
-                    type="text"
-                    value={optionsStr}
-                    onChange={(e) => setOptionsStr(e.target.value)}
-                    placeholder={t("form.options.ph")}
-                    className={inputCls}
+                  <OptionsGrid
+                    selected={form.options || []}
+                    onChange={(next) => setForm({ ...form, options: next })}
                   />
                 </Field>
 
