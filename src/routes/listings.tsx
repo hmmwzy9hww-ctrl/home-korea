@@ -414,6 +414,7 @@ function MapView({
   onSelect: (id: string | null) => void;
 }) {
   const { t } = useI18n();
+  const cityName = useCityName();
   const selected = listings.find((l) => l.id === selectedId) || null;
 
   return (
