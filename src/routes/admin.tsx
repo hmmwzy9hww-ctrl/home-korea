@@ -371,7 +371,7 @@ function AdminPage() {
                   </div>
                   <h2 className="line-clamp-1 text-sm font-semibold">{listing.title || "-"}</h2>
                   <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-                    {[t(`city.${listing.city}`), listing.area || listing.address].filter(Boolean).join(" · ") || "-"}
+                    {[cityName(listing.city), listing.area || listing.address].filter(Boolean).join(" · ") || "-"}
                   </p>
                   <p className="mt-1 text-xs font-bold">{formatWon(listing.monthlyRent)}</p>
                 </div>
