@@ -6,6 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { OptionsGrid } from "@/components/OptionsGrid";
 import { useI18n } from "@/lib/i18n";
 import { useAdmin, useListing, addListing, updateListing } from "@/lib/store";
+import { useCities, cityLabel } from "@/lib/citiesStore";
 import { translateDescription } from "@/server/translate.functions";
 import type { City, Listing, ListingStatus, RoomType } from "@/lib/types";
 
