@@ -231,13 +231,13 @@ function ListingsPage() {
             </div>
             <div className="px-5 py-4 space-y-5">
               <FilterGroup label={t("filter.city")}>
-                {cities.map((c) => (
+                {cityChips.map((c) => (
                   <Chip
                     key={c}
                     active={(search.city ?? "all") === c}
-                    onClick={() => update({ city: c === "all" ? undefined : (c as City) })}
+                    onClick={() => update({ city: c === "all" ? undefined : c })}
                   >
-                    {c === "all" ? t("filter.any") : t(`city.${c}`)}
+                    {c === "all" ? t("filter.any") : cityName(c)}
                   </Chip>
                 ))}
               </FilterGroup>
