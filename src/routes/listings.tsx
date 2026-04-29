@@ -47,7 +47,7 @@ export const Route = createFileRoute("/listings")({
   component: ListingsPage,
 });
 
-const cities: (City | "all")[] = ["all", "seoul", "incheon", "gyeonggi", "busan", "other"];
+// City list is loaded dynamically from Supabase via useCities().
 const roomTypes: (RoomType | "all")[] = ["all", "oneRoom", "twoRoom", "threeRoom", "officetel", "studio", "share"];
 
 function ListingsPage() {
