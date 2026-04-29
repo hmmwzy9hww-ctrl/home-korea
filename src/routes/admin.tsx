@@ -130,7 +130,6 @@ function AdminPage() {
         const empty = createEmptyListing();
         return JSON.stringify(current) === JSON.stringify(empty) ? current : empty;
       });
-      setOptionsStr((current) => (current === "" ? current : ""));
       setPhotos((current) => (current.length === 0 ? current : []));
       return;
     }
@@ -142,10 +141,6 @@ function AdminPage() {
 
     const { id: _id, createdAt: _createdAt, ...rest } = editingListing;
     setForm((current) => (JSON.stringify(current) === JSON.stringify(rest) ? current : rest));
-    setOptionsStr((current) => {
-      const next = rest.options.join(", ");
-      return current === next ? current : next;
-    });
     setPhotos((current) => {
       const next = rest.photos.slice(0, MAX_PHOTOS);
       return arraysEqual(current, next) ? current : next;
