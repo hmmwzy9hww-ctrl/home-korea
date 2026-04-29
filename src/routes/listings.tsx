@@ -51,7 +51,11 @@ export const Route = createFileRoute("/listings")({
 const roomTypes: (RoomType | "all")[] = ["all", "oneRoom", "twoRoom", "threeRoom", "officetel", "studio", "share"];
 
 function ListingsPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const cityList = useCities();
+  const cityName = useCityName();
+  // ["all", ...city ids] for chip rows
+  const cityChips: string[] = ["all", ...cityList.map((c) => c.id)];
   const search = Route.useSearch();
   const navigate = useNavigate();
   const all = useListings();
