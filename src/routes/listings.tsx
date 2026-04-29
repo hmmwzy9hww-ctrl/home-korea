@@ -126,7 +126,7 @@ function ListingsPage() {
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <h1 className="font-bold text-sm flex-1 truncate">
-            {search.city ? t(`city.${search.city}`) : t("listings.title")}
+            {search.city ? cityName(search.city) : t("listings.title")}
           </h1>
           <button
             type="button"
