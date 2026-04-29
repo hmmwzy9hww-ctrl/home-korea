@@ -33,7 +33,7 @@ interface ListingsSearch {
 export const Route = createFileRoute("/listings")({
   validateSearch: (s: Record<string, unknown>): ListingsSearch => ({
     q: typeof s.q === "string" ? s.q : undefined,
-    city: (["seoul", "incheon", "gyeonggi", "busan", "other"].includes(String(s.city)) ? s.city : undefined) as City | undefined,
+    city: typeof s.city === "string" && s.city ? s.city : undefined,
     roomType: (["oneRoom", "twoRoom", "threeRoom", "officetel", "studio", "share"].includes(String(s.roomType)) ? s.roomType : undefined) as RoomType | undefined,
     minPrice: typeof s.minPrice === "number" ? s.minPrice : undefined,
     maxPrice: typeof s.maxPrice === "number" ? s.maxPrice : undefined,
