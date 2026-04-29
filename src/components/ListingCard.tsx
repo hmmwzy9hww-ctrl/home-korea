@@ -86,6 +86,10 @@ export function ListingCard({ listing }: { listing: Listing }) {
           </div>
         </div>
 
+        {listing.options?.length > 0 && (
+          <OptionChips options={listing.options.slice(0, 4)} size="sm" />
+        )}
+
         <div className="flex gap-2 pt-1">
           <Link
             to="/listing/$id"
