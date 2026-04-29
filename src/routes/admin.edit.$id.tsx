@@ -167,12 +167,23 @@ function EditPage() {
     let descriptionTranslations = form.descriptionTranslations ?? {};
     const desc = form.description.trim();
     const prevDesc = (existing?.description || "").trim();
-    const shouldTranslate = desc.length > 0 && (isNew || desc !== prevDesc || Object.keys(descriptionTranslations).length === 0);
-    if (shouldTranslate) {
+    const shouldTranslateDesc = desc.length > 0 && (isNew || desc !== prevDesc || Object.keys(descriptionTranslations).length === 0);
+
+    // Auto-translate title if it changed (or new) and is non-empty.
+    let titleTranslations = form.titleTranslations ?? {};
+    const title = form.title.trim();
+    const prevTitle = (existing?.title || "").trim();
+    const shouldTranslateTitle = title.length > 0 && (isNew || title !== prevTitle || Object.keys(titleTranslations).length === 0);
+
+    if (shouldTranslateDesc || shouldTranslateTitle) {
       setTranslating(true);
       try {
-        const res = await translateDescription({ data: { text: desc } });
-        descriptionTranslations = res ?? {};
+        const [descRes, titleRes] = await Promise.all([
+          shouldTranslateDesc ? translateDescription({ data: { text: desc } }) : Promise.resolve(descriptionTranslations),
+          shouldTranslateTitle ? translateDescription({ data: { text: title } }) : Promise.resolve(titleTranslations),
+        ]);
+        if (shouldTranslateDesc) descriptionTranslations = descRes ?? {};
+        if (shouldTranslateTitle) titleTranslations = titleRes ?? {};
         toast.success("AI орчуулга бэлэн");
       } catch (err) {
         console.error(err);
@@ -180,11 +191,11 @@ function EditPage() {
       } finally {
         setTranslating(false);
       }
-    } else if (!desc) {
-      descriptionTranslations = {};
     }
+    if (!desc) descriptionTranslations = {};
+    if (!title) titleTranslations = {};
 
-    const payload = { ...form, photos: cleanPhotos, options, descriptionTranslations };
+    const payload = { ...form, photos: cleanPhotos, options, descriptionTranslations, titleTranslations };
 
     try {
       if (isNew) {

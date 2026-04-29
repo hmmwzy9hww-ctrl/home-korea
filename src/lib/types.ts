@@ -45,6 +45,8 @@ export interface Listing {
   longitude?: number | null;
   /** AI-generated translations of `description`, keyed by language code (ko, en, ru, zh, vi). */
   descriptionTranslations?: Record<string, string>;
+  /** AI-generated translations of `title`, keyed by language code (ko, en, ru, zh, vi). */
+  titleTranslations?: Record<string, string>;
   createdAt: number;
 }
 

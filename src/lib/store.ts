@@ -43,6 +43,10 @@ function rowToListing(row: Record<string, unknown>): Listing {
       row.description_translations && typeof row.description_translations === "object"
         ? (row.description_translations as Record<string, string>)
         : {},
+    titleTranslations:
+      row.title_translations && typeof row.title_translations === "object"
+        ? (row.title_translations as Record<string, string>)
+        : {},
     createdAt: Number(row.created_at ?? Date.now()),
   };
 }
@@ -78,6 +82,8 @@ function listingToRow(l: Partial<Listing>): Record<string, unknown> {
   if (l.longitude !== undefined) row.longitude = l.longitude;
   if (l.descriptionTranslations !== undefined)
     row.description_translations = l.descriptionTranslations ?? {};
+  if (l.titleTranslations !== undefined)
+    row.title_translations = l.titleTranslations ?? {};
   if (l.createdAt !== undefined) row.created_at = l.createdAt;
   return row;
 }

@@ -45,6 +45,7 @@ export type Database = {
           subway_minutes: number
           subway_station: string
           title: string
+          title_translations: Json
         }
         Insert: {
           address?: string
@@ -76,6 +77,7 @@ export type Database = {
           subway_minutes?: number
           subway_station?: string
           title: string
+          title_translations?: Json
         }
         Update: {
           address?: string
@@ -107,6 +109,7 @@ export type Database = {
           subway_minutes?: number
           subway_station?: string
           title?: string
+          title_translations?: Json
         }
         Relationships: []
       }

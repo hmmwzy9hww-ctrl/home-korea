@@ -10,9 +10,10 @@ import { PhotoCarousel } from "./PhotoCarousel";
 import { cn } from "@/lib/utils";
 
 export function ListingCard({ listing }: { listing: Listing }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const favs = useFavorites();
   const isFav = favs.has(listing.id);
+  const displayTitle = (lang !== "mn" && listing.titleTranslations?.[lang]) || listing.title;
   const messenger = buildMessengerUrl({
     listingId: listing.id,
     listingTitle: listing.title,
@@ -22,7 +23,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
   return (
     <article className="group bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover transition-shadow border">
       <div className="relative">
-        <PhotoCarousel photos={listing.photos} alt={listing.title} rounded={false} />
+        <PhotoCarousel photos={listing.photos} alt={displayTitle} rounded={false} />
         <button
           type="button"
           onClick={(e) => {
@@ -54,7 +55,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
           <span className="text-xs text-muted-foreground">/ {t("card.monthly").toLowerCase()}</span>
         </div>
         <h3 className="font-semibold text-sm text-foreground line-clamp-2 leading-snug">
-          {listing.title}
+          {displayTitle}
         </h3>
 
         <div className="flex flex-wrap gap-1.5 text-[11px] text-muted-foreground">
