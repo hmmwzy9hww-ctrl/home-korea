@@ -833,7 +833,7 @@ function AnalyticsPanel({
           return (
             <li key={c} className="text-xs">
               <div className="flex items-center justify-between">
-                <span className="font-medium">{t(`city.${c}`)}</span>
+                <span className="font-medium">{(() => { const ct = cities.find((x) => x.id === c); return ct ? `${ct.emoji} ${cityLabel(ct, lang)}` : c; })()}</span>
                 <span className="text-muted-foreground">
                   {v} {t("admin.analytics.views")}
                   {sub && " · 🔔"}
