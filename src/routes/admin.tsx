@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
+import { CitiesManager } from "@/components/CitiesManager";
+import { useCities, cityLabel } from "@/lib/citiesStore";
 import { OptionsGrid } from "@/components/OptionsGrid";
 import { useI18n, translate, LANGS, type Lang } from "@/lib/i18n";
 import { ADMIN_PASSWORD } from "@/lib/config";
