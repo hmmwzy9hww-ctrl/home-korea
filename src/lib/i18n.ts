@@ -310,6 +310,14 @@ const ko: Dict = {
   "admin.analytics.totalSaves": "총 찜 수", "admin.analytics.subscribers": "도시 구독자",
   "admin.analytics.byListing": "매물별", "admin.analytics.cityInterest": "도시별 관심도",
   "admin.analytics.views": "조회수", "admin.analytics.saves": "찜",
+  "cities.title": "도시 / 지역 관리", "cities.add": "도시 추가", "cities.edit": "도시 수정",
+  "cities.field.emoji": "이모지",
+  "cities.field.idHint": "영문 ID (변경 불가). 비우면 자동 생성됩니다.",
+  "cities.field.mn": "몽골어 이름", "cities.field.ko": "한국어 이름", "cities.field.en": "영어 이름",
+  "cities.field.ru": "러시아어 이름", "cities.field.zh": "중국어 이름", "cities.field.vi": "베트남어 이름",
+  "cities.delete.confirm": "{name} 도시를 삭제하시겠습니까?",
+  "cities.err.name": "최소 하나의 이름이 필요합니다",
+  "cities.err.save": "저장 실패", "cities.err.delete": "삭제 실패",
 };
 
 const en: Dict = {
