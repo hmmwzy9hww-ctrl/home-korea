@@ -99,7 +99,12 @@ function arraysEqual(a: string[], b: string[]) {
 }
 
 function AdminPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const cities = useCities();
+  const cityName = (id: string) => {
+    const c = cities.find((x) => x.id === id);
+    return c ? cityLabel(c, lang) : id;
+  };
   const isAdmin = useAdmin();
   const listings = useListings();
   const settings = useSiteSettings();
