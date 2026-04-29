@@ -6,7 +6,7 @@ import { buildMessengerUrl } from "@/lib/config";
 import { buildNaverMapSearchUrl } from "@/lib/maps";
 import type { Listing } from "@/lib/types";
 import { formatWon } from "@/lib/format";
-import { PhotoCarousel } from "./PhotoCarousel";
+import { PhotoGrid } from "./PhotoGrid";
 import { OptionChips } from "./OptionChips";
 import { cn } from "@/lib/utils";
 
@@ -23,32 +23,38 @@ export function ListingCard({ listing }: { listing: Listing }) {
 
   return (
     <article className="group bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover transition-shadow border">
-      <div className="relative">
-        <PhotoCarousel photos={listing.photos} alt={displayTitle} rounded={false} />
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            toggleFavorite(listing.id);
-          }}
-          aria-label={isFav ? t("card.fav.remove") : t("card.fav.add")}
-          className="absolute top-3 right-3 grid place-items-center h-9 w-9 rounded-full bg-background/85 backdrop-blur shadow-card hover:bg-background"
-        >
-          <Heart className={cn("h-5 w-5", isFav ? "fill-destructive text-destructive" : "text-foreground")} />
-        </button>
-        <div className="absolute top-3 left-3 flex gap-1.5">
-          {listing.featured && (
-            <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-primary text-primary-foreground">
-              {t("card.featured")}
-            </span>
-          )}
-          {listing.status === "unavailable" && (
-            <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-foreground/80 text-background">
-              {t("card.unavailable")}
-            </span>
-          )}
-        </div>
-      </div>
+      <PhotoGrid
+        photos={listing.photos}
+        alt={displayTitle}
+        overlay={
+          <>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleFavorite(listing.id);
+              }}
+              aria-label={isFav ? t("card.fav.remove") : t("card.fav.add")}
+              className="absolute top-3 right-3 z-10 grid place-items-center h-9 w-9 rounded-full bg-background/85 backdrop-blur shadow-card hover:bg-background"
+            >
+              <Heart className={cn("h-5 w-5", isFav ? "fill-destructive text-destructive" : "text-foreground")} />
+            </button>
+            <div className="absolute top-3 left-3 z-10 flex gap-1.5 pointer-events-none">
+              {listing.featured && (
+                <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-primary text-primary-foreground">
+                  {t("card.featured")}
+                </span>
+              )}
+              {listing.status === "unavailable" && (
+                <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-foreground/80 text-background">
+                  {t("card.unavailable")}
+                </span>
+              )}
+            </div>
+          </>
+        }
+      />
 
       <div className="p-3.5 space-y-2.5">
         <div className="flex items-baseline gap-2">
