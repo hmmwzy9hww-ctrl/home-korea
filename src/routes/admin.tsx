@@ -495,8 +495,8 @@ function AdminPage() {
                       className={inputCls}
                     >
                       {cities.map((city) => (
-                        <option key={city} value={city}>
-                          {t(`city.${city}`)}
+                        <option key={city.id} value={city.id}>
+                          {city.emoji} {cityLabel(city, lang)}
                         </option>
                       ))}
                     </select>
