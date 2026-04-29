@@ -59,7 +59,8 @@ const empty = (): Omit<Listing, "id" | "createdAt"> => ({
 });
 
 function EditPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const cities = useCities();
   const isAdmin = useAdmin();
   const { id } = Route.useParams();
   const isNew = id === "new";
