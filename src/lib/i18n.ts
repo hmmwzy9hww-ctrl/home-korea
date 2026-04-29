@@ -400,6 +400,14 @@ const en: Dict = {
   "admin.analytics.totalSaves": "Total saves", "admin.analytics.subscribers": "City subscribers",
   "admin.analytics.byListing": "Per listing", "admin.analytics.cityInterest": "City interest",
   "admin.analytics.views": "Views", "admin.analytics.saves": "Saves",
+  "cities.title": "City management", "cities.add": "Add city", "cities.edit": "Edit city",
+  "cities.field.emoji": "Emoji",
+  "cities.field.idHint": "Latin id (cannot change later). Leave empty to auto-generate.",
+  "cities.field.mn": "Mongolian name", "cities.field.ko": "Korean name", "cities.field.en": "English name",
+  "cities.field.ru": "Russian name", "cities.field.zh": "Chinese name", "cities.field.vi": "Vietnamese name",
+  "cities.delete.confirm": "Delete city {name}?",
+  "cities.err.name": "At least one name is required",
+  "cities.err.save": "Failed to save", "cities.err.delete": "Failed to delete",
 };
 
 const ru: Dict = {
