@@ -5,6 +5,8 @@ import { AppShell } from "@/components/AppShell";
 import { ListingCard } from "@/components/ListingCard";
 import { useI18n } from "@/lib/i18n";
 import { useListings } from "@/lib/store";
+import { useCities, cityLabel } from "@/lib/citiesStore";
+import { useCityName } from "@/lib/useCityName";
 import { formatWon } from "@/lib/format";
 import type { City, Listing, RoomType, SortKey } from "@/lib/types";
 import { cn } from "@/lib/utils";
