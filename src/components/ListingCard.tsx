@@ -7,6 +7,7 @@ import { buildNaverMapSearchUrl } from "@/lib/maps";
 import type { Listing } from "@/lib/types";
 import { formatWon } from "@/lib/format";
 import { PhotoCarousel } from "./PhotoCarousel";
+import { OptionChips } from "./OptionChips";
 import { cn } from "@/lib/utils";
 
 export function ListingCard({ listing }: { listing: Listing }) {
