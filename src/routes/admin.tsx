@@ -789,7 +789,7 @@ function AnalyticsPanel({
   for (const l of listings) {
     cityInterest[l.city] = (cityInterest[l.city] || 0) + (analytics.views[l.id] || 0);
   }
-  const cityList: City[] = ["seoul", "incheon", "gyeonggi", "busan", "other"];
+  const cityList = cities.map((c) => c.id);
 
   // Sort listings by views desc for the per-listing table.
   const sorted = [...listings].sort(
