@@ -455,7 +455,7 @@ function MapView({
             <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold truncate pr-6">{selected.title}</div>
               <div className="text-xs text-muted-foreground truncate">
-                {[t(`city.${selected.city}`), t(`room.${selected.roomType}`)]
+                {[cityName(selected.city), t(`room.${selected.roomType}`)]
                   .filter(Boolean)
                   .join(" · ")}
               </div>
