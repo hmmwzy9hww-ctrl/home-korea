@@ -337,6 +337,10 @@ function AdminPage() {
         {/* Editable site texts */}
         <TextEditor settings={settings} />
 
+        {/* City / area management */}
+        <CitiesManager />
+
+
         <button
           type="button"
           onClick={openAdd}
