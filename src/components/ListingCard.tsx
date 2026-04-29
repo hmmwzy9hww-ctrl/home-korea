@@ -7,6 +7,7 @@ import { buildNaverMapSearchUrl } from "@/lib/maps";
 import type { Listing } from "@/lib/types";
 import { formatWon } from "@/lib/format";
 import { PhotoCarousel } from "./PhotoCarousel";
+import { OptionChips } from "./OptionChips";
 import { cn } from "@/lib/utils";
 
 export function ListingCard({ listing }: { listing: Listing }) {
@@ -84,6 +85,10 @@ export function ListingCard({ listing }: { listing: Listing }) {
             </span>
           </div>
         </div>
+
+        {listing.options?.length > 0 && (
+          <OptionChips options={listing.options.slice(0, 4)} size="sm" />
+        )}
 
         <div className="flex gap-2 pt-1">
           <Link

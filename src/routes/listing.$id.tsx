@@ -20,6 +20,8 @@ import {
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
+import { OptionsGrid } from "@/components/OptionsGrid";
+import { OptionChips } from "@/components/OptionChips";
 import { useI18n } from "@/lib/i18n";
 import {
   useListing,
@@ -62,7 +64,7 @@ function ListingDetailPage() {
   const [editingDesc, setEditingDesc] = useState(false);
   const [descDraft, setDescDraft] = useState("");
   const [editingOpts, setEditingOpts] = useState(false);
-  const [optsDraft, setOptsDraft] = useState("");
+  const [optsDraft, setOptsDraft] = useState<string[]>([]);
 
   useEffect(() => {
     if (id) trackView(id);
@@ -113,16 +115,12 @@ function ListingDetailPage() {
   };
 
   const startEditOpts = () => {
-    setOptsDraft((listing.options || []).join(", "));
+    setOptsDraft([...(listing.options || [])]);
     setEditingOpts(true);
   };
   const saveOpts = async () => {
     try {
-      const options = optsDraft
-        .split(",")
-        .map((o) => o.trim())
-        .filter(Boolean);
-      await updateListing(listing.id, { options });
+      await updateListing(listing.id, { options: optsDraft });
       toast.success(t("form.saved"));
       setEditingOpts(false);
     } catch {
@@ -263,15 +261,7 @@ function ListingDetailPage() {
 
           {editingOpts ? (
             <div className="space-y-2">
-              <input
-                type="text"
-                value={optsDraft}
-                onChange={(e) => setOptsDraft(e.target.value)}
-                placeholder={t("form.options.ph")}
-                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                autoFocus
-              />
-              <p className="text-[11px] text-muted-foreground">{t("form.options")}</p>
+              <OptionsGrid selected={optsDraft} onChange={setOptsDraft} />
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -292,13 +282,7 @@ function ListingDetailPage() {
               </div>
             </div>
           ) : listing.options.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5">
-              {listing.options.map((o) => (
-                <span key={o} className="text-xs px-2.5 py-1 rounded-full bg-secondary">
-                  {o}
-                </span>
-              ))}
-            </div>
+            <OptionChips options={listing.options} />
           ) : (
             <p className="text-xs text-muted-foreground">—</p>
           )}
