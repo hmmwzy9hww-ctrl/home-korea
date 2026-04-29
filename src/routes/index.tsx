@@ -164,9 +164,9 @@ function HomePage() {
             search={{ city: "seoul" } as never}
             className="p-3 rounded-2xl border bg-card hover:shadow-card-hover transition-shadow"
           >
-            <div className="text-xs text-muted-foreground">{t("city.seoul")}</div>
+            <div className="text-xs text-muted-foreground">{seoulName}</div>
             <div className="text-base font-bold mt-0.5">
-              {t("summary.inCity", { city: t("city.seoul"), count: countByCity("seoul") })}
+              {t("summary.inCity", { city: seoulName, count: countByCity("seoul") })}
             </div>
           </Link>
           <Link
@@ -174,9 +174,9 @@ function HomePage() {
             search={{ city: "incheon" } as never}
             className="p-3 rounded-2xl border bg-card hover:shadow-card-hover transition-shadow"
           >
-            <div className="text-xs text-muted-foreground">{t("city.incheon")}</div>
+            <div className="text-xs text-muted-foreground">{incheonName}</div>
             <div className="text-base font-bold mt-0.5">
-              {t("summary.inCity", { city: t("city.incheon"), count: countByCity("incheon") })}
+              {t("summary.inCity", { city: incheonName, count: countByCity("incheon") })}
             </div>
           </Link>
           <Link
