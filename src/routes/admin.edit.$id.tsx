@@ -255,7 +255,7 @@ function EditPage() {
                 className={inputCls}
               >
                 {cities.map((c) => (
-                  <option key={c} value={c}>{t(`city.${c}`)}</option>
+                  <option key={c.id} value={c.id}>{c.emoji} {cityLabel(c, lang)}</option>
                 ))}
               </select>
             </Field>
