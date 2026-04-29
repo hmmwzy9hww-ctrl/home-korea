@@ -45,7 +45,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-const cities: City[] = ["seoul", "incheon", "gyeonggi", "busan", "other"];
+// City list is now loaded dynamically from Supabase via useCities() — see CitiesManager.
 const roomTypes: RoomType[] = [
   "oneRoom",
   "twoRoom",
