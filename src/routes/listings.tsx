@@ -144,19 +144,19 @@ function ListingsPage() {
         </div>
         {/* Quick chips */}
         <div className="flex items-center gap-1.5 px-4 pb-2.5 overflow-x-auto no-scrollbar">
-          {cities.map((c) => {
+          {cityChips.map((c) => {
             const active = (search.city ?? "all") === c;
             return (
               <button
                 key={c}
                 type="button"
-                onClick={() => update({ city: c === "all" ? undefined : (c as City) })}
+                onClick={() => update({ city: c === "all" ? undefined : c })}
                 className={cn(
                   "shrink-0 px-3 py-1 rounded-full text-xs font-medium border transition-colors",
                   active ? "bg-foreground text-background border-foreground" : "bg-background hover:bg-secondary",
                 )}
               >
-                {c === "all" ? t("filter.any") : t(`city.${c}`)}
+                {c === "all" ? t("filter.any") : cityName(c)}
               </button>
             );
           })}
