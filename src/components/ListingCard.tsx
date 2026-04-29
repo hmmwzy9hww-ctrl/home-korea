@@ -55,7 +55,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
           <span className="text-xs text-muted-foreground">/ {t("card.monthly").toLowerCase()}</span>
         </div>
         <h3 className="font-semibold text-sm text-foreground line-clamp-2 leading-snug">
-          {listing.title}
+          {displayTitle}
         </h3>
 
         <div className="flex flex-wrap gap-1.5 text-[11px] text-muted-foreground">
