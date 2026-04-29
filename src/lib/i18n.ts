@@ -209,6 +209,23 @@ const mn: Dict = {
   "admin.analytics.cityInterest": "Хотын сонирхол",
   "admin.analytics.views": "Үзэлт",
   "admin.analytics.saves": "Хадгалалт",
+
+  // Cities manager (admin)
+  "cities.title": "Хот / газрын удирдлага",
+  "cities.add": "Шинэ хот нэмэх",
+  "cities.edit": "Хот засах",
+  "cities.field.emoji": "Эмоджи",
+  "cities.field.idHint": "Латин үсгээр (өөрчлөгдөхгүй). Хоосон үлдээвэл автоматаар үүсгэнэ.",
+  "cities.field.mn": "Монгол нэр",
+  "cities.field.ko": "Солонгос нэр",
+  "cities.field.en": "Англи нэр",
+  "cities.field.ru": "Орос нэр",
+  "cities.field.zh": "Хятад нэр",
+  "cities.field.vi": "Вьетнам нэр",
+  "cities.delete.confirm": "{name} хотыг устгах уу?",
+  "cities.err.name": "Ядаж нэг нэр шаардлагатай",
+  "cities.err.save": "Хадгалж чадсангүй",
+  "cities.err.delete": "Устгаж чадсангүй",
 };
 
 const ko: Dict = {
