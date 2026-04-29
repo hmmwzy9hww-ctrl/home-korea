@@ -14,7 +14,7 @@ export const Route = createFileRoute("/admin/edit/$id")({
   component: EditPage,
 });
 
-const cities: City[] = ["seoul", "incheon", "gyeonggi", "busan", "other"];
+// City list now comes from useCities() (Supabase-backed, admin-managed).
 const roomTypes: RoomType[] = [
   "oneRoom",
   "twoRoom",
