@@ -112,21 +112,22 @@ function HomePage() {
         <h2 className="text-base font-bold mb-3">{t("home.section.cityStats")}</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {cities.map((c) => {
-            const count = countByCity(c.code);
-            const subscribed = subs.has(c.code);
+            const count = countByCity(c.id);
+            const subscribed = subs.has(c.id);
+            const name = cityLabel(c, lang);
             return (
               <div
-                key={c.code}
+                key={c.id}
                 className="flex items-center justify-between p-3 rounded-2xl border bg-gradient-to-br from-primary/10 to-accent"
               >
                 <Link
                   to="/listings"
-                  search={{ city: c.code } as never}
+                  search={{ city: c.id } as never}
                   className="flex items-center gap-2 min-w-0 flex-1"
                 >
                   <span className="text-xl shrink-0">{c.emoji}</span>
                   <div className="min-w-0">
-                    <div className="text-sm font-semibold truncate">{t(`city.${c.code}`)}</div>
+                    <div className="text-sm font-semibold truncate">{name}</div>
                     <div className="text-xs font-bold text-primary">
                       {t("home.cityStats.unit", { count })}
                     </div>
@@ -135,11 +136,9 @@ function HomePage() {
                 <button
                   type="button"
                   onClick={() => {
-                    toggleCitySubscription(c.code);
+                    toggleCitySubscription(c.id);
                     toast.success(
-                      t(subscribed ? "notif.unsubscribed" : "notif.subscribed", {
-                        city: t(`city.${c.code}`),
-                      }),
+                      t(subscribed ? "notif.unsubscribed" : "notif.subscribed", { city: name }),
                     );
                   }}
                   aria-label={subscribed ? t("subscribe.off") : t("subscribe.on")}
