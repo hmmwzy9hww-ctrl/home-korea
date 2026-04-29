@@ -16,7 +16,9 @@ import {
   useListings,
   useSiteSettings,
 } from "@/lib/store";
-import type { City } from "@/lib/types";
+import { useCities, cityLabel } from "@/lib/citiesStore";
+import { useI18n as _useI18n } from "@/lib/i18n";
+void _useI18n;
 
 export const Route = createFileRoute("/")({
   component: HomePage,
