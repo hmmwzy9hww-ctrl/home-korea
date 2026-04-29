@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
+import { CitiesManager } from "@/components/CitiesManager";
+import { useCities, cityLabel } from "@/lib/citiesStore";
 import { OptionsGrid } from "@/components/OptionsGrid";
 import { useI18n, translate, LANGS, type Lang } from "@/lib/i18n";
 import { ADMIN_PASSWORD } from "@/lib/config";
@@ -43,7 +45,7 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-const cities: City[] = ["seoul", "incheon", "gyeonggi", "busan", "other"];
+// City list is now loaded dynamically from Supabase via useCities() — see CitiesManager.
 const roomTypes: RoomType[] = [
   "oneRoom",
   "twoRoom",
@@ -97,7 +99,12 @@ function arraysEqual(a: string[], b: string[]) {
 }
 
 function AdminPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const cities = useCities();
+  const cityName = (id: string) => {
+    const c = cities.find((x) => x.id === id);
+    return c ? cityLabel(c, lang) : id;
+  };
   const isAdmin = useAdmin();
   const listings = useListings();
   const settings = useSiteSettings();
@@ -330,6 +337,10 @@ function AdminPage() {
         {/* Editable site texts */}
         <TextEditor settings={settings} />
 
+        {/* City / area management */}
+        <CitiesManager />
+
+
         <button
           type="button"
           onClick={openAdd}
@@ -364,7 +375,7 @@ function AdminPage() {
                   </div>
                   <h2 className="line-clamp-1 text-sm font-semibold">{listing.title || "-"}</h2>
                   <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-                    {[t(`city.${listing.city}`), listing.area || listing.address].filter(Boolean).join(" · ") || "-"}
+                    {[cityName(listing.city), listing.area || listing.address].filter(Boolean).join(" · ") || "-"}
                   </p>
                   <p className="mt-1 text-xs font-bold">{formatWon(listing.monthlyRent)}</p>
                 </div>
@@ -488,8 +499,8 @@ function AdminPage() {
                       className={inputCls}
                     >
                       {cities.map((city) => (
-                        <option key={city} value={city}>
-                          {t(`city.${city}`)}
+                        <option key={city.id} value={city.id}>
+                          {city.emoji} {cityLabel(city, lang)}
                         </option>
                       ))}
                     </select>
@@ -772,7 +783,8 @@ function AnalyticsPanel({
   analytics: { views: Record<string, number>; saves: Record<string, number> };
   subs: Set<string>;
 }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const cities = useCities();
   const totalViews = Object.values(analytics.views).reduce((a, b) => a + b, 0);
   const totalSaves = Object.values(analytics.saves).reduce((a, b) => a + b, 0);
 
@@ -781,7 +793,7 @@ function AnalyticsPanel({
   for (const l of listings) {
     cityInterest[l.city] = (cityInterest[l.city] || 0) + (analytics.views[l.id] || 0);
   }
-  const cityList: City[] = ["seoul", "incheon", "gyeonggi", "busan", "other"];
+  const cityList = cities.map((c) => c.id);
 
   // Sort listings by views desc for the per-listing table.
   const sorted = [...listings].sort(
@@ -825,7 +837,7 @@ function AnalyticsPanel({
           return (
             <li key={c} className="text-xs">
               <div className="flex items-center justify-between">
-                <span className="font-medium">{t(`city.${c}`)}</span>
+                <span className="font-medium">{(() => { const ct = cities.find((x) => x.id === c); return ct ? `${ct.emoji} ${cityLabel(ct, lang)}` : c; })()}</span>
                 <span className="text-muted-foreground">
                   {v} {t("admin.analytics.views")}
                   {sub && " · 🔔"}

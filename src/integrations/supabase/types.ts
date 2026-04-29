@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      cities: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          name_en: string
+          name_ko: string
+          name_mn: string
+          name_ru: string
+          name_vi: string
+          name_zh: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string
+          id: string
+          name_en?: string
+          name_ko?: string
+          name_mn?: string
+          name_ru?: string
+          name_vi?: string
+          name_zh?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          name_en?: string
+          name_ko?: string
+          name_mn?: string
+          name_ru?: string
+          name_vi?: string
+          name_zh?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       listings: {
         Row: {
           address: string

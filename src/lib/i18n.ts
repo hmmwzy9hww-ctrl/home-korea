@@ -209,6 +209,23 @@ const mn: Dict = {
   "admin.analytics.cityInterest": "Хотын сонирхол",
   "admin.analytics.views": "Үзэлт",
   "admin.analytics.saves": "Хадгалалт",
+
+  // Cities manager (admin)
+  "cities.title": "Хот / газрын удирдлага",
+  "cities.add": "Шинэ хот нэмэх",
+  "cities.edit": "Хот засах",
+  "cities.field.emoji": "Эмоджи",
+  "cities.field.idHint": "Латин үсгээр (өөрчлөгдөхгүй). Хоосон үлдээвэл автоматаар үүсгэнэ.",
+  "cities.field.mn": "Монгол нэр",
+  "cities.field.ko": "Солонгос нэр",
+  "cities.field.en": "Англи нэр",
+  "cities.field.ru": "Орос нэр",
+  "cities.field.zh": "Хятад нэр",
+  "cities.field.vi": "Вьетнам нэр",
+  "cities.delete.confirm": "{name} хотыг устгах уу?",
+  "cities.err.name": "Ядаж нэг нэр шаардлагатай",
+  "cities.err.save": "Хадгалж чадсангүй",
+  "cities.err.delete": "Устгаж чадсангүй",
 };
 
 const ko: Dict = {
@@ -293,6 +310,14 @@ const ko: Dict = {
   "admin.analytics.totalSaves": "총 찜 수", "admin.analytics.subscribers": "도시 구독자",
   "admin.analytics.byListing": "매물별", "admin.analytics.cityInterest": "도시별 관심도",
   "admin.analytics.views": "조회수", "admin.analytics.saves": "찜",
+  "cities.title": "도시 / 지역 관리", "cities.add": "도시 추가", "cities.edit": "도시 수정",
+  "cities.field.emoji": "이모지",
+  "cities.field.idHint": "영문 ID (변경 불가). 비우면 자동 생성됩니다.",
+  "cities.field.mn": "몽골어 이름", "cities.field.ko": "한국어 이름", "cities.field.en": "영어 이름",
+  "cities.field.ru": "러시아어 이름", "cities.field.zh": "중국어 이름", "cities.field.vi": "베트남어 이름",
+  "cities.delete.confirm": "{name} 도시를 삭제하시겠습니까?",
+  "cities.err.name": "최소 하나의 이름이 필요합니다",
+  "cities.err.save": "저장 실패", "cities.err.delete": "삭제 실패",
 };
 
 const en: Dict = {
@@ -375,6 +400,14 @@ const en: Dict = {
   "admin.analytics.totalSaves": "Total saves", "admin.analytics.subscribers": "City subscribers",
   "admin.analytics.byListing": "Per listing", "admin.analytics.cityInterest": "City interest",
   "admin.analytics.views": "Views", "admin.analytics.saves": "Saves",
+  "cities.title": "City management", "cities.add": "Add city", "cities.edit": "Edit city",
+  "cities.field.emoji": "Emoji",
+  "cities.field.idHint": "Latin id (cannot change later). Leave empty to auto-generate.",
+  "cities.field.mn": "Mongolian name", "cities.field.ko": "Korean name", "cities.field.en": "English name",
+  "cities.field.ru": "Russian name", "cities.field.zh": "Chinese name", "cities.field.vi": "Vietnamese name",
+  "cities.delete.confirm": "Delete city {name}?",
+  "cities.err.name": "At least one name is required",
+  "cities.err.save": "Failed to save", "cities.err.delete": "Failed to delete",
 };
 
 const ru: Dict = {

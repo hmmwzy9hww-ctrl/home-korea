@@ -1,4 +1,5 @@
-export type City = "seoul" | "incheon" | "gyeonggi" | "busan" | "other";
+// Cities are now dynamic (managed in Supabase `cities` table). City is just a string id.
+export type City = string;
 export type RoomType =
   | "oneRoom"
   | "twoRoom"

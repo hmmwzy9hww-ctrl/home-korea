@@ -6,6 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { OptionsGrid } from "@/components/OptionsGrid";
 import { useI18n } from "@/lib/i18n";
 import { useAdmin, useListing, addListing, updateListing } from "@/lib/store";
+import { useCities, cityLabel } from "@/lib/citiesStore";
 import { translateDescription } from "@/server/translate.functions";
 import type { City, Listing, ListingStatus, RoomType } from "@/lib/types";
 
@@ -13,7 +14,7 @@ export const Route = createFileRoute("/admin/edit/$id")({
   component: EditPage,
 });
 
-const cities: City[] = ["seoul", "incheon", "gyeonggi", "busan", "other"];
+// City list now comes from useCities() (Supabase-backed, admin-managed).
 const roomTypes: RoomType[] = [
   "oneRoom",
   "twoRoom",
@@ -58,7 +59,8 @@ const empty = (): Omit<Listing, "id" | "createdAt"> => ({
 });
 
 function EditPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const cities = useCities();
   const isAdmin = useAdmin();
   const { id } = Route.useParams();
   const isNew = id === "new";
@@ -253,7 +255,7 @@ function EditPage() {
                 className={inputCls}
               >
                 {cities.map((c) => (
-                  <option key={c} value={c}>{t(`city.${c}`)}</option>
+                  <option key={c.id} value={c.id}>{c.emoji} {cityLabel(c, lang)}</option>
                 ))}
               </select>
             </Field>
