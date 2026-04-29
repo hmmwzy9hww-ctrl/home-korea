@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Save, X, Upload, Trash2, Languages } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
+import { OptionsGrid } from "@/components/OptionsGrid";
 import { useI18n } from "@/lib/i18n";
 import { useAdmin, useListing, addListing, updateListing } from "@/lib/store";
 import { translateDescription } from "@/server/translate.functions";
@@ -66,7 +67,6 @@ function EditPage() {
 
   const [form, setForm] = useState<Omit<Listing, "id" | "createdAt">>(empty());
   const [photos, setPhotos] = useState<string[]>([]);
-  const [optionsStr, setOptionsStr] = useState("");
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const MAX_PHOTOS = 20;
@@ -76,11 +76,9 @@ function EditPage() {
       const { id: _id, createdAt: _c, ...rest } = existing;
       setForm(rest);
       setPhotos(existing.photos.slice(0, MAX_PHOTOS));
-      setOptionsStr(existing.options.join(", "));
     } else if (isNew) {
       setForm(empty());
       setPhotos([]);
-      setOptionsStr("");
     }
   }, [existing, isNew]);
 
@@ -161,7 +159,7 @@ function EditPage() {
       return;
     }
     const cleanPhotos = photos.filter(Boolean).slice(0, MAX_PHOTOS);
-    const options = optionsStr.split(",").map((o) => o.trim()).filter(Boolean);
+    const options = (form.options || []).filter(Boolean);
 
     // Auto-translate description if it changed (or new) and is non-empty.
     let descriptionTranslations = form.descriptionTranslations ?? {};
@@ -455,12 +453,9 @@ function EditPage() {
           </Field>
 
           <Field label={t("form.options")}>
-            <input
-              type="text"
-              value={optionsStr}
-              onChange={(e) => setOptionsStr(e.target.value)}
-              placeholder={t("form.options.ph")}
-              className={inputCls}
+            <OptionsGrid
+              selected={form.options || []}
+              onChange={(next) => setForm({ ...form, options: next })}
             />
           </Field>
 
