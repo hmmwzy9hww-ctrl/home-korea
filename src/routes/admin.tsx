@@ -779,7 +779,8 @@ function AnalyticsPanel({
   analytics: { views: Record<string, number>; saves: Record<string, number> };
   subs: Set<string>;
 }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const cities = useCities();
   const totalViews = Object.values(analytics.views).reduce((a, b) => a + b, 0);
   const totalSaves = Object.values(analytics.saves).reduce((a, b) => a + b, 0);
 
