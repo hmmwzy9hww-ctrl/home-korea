@@ -37,6 +37,8 @@ function rowToListing(row: Record<string, unknown>): Listing {
     status: (row.status as ListingStatus) ?? "available",
     featured: Boolean(row.featured),
     createdAt: Number(row.created_at ?? Date.now()),
+    latitude: row.latitude == null ? undefined : Number(row.latitude),
+    longitude: row.longitude == null ? undefined : Number(row.longitude),
   };
 }
 
@@ -67,6 +69,8 @@ function listingToRow(l: Partial<Listing>): Record<string, unknown> {
   if (l.status !== undefined) row.status = l.status;
   if (l.featured !== undefined) row.featured = l.featured;
   if (l.createdAt !== undefined) row.created_at = l.createdAt;
+  if (l.latitude !== undefined) row.latitude = l.latitude;
+  if (l.longitude !== undefined) row.longitude = l.longitude;
   return row;
 }
 

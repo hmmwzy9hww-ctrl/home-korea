@@ -95,8 +95,36 @@ function AdminPage() {
   const [optionsStr, setOptionsStr] = useState("");
   const [photos, setPhotos] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [coverDraft, setCoverDraft] = useState(settings.coverImageUrl);
+
+  const geocodeAddress = async () => {
+    const q = form.address.trim();
+    if (!q) {
+      toast.error("Хаягаа эхлээд оруулна уу");
+      return;
+    }
+    setGeocoding(true);
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
+      const res = await fetch(url, { headers: { "Accept-Language": "ko" } });
+      const data = (await res.json()) as Array<{ lat: string; lon: string }>;
+      if (!data?.length) {
+        toast.error("Байршил олдсонгүй");
+        return;
+      }
+      const lat = Number(data[0].lat);
+      const lng = Number(data[0].lon);
+      setForm((f) => ({ ...f, latitude: lat, longitude: lng }));
+      toast.success("Байршил олдлоо");
+    } catch (e) {
+      console.error(e);
+      toast.error("Алдаа гарлаа");
+    } finally {
+      setGeocoding(false);
+    }
+  };
 
   useEffect(() => {
     setCoverDraft((current) => (current === settings.coverImageUrl ? current : settings.coverImageUrl));
@@ -241,6 +269,8 @@ function AdminPage() {
       photos: photos.filter(Boolean).slice(0, MAX_PHOTOS),
       naverMapUrl: "",
       messengerUrl: "",
+      latitude: form.latitude,
+      longitude: form.longitude,
     };
 
     if (editor?.mode === "edit" && editingListing) {
@@ -529,6 +559,49 @@ function AdminPage() {
                       className={inputCls}
                     />
                   </Field>
+                </div>
+
+                <div className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end">
+                  <Field label="Latitude">
+                    <input
+                      type="number"
+                      step="any"
+                      inputMode="decimal"
+                      value={form.latitude ?? ""}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          latitude: e.target.value === "" ? undefined : Number(e.target.value),
+                        })
+                      }
+                      placeholder="37.5665"
+                      className={inputCls}
+                    />
+                  </Field>
+                  <Field label="Longitude">
+                    <input
+                      type="number"
+                      step="any"
+                      inputMode="decimal"
+                      value={form.longitude ?? ""}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          longitude: e.target.value === "" ? undefined : Number(e.target.value),
+                        })
+                      }
+                      placeholder="126.9780"
+                      className={inputCls}
+                    />
+                  </Field>
+                  <button
+                    type="button"
+                    onClick={geocodeAddress}
+                    disabled={geocoding}
+                    className="h-10 rounded-xl border bg-secondary px-3 text-sm font-medium hover:bg-secondary/80 disabled:opacity-50"
+                  >
+                    {geocoding ? "..." : "📍 Хаягаас авах"}
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
