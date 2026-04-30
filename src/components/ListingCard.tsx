@@ -17,6 +17,7 @@ const PAYMENT_LABEL: Record<string, { mn: string; ko: string; en: string; ru: st
 
 export function ListingCard({ listing }: { listing: Listing }) {
   const { t, lang } = useI18n();
+  useReferenceData(); // ensures cache loads + re-renders when ready
   const favs = useFavorites();
   const isFav = favs.has(listing.id);
   const title = listingTitle(listing, lang);
