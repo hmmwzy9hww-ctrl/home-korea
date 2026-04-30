@@ -824,12 +824,12 @@ function AdminPage() {
                 </Field>
 
                 <Field label={t("form.options")}>
-                  <input
-                    type="text"
-                    value={optionsStr}
-                    onChange={(e) => setOptionsStr(e.target.value)}
-                    placeholder={t("form.options.ph")}
-                    className={inputCls}
+                  <AmenityPicker
+                    value={form.options}
+                    onChange={(next) => {
+                      setForm({ ...form, options: next });
+                      setOptionsStr(next.join(", "));
+                    }}
                   />
                 </Field>
 
