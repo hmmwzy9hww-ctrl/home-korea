@@ -241,6 +241,8 @@ function AdminPage() {
       photos: photos.filter(Boolean).slice(0, MAX_PHOTOS),
       naverMapUrl: "",
       messengerUrl: "",
+      latitude: form.latitude,
+      longitude: form.longitude,
     };
 
     if (editor?.mode === "edit" && editingListing) {
