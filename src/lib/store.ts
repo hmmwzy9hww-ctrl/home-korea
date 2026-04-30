@@ -36,7 +36,7 @@ function rowToListing(row: Record<string, unknown>): Listing {
     messengerUrl: row.messenger_url ? String(row.messenger_url) : undefined,
     status: (row.status as ListingStatus) ?? "available",
     featured: Boolean(row.featured),
-    paymentType: (row.payment_type as "monthly" | "quarterly") ?? "monthly",
+    paymentType: (row.payment_type as string) ?? "monthly",
     latitude: row.latitude == null ? null : Number(row.latitude),
     longitude: row.longitude == null ? null : Number(row.longitude),
     descriptionTranslations:
@@ -47,6 +47,9 @@ function rowToListing(row: Record<string, unknown>): Listing {
       row.title_translations && typeof row.title_translations === "object"
         ? (row.title_translations as Record<string, string>)
         : {},
+    approvalStatus: (row.approval_status as "pending" | "approved" | "rejected") ?? "approved",
+    submittedBy: row.submitted_by ? String(row.submitted_by) : null,
+    rejectionReason: String(row.rejection_reason ?? ""),
     createdAt: Number(row.created_at ?? Date.now()),
   };
 }
@@ -85,6 +88,9 @@ function listingToRow(l: Partial<Listing>): Record<string, unknown> {
   if (l.titleTranslations !== undefined)
     row.title_translations = l.titleTranslations ?? {};
   if (l.createdAt !== undefined) row.created_at = l.createdAt;
+  if (l.approvalStatus !== undefined) row.approval_status = l.approvalStatus;
+  if (l.submittedBy !== undefined) row.submitted_by = l.submittedBy;
+  if (l.rejectionReason !== undefined) row.rejection_reason = l.rejectionReason;
   return row;
 }
 
