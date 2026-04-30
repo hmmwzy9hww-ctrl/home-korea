@@ -219,16 +219,6 @@ function AdminPage() {
     setEditor({ mode: "edit", id });
   };
 
-  const submitLogin = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const ok = loginAdmin(pw, ADMIN_PASSWORD);
-    if (!ok) {
-      setErr(t("admin.login.wrong"));
-      return;
-    }
-    setPw("");
-    setErr("");
-  };
 
   const saveListing = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
