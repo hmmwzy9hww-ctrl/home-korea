@@ -7,7 +7,8 @@ import { buildNaverMapSearchUrl } from "@/lib/maps";
 import type { Listing } from "@/lib/types";
 import { formatWon } from "@/lib/format";
 import { listingTitle, listingArea } from "@/lib/listingI18n";
-import { PhotoCarousel } from "./PhotoCarousel";
+// PhotoCarousel intentionally not used here — list cards show only the cover
+// image with native lazy loading to keep scroll performance high.
 import { cn } from "@/lib/utils";
 
 const PAYMENT_LABEL: Record<string, { mn: string; ko: string; en: string; ru: string; zh: string; vi: string }> = {
@@ -33,7 +34,20 @@ export function ListingCard({ listing }: { listing: Listing }) {
   return (
     <article className="group bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover transition-shadow border">
       <div className="relative">
-        <PhotoCarousel photos={listing.photos} alt={title} rounded={false} />
+        <div className="relative w-full aspect-[4/3] overflow-hidden bg-muted">
+          <img
+            src={listing.photos?.[0] || "https://placehold.co/800x600?text=No+photo"}
+            alt={title}
+            className="absolute inset-0 h-full w-full object-cover"
+            loading="lazy"
+            decoding="async"
+          />
+          {listing.photos && listing.photos.length > 1 && (
+            <span className="absolute bottom-2 right-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-background/85 backdrop-blur text-foreground">
+              {listing.photos.length}
+            </span>
+          )}
+        </div>
         <button
           type="button"
           onClick={(e) => {
