@@ -247,24 +247,48 @@ function ListingsPage() {
             </div>
             <div className="px-5 py-4 space-y-5">
               <FilterGroup label={t("filter.city")}>
-                {cities.map((c) => (
-                  <Chip
-                    key={c}
-                    active={(search.city ?? "all") === c}
-                    onClick={() => update({ city: c === "all" ? undefined : (c as City) })}
-                  >
-                    {c === "all" ? t("filter.any") : t(`city.${c}`)}
-                  </Chip>
-                ))}
+                <Chip active={!search.city} onClick={() => update({ city: undefined })}>
+                  {t("filter.any")}
+                </Chip>
+                {parentCities.map((c) => {
+                  const districts = districtsByParent.get(c.id) ?? [];
+                  const parentActive = search.city === c.id || districts.some((d) => d.id === search.city);
+                  return (
+                    <div key={c.id} className="w-full">
+                      <Chip
+                        active={parentActive}
+                        onClick={() => update({ city: c.id as City })}
+                      >
+                        {c.emoji ? `${c.emoji} ` : ""}{cityName(c, lang)}
+                      </Chip>
+                      {parentActive && districts.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-1.5 ml-3">
+                          {districts.map((d) => (
+                            <Chip
+                              key={d.id}
+                              active={search.city === d.id}
+                              onClick={() => update({ city: d.id as City })}
+                            >
+                              {cityName(d, lang)}
+                            </Chip>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </FilterGroup>
               <FilterGroup label={t("filter.roomType")}>
-                {roomTypes.map((r) => (
+                <Chip active={!search.roomType} onClick={() => update({ roomType: undefined })}>
+                  {t("filter.any")}
+                </Chip>
+                {roomTypesData.map((r) => (
                   <Chip
-                    key={r}
-                    active={(search.roomType ?? "all") === r}
-                    onClick={() => update({ roomType: r === "all" ? undefined : (r as RoomType) })}
+                    key={r.id}
+                    active={search.roomType === r.id}
+                    onClick={() => update({ roomType: r.id as RoomType })}
                   >
-                    {r === "all" ? t("filter.any") : t(`room.${r}`)}
+                    {r.emoji ? `${r.emoji} ` : ""}{roomTypeName(r, lang)}
                   </Chip>
                 ))}
               </FilterGroup>
