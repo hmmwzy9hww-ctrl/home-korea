@@ -238,6 +238,14 @@ export function useListings(): Listing[] {
 
 export function useListing(id: string | undefined): Listing | undefined {
   const all = useListings();
+  // When a single listing is opened, lazily fetch the heavy fields
+  // (description + per-language translations) that are omitted from the
+  // lightweight list query.
+  useEffect(() => {
+    if (!id) return;
+    if (fullyLoadedIds.has(id)) return;
+    void fetchOne(id);
+  }, [id]);
   return all.find((l) => l.id === id);
 }
 
