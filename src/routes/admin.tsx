@@ -525,7 +525,7 @@ function MultiLangCrudTable({
   title: string;
   records: AnyRec[];
   iconLabel: string;
-  onAdd: (rec: Omit<AnyRec, "sortOrder"> & { sortOrder?: number; emoji?: string; icon?: string }) => Promise<void>;
+  onAdd: (rec: never) => Promise<void>;
   onUpdate: (id: string, patch: Partial<AnyRec>) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
 }) {
