@@ -31,7 +31,7 @@ export const Route = createFileRoute("/listing/$id")({
 });
 
 function ListingDetailPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { id } = Route.useParams();
   const listing = useListing(id);
   const favs = useFavorites();
