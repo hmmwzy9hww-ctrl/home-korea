@@ -145,7 +145,8 @@ async function fetchAll(attempt = 0): Promise<void> {
     }
     return;
   }
-  memoryStore = (data ?? []).map((r) => rowToListing(r as Record<string, unknown>));
+  const rows = (data ?? []) as unknown as Record<string, unknown>[];
+  memoryStore = rows.map((r) => rowToListing(r));
   loaded = true;
   emit();
 }
