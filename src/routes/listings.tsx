@@ -4,7 +4,7 @@ import { ArrowLeft, List, Map as MapIcon, SlidersHorizontal, X } from "lucide-re
 import { AppShell } from "@/components/AppShell";
 import { ListingCard } from "@/components/ListingCard";
 import { useI18n } from "@/lib/i18n";
-import { useListings } from "@/lib/store";
+import { cityName, roomTypeName, useCitiesData, useListings, useRoomTypesData } from "@/lib/store";
 import { formatWon } from "@/lib/format";
 import type { City, Listing, RoomType, SortKey } from "@/lib/types";
 import { cn } from "@/lib/utils";
