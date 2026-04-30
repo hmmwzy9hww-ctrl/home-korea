@@ -29,6 +29,8 @@ export interface Listing {
   status: ListingStatus;
   featured: boolean;
   createdAt: number;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface Filters {
