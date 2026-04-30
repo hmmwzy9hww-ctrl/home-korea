@@ -105,7 +105,7 @@ function ListingDetailPage() {
           <h1 className="text-xl font-bold leading-tight">{listing.title}</h1>
           <p className="mt-1.5 text-sm text-muted-foreground flex items-center gap-1">
             <MapPin className="h-3.5 w-3.5" />
-            {listing.area ? `${t(`city.${listing.city}`)} · ${listing.area}` : t(`city.${listing.city}`)}
+            {(() => { const cn2 = lookupCityName(listing.city, lang) || t(`city.${listing.city}`); return listing.area ? `${cn2} · ${listing.area}` : cn2; })()}
           </p>
           <p className="mt-1 text-xs text-muted-foreground inline-flex items-center gap-1">
             <Eye className="h-3 w-3" />
