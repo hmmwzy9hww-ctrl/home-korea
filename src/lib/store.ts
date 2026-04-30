@@ -9,6 +9,31 @@ let initialized = false;
 let loaded = false;
 const listeners = new Set<() => void>();
 
+// sessionStorage cache so that repeat navigations within the same tab show
+// listings instantly while a fresh fetch runs in the background.
+const LISTINGS_CACHE_KEY = "ger.listings.cache.v1";
+
+function loadCachedListings(): Listing[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(LISTINGS_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Listing[];
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistCachedListings(rows: Listing[]) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(LISTINGS_CACHE_KEY, JSON.stringify(rows));
+  } catch {
+    // Quota errors are non-fatal — the in-memory store still works.
+  }
+}
+
 // Map a Supabase row (snake_case) to our Listing type (camelCase).
 function rowToListing(row: Record<string, unknown>): Listing {
   return {
@@ -148,6 +173,7 @@ async function fetchAll(attempt = 0): Promise<void> {
   const rows = (data ?? []) as unknown as Record<string, unknown>[];
   memoryStore = rows.map((r) => rowToListing(r));
   loaded = true;
+  persistCachedListings(memoryStore);
   emit();
 }
 
@@ -176,6 +202,12 @@ async function fetchOne(id: string): Promise<void> {
 function ensureInit() {
   if (initialized || typeof window === "undefined") return;
   initialized = true;
+  // Hydrate from sessionStorage cache so the UI shows data immediately.
+  const cached = loadCachedListings();
+  if (cached && cached.length > 0) {
+    memoryStore = cached;
+    loaded = true;
+  }
   void fetchAll();
   // Realtime subscription so all devices stay in sync.
   supabase
@@ -237,6 +269,27 @@ void SAMPLE_FALLBACK;
 
 export function useListings(): Listing[] {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+// True once the first network fetch has completed (or hydrated from cache).
+// Components use this to show skeletons before any data is available.
+export function useListingsLoaded(): boolean {
+  const [v, setV] = useState<boolean>(() => loaded);
+  useEffect(() => {
+    if (loaded) {
+      setV(true);
+      return;
+    }
+    const cb = () => {
+      if (loaded) setV(true);
+    };
+    listeners.add(cb);
+    ensureInit();
+    return () => {
+      listeners.delete(cb);
+    };
+  }, []);
+  return v;
 }
 
 export function useListing(id: string | undefined): Listing | undefined {

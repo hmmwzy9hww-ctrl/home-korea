@@ -3,8 +3,9 @@ import { lazy, Suspense, useMemo, useState } from "react";
 import { ArrowLeft, List, Map as MapIcon, SlidersHorizontal, X } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ListingCard } from "@/components/ListingCard";
+import { ListingCardSkeletonGrid } from "@/components/ListingCardSkeleton";
 import { useI18n } from "@/lib/i18n";
-import { cityName, roomTypeName, useCitiesData, useListings, useRoomTypesData } from "@/lib/store";
+import { cityName, roomTypeName, useCitiesData, useListings, useListingsLoaded, useRoomTypesData } from "@/lib/store";
 import { formatWon } from "@/lib/format";
 import type { City, Listing, RoomType, SortKey } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -65,6 +66,7 @@ function ListingsPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const all = useListings();
+  const loaded = useListingsLoaded();
   const [filterOpen, setFilterOpen] = useState(false);
   const [view, setView] = useState<"list" | "map">("list");
   const [selectedPin, setSelectedPin] = useState<string | null>(null);
@@ -216,7 +218,9 @@ function ListingsPage() {
           </div>
         </div>
 
-        {filtered.length === 0 ? (
+        {!loaded && all.length === 0 ? (
+          <ListingCardSkeletonGrid count={6} />
+        ) : filtered.length === 0 ? (
           <div className="py-16 text-center text-sm text-muted-foreground">
             {t("listings.empty")}
           </div>
