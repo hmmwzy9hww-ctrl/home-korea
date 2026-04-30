@@ -47,7 +47,21 @@ export const Route = createFileRoute("/listings")({
 
 
 function ListingsPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const citiesData = useCitiesData();
+  const roomTypesData = useRoomTypesData();
+  const parentCities = useMemo(() => citiesData.filter((c) => !c.parent_id), [citiesData]);
+  const districtsByParent = useMemo(() => {
+    const m = new Map<string, typeof citiesData>();
+    for (const c of citiesData) {
+      if (c.parent_id) {
+        const arr = m.get(c.parent_id) ?? [];
+        arr.push(c);
+        m.set(c.parent_id, arr);
+      }
+    }
+    return m;
+  }, [citiesData]);
   const search = Route.useSearch();
   const navigate = useNavigate();
   const all = useListings();
