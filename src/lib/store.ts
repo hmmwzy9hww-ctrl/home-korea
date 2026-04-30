@@ -93,10 +93,48 @@ function emit() {
   listeners.forEach((l) => l());
 }
 
+// Lightweight column set used for list/grid/map views. Heavy fields like
+// description and per-language translation maps are fetched on demand by
+// fetchOne() when a user opens a single listing.
+const LIST_COLUMNS = [
+  "id",
+  "title",
+  "room_type",
+  "city",
+  "area",
+  "address",
+  "monthly_rent",
+  "deposit",
+  "maintenance_fee",
+  "maintenance_included",
+  "floor",
+  "size",
+  "subway_station",
+  "subway_minutes",
+  "bus_stop",
+  "bus_minutes",
+  "available_from",
+  "options",
+  "description",
+  "photos",
+  "naver_map_url",
+  "messenger_url",
+  "status",
+  "featured",
+  "created_at",
+  "payment_type",
+  "latitude",
+  "longitude",
+  "title_translations",
+  "area_translations",
+].join(",");
+
+const fullyLoadedIds = new Set<string>();
+
 async function fetchAll(attempt = 0): Promise<void> {
   const { data, error } = await supabase
     .from("listings")
-    .select("*")
+    .select(LIST_COLUMNS)
     .order("created_at", { ascending: false });
   if (error) {
     console.error("[listings] fetch failed", error);
@@ -109,6 +147,28 @@ async function fetchAll(attempt = 0): Promise<void> {
   }
   memoryStore = (data ?? []).map((r) => rowToListing(r as Record<string, unknown>));
   loaded = true;
+  emit();
+}
+
+async function fetchOne(id: string): Promise<void> {
+  const { data, error } = await supabase
+    .from("listings")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) {
+    console.error("[listings] fetch one failed", error);
+    return;
+  }
+  if (!data) return;
+  const full = rowToListing(data as Record<string, unknown>);
+  fullyLoadedIds.add(id);
+  const idx = memoryStore.findIndex((l) => l.id === id);
+  if (idx >= 0) {
+    memoryStore = memoryStore.map((l) => (l.id === id ? full : l));
+  } else {
+    memoryStore = [full, ...memoryStore];
+  }
   emit();
 }
 
