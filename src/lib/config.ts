@@ -1,7 +1,7 @@
 // Ерөнхий тохиргоо. Messenger хуудас болон админ нууц үгийг энд солино.
 export const MESSENGER_PAGE = "my.home.korean";
 export const DEFAULT_MESSENGER_URL = `https://m.me/${MESSENGER_PAGE}`;
-export const ADMIN_PASSWORD = "admin123";
+export const ADMIN_PASSWORD = "Hosko0116@";
 
 // Production site origin used to build clean, shareable listing URLs that
 // preview nicely (with photo + title) inside Facebook Messenger inbox.
