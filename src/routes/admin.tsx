@@ -309,46 +309,51 @@ function AdminPage() {
       paymentType: form.paymentType || "monthly",
     };
 
-    // Show a toast while we translate so admins know what's happening.
-    const translatingToast = toast.loading("Бүх хэл рүү орчуулж байна...");
-    let translations: Awaited<ReturnType<typeof translateListingFields>> = {};
-    try {
-      translations = await translateListingFields({
-        sourceLang: "mn",
-        fields: {
-          title: basePayload.title,
-          description: basePayload.description,
-          address: basePayload.address,
-          area: basePayload.area,
-          options: basePayload.options,
-        },
-      });
-      toast.dismiss(translatingToast);
-    } catch (err) {
-      toast.dismiss(translatingToast);
-      console.error(err);
-      toast.error(
-        "Орчуулга амжилтгүй боллоо. Зар Монгол дээр хадгалагдана.",
-      );
-    }
-
-    const payload: ListingForm = {
-      ...basePayload,
-      titleTranslations: translations.titleTranslations,
-      descriptionTranslations: translations.descriptionTranslations,
-      addressTranslations: translations.addressTranslations,
-      areaTranslations: translations.areaTranslations,
-      optionsTranslations: translations.optionsTranslations,
-    };
-
+    // Save first (Mongolian), then translate in background and patch the row.
+    let savedId: string | undefined;
     if (editor?.mode === "edit" && editingListing) {
-      await updateListing(editingListing.id, payload);
+      savedId = editingListing.id;
+      await updateListing(editingListing.id, basePayload);
     } else {
-      await addListing(payload);
+      const created = await addListing(basePayload);
+      savedId = (created as { id?: string } | undefined)?.id;
     }
 
     toast.success(t("form.saved"));
     closeEditor();
+
+    // Background translation — doesn't block save. Patches translations when ready.
+    void (async () => {
+      const translatingToast = toast.loading("Бусад хэл рүү орчуулж байна...");
+      try {
+        const translations = await translateListingFields({
+          sourceLang: "mn",
+          fields: {
+            title: basePayload.title,
+            description: basePayload.description,
+            address: basePayload.address,
+            area: basePayload.area,
+            options: basePayload.options,
+          },
+        });
+        if (savedId) {
+          await updateListing(savedId, {
+            ...basePayload,
+            titleTranslations: translations.titleTranslations,
+            descriptionTranslations: translations.descriptionTranslations,
+            addressTranslations: translations.addressTranslations,
+            areaTranslations: translations.areaTranslations,
+            optionsTranslations: translations.optionsTranslations,
+          });
+        }
+        toast.dismiss(translatingToast);
+        toast.success("Орчуулга бэлэн боллоо");
+      } catch (err) {
+        toast.dismiss(translatingToast);
+        console.error(err);
+        toast.error("Орчуулга амжилтгүй. Дараа дахин оролдоно уу.");
+      }
+    })();
   };
 
   if (!isAdmin) {
