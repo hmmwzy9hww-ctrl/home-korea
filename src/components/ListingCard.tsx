@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Heart, MapPin, Train, Bus, MessageCircle, ExternalLink, Wallet } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
-import { useFavorites, toggleFavorite } from "@/lib/store";
+import { lookupCityName, lookupRoomTypeName, useFavorites, useReferenceData, toggleFavorite } from "@/lib/store";
 import { buildMessengerUrl } from "@/lib/config";
 import { buildNaverMapSearchUrl } from "@/lib/maps";
 import type { Listing } from "@/lib/types";
@@ -17,6 +17,7 @@ const PAYMENT_LABEL: Record<string, { mn: string; ko: string; en: string; ru: st
 
 export function ListingCard({ listing }: { listing: Listing }) {
   const { t, lang } = useI18n();
+  useReferenceData(); // ensures cache loads + re-renders when ready
   const favs = useFavorites();
   const isFav = favs.has(listing.id);
   const title = listingTitle(listing, lang);
@@ -72,7 +73,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
         </h3>
 
         <div className="flex flex-wrap gap-1.5 text-[11px] text-muted-foreground">
-          <span className="px-2 py-0.5 rounded-md bg-secondary">{t(`room.${listing.roomType}`)}</span>
+          <span className="px-2 py-0.5 rounded-md bg-secondary">{lookupRoomTypeName(listing.roomType, lang) || t(`room.${listing.roomType}`)}</span>
           <span className="px-2 py-0.5 rounded-md bg-secondary">
             {t("card.deposit")} {formatWon(listing.deposit)}
           </span>
@@ -84,7 +85,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
         <div className="text-[12px] text-muted-foreground space-y-1">
           <div className="flex items-center gap-1.5 min-w-0">
             <MapPin className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{area ? `${t(`city.${listing.city}`)} · ${area}` : t(`city.${listing.city}`)}</span>
+            <span className="truncate">{(() => { const cn2 = lookupCityName(listing.city, lang) || t(`city.${listing.city}`); return area ? `${cn2} · ${area}` : cn2; })()}</span>
           </div>
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">

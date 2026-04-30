@@ -4,7 +4,7 @@ import { ArrowLeft, Heart, MapPin, Train, Bus, Calendar, Ruler, Building2, Messa
 import { AppShell } from "@/components/AppShell";
 import { PhotoGrid } from "@/components/PhotoGrid";
 import { useI18n } from "@/lib/i18n";
-import { useListing, useFavorites, toggleFavorite, trackView, useAnalytics } from "@/lib/store";
+import { lookupCityName, lookupRoomTypeName, useListing, useFavorites, useReferenceData, toggleFavorite, trackView, useAnalytics } from "@/lib/store";
 import { buildMessengerUrl } from "@/lib/config";
 import { buildNaverMapSearchUrl } from "@/lib/maps";
 import { formatWon } from "@/lib/format";
@@ -31,11 +31,12 @@ export const Route = createFileRoute("/listing/$id")({
 });
 
 function ListingDetailPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { id } = Route.useParams();
   const listing = useListing(id);
   const favs = useFavorites();
   const analytics = useAnalytics();
+  useReferenceData();
 
   useEffect(() => {
     if (id) trackView(id);
@@ -79,7 +80,7 @@ function ListingDetailPage() {
         >
           <Heart className={cn("h-5 w-5", isFav ? "fill-destructive text-destructive" : "")} />
         </button>
-        <PhotoCarousel photos={listing.photos} alt={listing.title} rounded={false} />
+        <PhotoGrid photos={listing.photos} alt={listingTitle(listing, lang)} />
       </div>
 
       <div className="px-4 py-4 space-y-5">
@@ -104,7 +105,7 @@ function ListingDetailPage() {
           <h1 className="text-xl font-bold leading-tight">{listing.title}</h1>
           <p className="mt-1.5 text-sm text-muted-foreground flex items-center gap-1">
             <MapPin className="h-3.5 w-3.5" />
-            {listing.area ? `${t(`city.${listing.city}`)} · ${listing.area}` : t(`city.${listing.city}`)}
+            {(() => { const cn2 = lookupCityName(listing.city, lang) || t(`city.${listing.city}`); return listing.area ? `${cn2} · ${listing.area}` : cn2; })()}
           </p>
           <p className="mt-1 text-xs text-muted-foreground inline-flex items-center gap-1">
             <Eye className="h-3 w-3" />
@@ -133,7 +134,7 @@ function ListingDetailPage() {
 
         {/* Info rows */}
         <div className="rounded-2xl border bg-card divide-y">
-          <InfoRow icon={Building2} label={t("card.roomType")} value={t(`room.${listing.roomType}`)} />
+          <InfoRow icon={Building2} label={t("card.roomType")} value={lookupRoomTypeName(listing.roomType, lang) || t(`room.${listing.roomType}`)} />
           <InfoRow icon={Ruler} label={t("card.size")} value={`${listing.size} m² · ${listing.floor} ${t("card.floor")}`} />
           <InfoRow icon={Train} label={t("card.subway")} value={`${listing.subwayStation} · ${listing.subwayMinutes} ${t("card.minWalk")}`} />
           <InfoRow icon={Bus} label={t("card.bus")} value={`${listing.busStop} · ${listing.busMinutes} ${t("card.minWalk")}`} />

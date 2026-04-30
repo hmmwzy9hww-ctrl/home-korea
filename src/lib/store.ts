@@ -672,3 +672,117 @@ export async function translateListingFields(
   }
   return data ?? {};
 }
+
+// ===== Cities & Room Types (dynamic from DB) =====
+export type CityRow = {
+  id: string;
+  parent_id: string | null;
+  name_mn: string;
+  name_ko: string;
+  name_en: string;
+  name_ru: string;
+  name_zh: string;
+  name_vi: string;
+  emoji: string;
+  sort_order: number;
+};
+export type RoomTypeRow = Omit<CityRow, "parent_id">;
+
+export function cityName(row: CityRow | undefined, lang: string): string {
+  if (!row) return "";
+  const key = `name_${lang}` as keyof CityRow;
+  const v = row[key];
+  return (typeof v === "string" && v.trim()) ? v : row.name_mn || row.name_ko || row.id;
+}
+export function roomTypeName(row: RoomTypeRow | undefined, lang: string): string {
+  if (!row) return "";
+  const key = `name_${lang}` as keyof RoomTypeRow;
+  const v = row[key];
+  return (typeof v === "string" && v.trim()) ? v : row.name_mn || row.name_ko || row.id;
+}
+
+export function useCitiesData(): CityRow[] {
+  const [rows, setRows] = useState<CityRow[]>([]);
+  useEffect(() => {
+    let active = true;
+    supabase
+      .from("cities")
+      .select("*")
+      .order("sort_order", { ascending: true })
+      .then(({ data }) => {
+        if (active && data) setRows(data as unknown as CityRow[]);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+  return rows;
+}
+
+export function useRoomTypesData(): RoomTypeRow[] {
+  const [rows, setRows] = useState<RoomTypeRow[]>([]);
+  useEffect(() => {
+    let active = true;
+    supabase
+      .from("room_types")
+      .select("*")
+      .order("sort_order", { ascending: true })
+      .then(({ data }) => {
+        if (active && data) setRows(data as unknown as RoomTypeRow[]);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+  return rows;
+}
+
+// Global cache for cities & room types so UI components can resolve names by id synchronously.
+let citiesCache: CityRow[] = [];
+let roomTypesCache: RoomTypeRow[] = [];
+const refDirListeners = new Set<() => void>();
+
+async function loadReferenceDirs() {
+  const [c, r] = await Promise.all([
+    supabase.from("cities").select("*").order("sort_order", { ascending: true }),
+    supabase.from("room_types").select("*").order("sort_order", { ascending: true }),
+  ]);
+  if (c.data) citiesCache = c.data as unknown as CityRow[];
+  if (r.data) roomTypesCache = r.data as unknown as RoomTypeRow[];
+  refDirListeners.forEach((l) => l());
+}
+
+let referenceLoaded = false;
+function ensureReferenceLoaded() {
+  if (referenceLoaded) return;
+  referenceLoaded = true;
+  loadReferenceDirs();
+}
+
+export function lookupCityName(id: string | undefined, lang: string): string {
+  if (!id) return "";
+  ensureReferenceLoaded();
+  const row = citiesCache.find((c) => c.id === id);
+  if (!row) return id;
+  const v = (row as any)[`name_${lang}`];
+  return (typeof v === "string" && v.trim()) ? v : row.name_mn || row.name_ko || id;
+}
+export function lookupRoomTypeName(id: string | undefined, lang: string): string {
+  if (!id) return "";
+  ensureReferenceLoaded();
+  const row = roomTypesCache.find((r) => r.id === id);
+  if (!row) return id;
+  const v = (row as any)[`name_${lang}`];
+  return (typeof v === "string" && v.trim()) ? v : row.name_mn || row.name_ko || id;
+}
+
+export function useReferenceData() {
+  const subscribe = (cb: () => void) => {
+    refDirListeners.add(cb);
+    return () => { refDirListeners.delete(cb); };
+  };
+  const get = () => citiesCache.length + roomTypesCache.length;
+  useSyncExternalStore(subscribe, get, () => 0);
+  ensureReferenceLoaded();
+  return { cities: citiesCache, roomTypes: roomTypesCache };
+}
