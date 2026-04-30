@@ -672,3 +672,67 @@ export async function translateListingFields(
   }
   return data ?? {};
 }
+
+// ===== Cities & Room Types (dynamic from DB) =====
+export type CityRow = {
+  id: string;
+  parent_id: string | null;
+  name_mn: string;
+  name_ko: string;
+  name_en: string;
+  name_ru: string;
+  name_zh: string;
+  name_vi: string;
+  emoji: string;
+  sort_order: number;
+};
+export type RoomTypeRow = Omit<CityRow, "parent_id">;
+
+export function cityName(row: CityRow | undefined, lang: string): string {
+  if (!row) return "";
+  const key = `name_${lang}` as keyof CityRow;
+  const v = row[key];
+  return (typeof v === "string" && v.trim()) ? v : row.name_mn || row.name_ko || row.id;
+}
+export function roomTypeName(row: RoomTypeRow | undefined, lang: string): string {
+  if (!row) return "";
+  const key = `name_${lang}` as keyof RoomTypeRow;
+  const v = row[key];
+  return (typeof v === "string" && v.trim()) ? v : row.name_mn || row.name_ko || row.id;
+}
+
+export function useCitiesData(): CityRow[] {
+  const [rows, setRows] = useState<CityRow[]>([]);
+  useEffect(() => {
+    let active = true;
+    supabase
+      .from("cities")
+      .select("*")
+      .order("sort_order", { ascending: true })
+      .then(({ data }) => {
+        if (active && data) setRows(data as unknown as CityRow[]);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+  return rows;
+}
+
+export function useRoomTypesData(): RoomTypeRow[] {
+  const [rows, setRows] = useState<RoomTypeRow[]>([]);
+  useEffect(() => {
+    let active = true;
+    supabase
+      .from("room_types")
+      .select("*")
+      .order("sort_order", { ascending: true })
+      .then(({ data }) => {
+        if (active && data) setRows(data as unknown as RoomTypeRow[]);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+  return rows;
+}
