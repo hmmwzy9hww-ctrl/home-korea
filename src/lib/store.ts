@@ -290,21 +290,41 @@ export function toggleFavorite(id: string) {
 // ===== Admin auth (simple, client-side, password-protected) =====
 const AUTH_KEY = "ger.admin.v1";
 const authListeners = new Set<() => void>();
+let adminSessionMemory = false;
+
+function readAdminSession(): boolean {
+  if (typeof window === "undefined") return adminSessionMemory;
+  try {
+    return window.localStorage.getItem(AUTH_KEY) === "1";
+  } catch {
+    return adminSessionMemory;
+  }
+}
+
+function writeAdminSession(value: boolean) {
+  adminSessionMemory = value;
+  if (typeof window === "undefined") return;
+  try {
+    if (value) window.localStorage.setItem(AUTH_KEY, "1");
+    else window.localStorage.removeItem(AUTH_KEY);
+  } catch {
+    // Ignore storage restrictions and keep the in-memory session for this tab.
+  }
+}
 
 export function isAdmin(): boolean {
-  if (typeof window === "undefined") return false;
-  return window.localStorage.getItem(AUTH_KEY) === "1";
+  return readAdminSession();
 }
 
 export function loginAdmin(password: string, expected: string): boolean {
-  if (password !== expected) return false;
-  if (typeof window !== "undefined") window.localStorage.setItem(AUTH_KEY, "1");
+  if (password.trim() !== expected) return false;
+  writeAdminSession(true);
   authListeners.forEach((l) => l());
   return true;
 }
 
 export function logoutAdmin() {
-  if (typeof window !== "undefined") window.localStorage.removeItem(AUTH_KEY);
+  writeAdminSession(false);
   authListeners.forEach((l) => l());
 }
 
