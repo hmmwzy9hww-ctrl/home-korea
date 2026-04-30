@@ -185,3 +185,83 @@ export function ListingCard({ listing }: { listing: Listing }) {
     </article>
   );
 }
+
+/**
+ * Facebook-style mini grid for listing cards.
+ * 1 photo: full cover. 2: side-by-side. 3: 1 large + 2 small.
+ * 4+: 1 large + up to 4 small (2x2). Last tile shows +N overlay if more remain.
+ * Compact aspect ratio so cards stay scannable in a list/grid.
+ */
+function CardPhotoGrid({ photos, alt }: { photos: string[]; alt: string }) {
+  const safe = (photos || []).filter(Boolean);
+  if (safe.length === 0) {
+    return (
+      <div className="relative w-full aspect-[4/3] overflow-hidden bg-muted">
+        <img
+          src="https://placehold.co/800x600?text=No+photo"
+          alt={alt}
+          className="absolute inset-0 h-full w-full object-cover"
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+    );
+  }
+  if (safe.length === 1) {
+    return (
+      <div className="relative w-full aspect-[4/3] overflow-hidden bg-muted">
+        <img
+          src={safe[0]}
+          alt={alt}
+          className="absolute inset-0 h-full w-full object-cover"
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+    );
+  }
+  if (safe.length === 2) {
+    return (
+      <div className="grid grid-cols-2 gap-0.5 aspect-[4/3] w-full bg-background">
+        {safe.map((src, i) => (
+          <div key={i} className="relative overflow-hidden bg-muted">
+            <img src={src} alt={`${alt} ${i + 1}`} className="absolute inset-0 h-full w-full object-cover" loading="lazy" decoding="async" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  // 3+ photos: FB-style 1 large + side column
+  const display = safe.slice(0, 5);
+  const remaining = Math.max(0, safe.length - display.length);
+  const sideCount = display.length - 1; // 2..4
+  return (
+    <div className="grid grid-cols-2 gap-0.5 aspect-[4/3] w-full bg-background">
+      <div className="relative overflow-hidden bg-muted">
+        <img src={display[0]} alt={alt} className="absolute inset-0 h-full w-full object-cover" loading="lazy" decoding="async" />
+      </div>
+      <div
+        className={cn(
+          "grid gap-0.5",
+          sideCount >= 3 ? "grid-cols-2" : "grid-cols-1",
+          sideCount >= 2 ? "grid-rows-2" : "grid-rows-1",
+        )}
+      >
+        {display.slice(1).map((src, i) => {
+          const isLast = i === sideCount - 1;
+          const overlay = isLast && remaining > 0;
+          return (
+            <div key={i} className="relative overflow-hidden bg-muted">
+              <img src={src} alt={`${alt} ${i + 2}`} className="absolute inset-0 h-full w-full object-cover" loading="lazy" decoding="async" />
+              {overlay && (
+                <span className="absolute inset-0 grid place-items-center bg-foreground/55 text-background text-base font-bold">
+                  +{remaining}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
