@@ -11,7 +11,7 @@ import { formatWon } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { listingTitle, listingDescription, listingAddress, listingArea, listingOptions } from "@/lib/listingI18n";
 import { AmenityIcon } from "@/components/AmenityIcon";
-import { useAutoTranslatedDescription } from "@/lib/useAutoTranslate";
+import { useAutoTranslatedDescription, useAutoTranslatedTitle } from "@/lib/useAutoTranslate";
 
 const PAYMENT_LABEL: Record<string, Record<string, string>> = {
   monthly: { mn: "Сар бүр", ko: "월세", en: "Monthly", ru: "Ежемесячно", zh: "月租", vi: "Hàng tháng" },
@@ -60,12 +60,22 @@ function ListingDetailPage() {
 
   const isFav = favs.has(listing.id);
   const titleI18n = listingTitle(listing, lang);
+  const { text: titleAuto } = useAutoTranslatedTitle({
+    listingId: listing.id,
+    targetLang: lang,
+    title: listing.title,
+    existing: listing.titleTranslations as Record<string, string | undefined> | undefined,
+    descriptionSource: listing.description,
+    descriptionExisting: listing.descriptionTranslations as Record<string, string | undefined> | undefined,
+  });
   const descriptionI18n = listingDescription(listing, lang);
   const { text: descriptionAuto, loading: descLoading } = useAutoTranslatedDescription({
     listingId: listing.id,
     targetLang: lang,
     description: listing.description,
     existing: listing.descriptionTranslations as Record<string, string | undefined> | undefined,
+    titleSource: listing.title,
+    titleExisting: listing.titleTranslations as Record<string, string | undefined> | undefined,
   });
   const addressI18n = listingAddress(listing, lang);
   const areaI18n = listingArea(listing, lang);
