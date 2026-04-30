@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import type { Listing } from "@/lib/types";
 import { useI18n } from "@/lib/i18n";
+import { useCityName } from "@/lib/useCityName";
 import { formatWon } from "@/lib/format";
 
 const LeafletMap = lazy(() =>
@@ -22,6 +23,7 @@ interface Props {
  */
 export function HomeMap({ listings }: Props) {
   const { t } = useI18n();
+  const cityName = useCityName();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = listings.find((l) => l.id === selectedId) || null;
 
@@ -68,7 +70,7 @@ export function HomeMap({ listings }: Props) {
             <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold truncate pr-6">{selected.title}</div>
               <div className="text-xs text-muted-foreground truncate">
-                {[t(`city.${selected.city}`), t(`room.${selected.roomType}`)]
+                {[cityName(selected.city), t(`room.${selected.roomType}`)]
                   .filter(Boolean)
                   .join(" · ")}
               </div>

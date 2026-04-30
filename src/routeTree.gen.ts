@@ -11,10 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ListingsRouteImport } from './routes/listings'
 import { Route as FavoritesRouteImport } from './routes/favorites'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ListingIdRouteImport } from './routes/listing.$id'
-import { Route as AdminEditIdRouteImport } from './routes/admin.edit.$id'
 
 const ListingsRoute = ListingsRouteImport.update({
   id: '/listings',
@@ -24,11 +22,6 @@ const ListingsRoute = ListingsRouteImport.update({
 const FavoritesRoute = FavoritesRouteImport.update({
   id: '/favorites',
   path: '/favorites',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -41,67 +34,36 @@ const ListingIdRoute = ListingIdRouteImport.update({
   path: '/listing/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminEditIdRoute = AdminEditIdRouteImport.update({
-  id: '/edit/$id',
-  path: '/edit/$id',
-  getParentRoute: () => AdminRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
   '/favorites': typeof FavoritesRoute
   '/listings': typeof ListingsRoute
   '/listing/$id': typeof ListingIdRoute
-  '/admin/edit/$id': typeof AdminEditIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
   '/favorites': typeof FavoritesRoute
   '/listings': typeof ListingsRoute
   '/listing/$id': typeof ListingIdRoute
-  '/admin/edit/$id': typeof AdminEditIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
   '/favorites': typeof FavoritesRoute
   '/listings': typeof ListingsRoute
   '/listing/$id': typeof ListingIdRoute
-  '/admin/edit/$id': typeof AdminEditIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/admin'
-    | '/favorites'
-    | '/listings'
-    | '/listing/$id'
-    | '/admin/edit/$id'
+  fullPaths: '/' | '/favorites' | '/listings' | '/listing/$id'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/admin'
-    | '/favorites'
-    | '/listings'
-    | '/listing/$id'
-    | '/admin/edit/$id'
-  id:
-    | '__root__'
-    | '/'
-    | '/admin'
-    | '/favorites'
-    | '/listings'
-    | '/listing/$id'
-    | '/admin/edit/$id'
+  to: '/' | '/favorites' | '/listings' | '/listing/$id'
+  id: '__root__' | '/' | '/favorites' | '/listings' | '/listing/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRouteWithChildren
   FavoritesRoute: typeof FavoritesRoute
   ListingsRoute: typeof ListingsRoute
   ListingIdRoute: typeof ListingIdRoute
@@ -123,13 +85,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FavoritesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -144,29 +99,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ListingIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/edit/$id': {
-      id: '/admin/edit/$id'
-      path: '/edit/$id'
-      fullPath: '/admin/edit/$id'
-      preLoaderRoute: typeof AdminEditIdRouteImport
-      parentRoute: typeof AdminRoute
-    }
   }
 }
 
-interface AdminRouteChildren {
-  AdminEditIdRoute: typeof AdminEditIdRoute
-}
-
-const AdminRouteChildren: AdminRouteChildren = {
-  AdminEditIdRoute: AdminEditIdRoute,
-}
-
-const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRouteWithChildren,
   FavoritesRoute: FavoritesRoute,
   ListingsRoute: ListingsRoute,
   ListingIdRoute: ListingIdRoute,

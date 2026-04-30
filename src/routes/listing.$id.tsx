@@ -20,6 +20,8 @@ import {
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
+import { OptionsGrid } from "@/components/OptionsGrid";
+import { OptionChips } from "@/components/OptionChips";
 import { useI18n } from "@/lib/i18n";
 import {
   useListing,
@@ -30,6 +32,7 @@ import {
   useAdmin,
   updateListing,
 } from "@/lib/store";
+import { translateDescription } from "@/server/translate.functions";
 import { buildMessengerUrl } from "@/lib/config";
 import { buildNaverMapSearchUrl } from "@/lib/maps";
 import { formatWon } from "@/lib/format";
@@ -50,7 +53,7 @@ export const Route = createFileRoute("/listing/$id")({
 });
 
 function ListingDetailPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { id } = Route.useParams();
   const listing = useListing(id);
   const favs = useFavorites();
@@ -61,7 +64,7 @@ function ListingDetailPage() {
   const [editingDesc, setEditingDesc] = useState(false);
   const [descDraft, setDescDraft] = useState("");
   const [editingOpts, setEditingOpts] = useState(false);
-  const [optsDraft, setOptsDraft] = useState("");
+  const [optsDraft, setOptsDraft] = useState<string[]>([]);
 
   useEffect(() => {
     if (id) trackView(id);
@@ -94,7 +97,16 @@ function ListingDetailPage() {
   };
   const saveDesc = async () => {
     try {
-      await updateListing(listing.id, { description: descDraft.trim() });
+      const text = descDraft.trim();
+      let descriptionTranslations: Record<string, string> = {};
+      if (text) {
+        try {
+          descriptionTranslations = (await translateDescription({ data: { text } })) ?? {};
+        } catch (err) {
+          console.error("translate failed", err);
+        }
+      }
+      await updateListing(listing.id, { description: text, descriptionTranslations });
       toast.success(t("form.saved"));
       setEditingDesc(false);
     } catch {
@@ -103,16 +115,12 @@ function ListingDetailPage() {
   };
 
   const startEditOpts = () => {
-    setOptsDraft((listing.options || []).join(", "));
+    setOptsDraft([...(listing.options || [])]);
     setEditingOpts(true);
   };
   const saveOpts = async () => {
     try {
-      const options = optsDraft
-        .split(",")
-        .map((o) => o.trim())
-        .filter(Boolean);
-      await updateListing(listing.id, { options });
+      await updateListing(listing.id, { options: optsDraft });
       toast.success(t("form.saved"));
       setEditingOpts(false);
     } catch {
@@ -160,7 +168,7 @@ function ListingDetailPage() {
               {listing.status === "available" ? t("card.available") : t("card.unavailable")}
             </span>
           </div>
-          <h1 className="text-xl font-bold leading-tight">{listing.title}</h1>
+          <h1 className="text-xl font-bold leading-tight">{(lang !== "mn" && listing.titleTranslations?.[lang]) || listing.title}</h1>
           <p className="mt-1.5 text-sm text-muted-foreground flex items-center gap-1">
             <MapPin className="h-3.5 w-3.5" />
             {listing.area ? `${t(`city.${listing.city}`)} · ${listing.area}` : t(`city.${listing.city}`)}
@@ -253,15 +261,7 @@ function ListingDetailPage() {
 
           {editingOpts ? (
             <div className="space-y-2">
-              <input
-                type="text"
-                value={optsDraft}
-                onChange={(e) => setOptsDraft(e.target.value)}
-                placeholder={t("form.options.ph")}
-                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                autoFocus
-              />
-              <p className="text-[11px] text-muted-foreground">{t("form.options")}</p>
+              <OptionsGrid selected={optsDraft} onChange={setOptsDraft} />
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -282,13 +282,7 @@ function ListingDetailPage() {
               </div>
             </div>
           ) : listing.options.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5">
-              {listing.options.map((o) => (
-                <span key={o} className="text-xs px-2.5 py-1 rounded-full bg-secondary">
-                  {o}
-                </span>
-              ))}
-            </div>
+            <OptionChips options={listing.options} />
           ) : (
             <p className="text-xs text-muted-foreground">—</p>
           )}
@@ -339,11 +333,30 @@ function ListingDetailPage() {
                 </button>
               </div>
             </div>
-          ) : (
-            <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
-              {listing.description || (isAdmin ? "—" : "")}
-            </p>
-          )}
+          ) : (() => {
+            const translations = listing.descriptionTranslations || {};
+            const translated = lang !== "mn" ? translations[lang] : "";
+            const display = translated || listing.description;
+            const showOriginal = !!translated && !!listing.description && translated !== listing.description;
+            return (
+              <div className="space-y-2">
+                <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
+                  {display || (isAdmin ? "—" : "")}
+                </p>
+                {translated && (
+                  <p className="text-[10px] text-muted-foreground italic">
+                    🌐 AI translation
+                  </p>
+                )}
+                {showOriginal && (
+                  <details className="text-xs text-muted-foreground">
+                    <summary className="cursor-pointer">Эх (Монгол)</summary>
+                    <p className="mt-1 whitespace-pre-line">{listing.description}</p>
+                  </details>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Map */}
