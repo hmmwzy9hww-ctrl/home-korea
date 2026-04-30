@@ -20,10 +20,10 @@ function AuthPage() {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // If already signed in as admin, bounce to /admin.
+  // Only redirect once the admin role check has completed.
   useEffect(() => {
     if (!loading && session && isAdmin) {
-      navigate({ to: "/admin" });
+      navigate({ to: "/admin", replace: true });
     }
   }, [loading, session, isAdmin, navigate]);
 
@@ -36,13 +36,41 @@ function AuthPage() {
     setSubmitting(true);
     try {
       if (mode === "signin") {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: email.trim(),
           password,
         });
         if (error) throw error;
         toast.success("Тавтай морил!");
-        navigate({ to: "/admin" });
+
+        // Wait for the role lookup in useAuth to complete before redirecting.
+        // If the account is not admin, keep the user on /auth and sign them back out.
+        let redirected = false;
+        for (let attempt = 0; attempt < 20; attempt += 1) {
+          const { data: sessionData } = await supabase.auth.getSession();
+          const userId = sessionData.session?.user?.id ?? data.session?.user?.id;
+          if (!userId) break;
+
+          const { data: roleRow, error: roleError } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", userId)
+            .eq("role", "admin")
+            .maybeSingle();
+
+          if (!roleError && roleRow) {
+            navigate({ to: "/admin", replace: true });
+            redirected = true;
+            break;
+          }
+
+          await new Promise((resolve) => window.setTimeout(resolve, 150));
+        }
+
+        if (!redirected) {
+          await supabase.auth.signOut();
+          toast.error("Таны бүртгэлд admin эрх олдоогүй байна.");
+        }
       } else {
         const { error } = await supabase.auth.signUp({
           email: email.trim(),
