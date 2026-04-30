@@ -41,6 +41,8 @@ import {
 } from "@/lib/store";
 import type { City, Listing, ListingStatus, RoomType } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { AmenityPicker } from "@/components/AmenityPicker";
+import { AmenityManager } from "@/components/AmenityManager";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -441,6 +443,9 @@ function AdminPage() {
         {/* Editable site texts */}
         <TextEditor settings={settings} />
 
+        {/* Amenities (icon-based options) manager */}
+        <AmenityManager />
+
         <button
           type="button"
           onClick={openAdd}
@@ -822,12 +827,12 @@ function AdminPage() {
                 </Field>
 
                 <Field label={t("form.options")}>
-                  <input
-                    type="text"
-                    value={optionsStr}
-                    onChange={(e) => setOptionsStr(e.target.value)}
-                    placeholder={t("form.options.ph")}
-                    className={inputCls}
+                  <AmenityPicker
+                    value={form.options}
+                    onChange={(next) => {
+                      setForm({ ...form, options: next });
+                      setOptionsStr(next.join(", "));
+                    }}
                   />
                 </Field>
 

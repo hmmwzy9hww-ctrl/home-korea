@@ -931,3 +931,78 @@ export function useReferenceData() {
   ensureReferenceLoaded();
   return { cities: citiesCache, roomTypes: roomTypesCache };
 }
+
+// ===== Amenities (icon-based options) =====
+export type AmenityRow = {
+  id: string;
+  icon: string;
+  icon_url: string;
+  name_mn: string;
+  name_ko: string;
+  name_en: string;
+  name_ru: string;
+  name_zh: string;
+  name_vi: string;
+  sort_order: number;
+};
+
+let amenitiesCache: AmenityRow[] = [];
+const amenityListeners = new Set<() => void>();
+let amenitiesLoaded = false;
+
+async function loadAmenities() {
+  const { data, error } = await supabase
+    .from("listing_amenities")
+    .select("*")
+    .order("sort_order", { ascending: true });
+  if (error) {
+    console.error("[amenities] fetch failed", error);
+    return;
+  }
+  amenitiesCache = (data ?? []) as unknown as AmenityRow[];
+  amenitiesLoaded = true;
+  amenityListeners.forEach((l) => l());
+}
+
+function ensureAmenitiesLoaded() {
+  if (amenitiesLoaded) return;
+  amenitiesLoaded = true; // mark to prevent double-load
+  void loadAmenities().then(() => {
+    // ensure listeners are notified again once first load resolves
+    amenityListeners.forEach((l) => l());
+  });
+}
+
+export function useAmenities(): AmenityRow[] {
+  const subscribe = (cb: () => void) => {
+    amenityListeners.add(cb);
+    return () => { amenityListeners.delete(cb); };
+  };
+  const get = () => amenitiesCache.length;
+  useSyncExternalStore(subscribe, get, () => 0);
+  ensureAmenitiesLoaded();
+  return amenitiesCache;
+}
+
+export function lookupAmenity(id: string): AmenityRow | undefined {
+  ensureAmenitiesLoaded();
+  return amenitiesCache.find((a) => a.id === id);
+}
+
+export function amenityName(row: AmenityRow | undefined, lang: string): string {
+  if (!row) return "";
+  const v = (row as unknown as Record<string, string>)[`name_${lang}`];
+  return (typeof v === "string" && v.trim()) ? v : row.name_mn || row.name_en || row.id;
+}
+
+export async function upsertAmenity(row: Partial<AmenityRow> & { id: string }) {
+  const { error } = await supabase.from("listing_amenities").upsert(row as never, { onConflict: "id" });
+  if (error) throw error;
+  await loadAmenities();
+}
+
+export async function deleteAmenity(id: string) {
+  const { error } = await supabase.from("listing_amenities").delete().eq("id", id);
+  if (error) throw error;
+  await loadAmenities();
+}

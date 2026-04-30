@@ -4,12 +4,13 @@ import { ArrowLeft, Heart, MapPin, Train, Bus, Calendar, Ruler, Building2, Messa
 import { AppShell } from "@/components/AppShell";
 import { PhotoGrid } from "@/components/PhotoGrid";
 import { useI18n } from "@/lib/i18n";
-import { lookupCityName, lookupRoomTypeName, useListing, useFavorites, useReferenceData, toggleFavorite, trackView, useAnalytics } from "@/lib/store";
+import { lookupCityName, lookupRoomTypeName, useListing, useFavorites, useReferenceData, toggleFavorite, trackView, useAnalytics, useAmenities, amenityName } from "@/lib/store";
 import { buildMessengerUrl } from "@/lib/config";
 import { buildNaverMapSearchUrl } from "@/lib/maps";
 import { formatWon } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { listingTitle, listingDescription, listingAddress, listingArea, listingOptions } from "@/lib/listingI18n";
+import { AmenityIcon } from "@/components/AmenityIcon";
 
 const PAYMENT_LABEL: Record<string, Record<string, string>> = {
   monthly: { mn: "Сар бүр", ko: "월세", en: "Monthly", ru: "Ежемесячно", zh: "月租", vi: "Hàng tháng" },
@@ -37,6 +38,7 @@ function ListingDetailPage() {
   const favs = useFavorites();
   const analytics = useAnalytics();
   useReferenceData();
+  const amenities = useAmenities();
 
   useEffect(() => {
     if (id) trackView(id);
@@ -148,15 +150,26 @@ function ListingDetailPage() {
         </div>
 
         {/* Options */}
-        {optionsI18n.length > 0 && (
+        {listing.options && listing.options.length > 0 && (
           <div>
             <h2 className="font-bold text-sm mb-2">{t("card.options")}</h2>
             <div className="flex flex-wrap gap-1.5">
-              {optionsI18n.map((o, i) => (
-                <span key={`${o}-${i}`} className="text-xs px-2.5 py-1 rounded-full bg-secondary">
-                  {o}
-                </span>
-              ))}
+              {listing.options.map((opt, i) => {
+                const a = amenities.find((x) => x.id === opt);
+                // Fallback: localized translation from options_translations or raw string
+                const label = a ? amenityName(a, lang) : (optionsI18n[i] ?? opt);
+                return (
+                  <span
+                    key={`${opt}-${i}`}
+                    className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-secondary"
+                  >
+                    {a ? (
+                      <AmenityIcon iconUrl={a.icon_url} iconName={a.icon} className="h-3.5 w-3.5" alt={label} />
+                    ) : null}
+                    {label}
+                  </span>
+                );
+              })}
             </div>
           </div>
         )}
