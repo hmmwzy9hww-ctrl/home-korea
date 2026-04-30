@@ -1,1 +1,0 @@
-ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS payment_type TEXT NOT NULL DEFAULT 'monthly';

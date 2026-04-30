@@ -1,38 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import {
-  ArrowLeft,
-  Heart,
-  MapPin,
-  Train,
-  Bus,
-  Calendar,
-  Ruler,
-  Building2,
-  MessageCircle,
-  ExternalLink,
-  Eye,
-  CreditCard,
-  Pencil,
-  Save,
-  X,
-} from "lucide-react";
-import { toast } from "sonner";
+import { useEffect } from "react";
+import { ArrowLeft, Heart, MapPin, Train, Bus, Calendar, Ruler, Building2, MessageCircle, ExternalLink, Eye } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
-import { OptionsGrid } from "@/components/OptionsGrid";
-import { OptionChips } from "@/components/OptionChips";
 import { useI18n } from "@/lib/i18n";
-import {
-  useListing,
-  useFavorites,
-  toggleFavorite,
-  trackView,
-  useAnalytics,
-  useAdmin,
-  updateListing,
-} from "@/lib/store";
-import { translateDescription } from "@/server/translate.functions";
+import { useListing, useFavorites, toggleFavorite, trackView, useAnalytics } from "@/lib/store";
 import { buildMessengerUrl } from "@/lib/config";
 import { buildNaverMapSearchUrl } from "@/lib/maps";
 import { formatWon } from "@/lib/format";
@@ -53,18 +25,11 @@ export const Route = createFileRoute("/listing/$id")({
 });
 
 function ListingDetailPage() {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const { id } = Route.useParams();
   const listing = useListing(id);
   const favs = useFavorites();
   const analytics = useAnalytics();
-  const isAdmin = useAdmin();
-
-  // Inline edit state for admin
-  const [editingDesc, setEditingDesc] = useState(false);
-  const [descDraft, setDescDraft] = useState("");
-  const [editingOpts, setEditingOpts] = useState(false);
-  const [optsDraft, setOptsDraft] = useState<string[]>([]);
 
   useEffect(() => {
     if (id) trackView(id);
@@ -89,44 +54,6 @@ function ListingDetailPage() {
     listingTitle: listing.title,
   });
   const mapUrl = listing.address?.trim() ? buildNaverMapSearchUrl(listing.address.trim()) : "";
-  const paymentType = listing.paymentType ?? "monthly";
-
-  const startEditDesc = () => {
-    setDescDraft(listing.description || "");
-    setEditingDesc(true);
-  };
-  const saveDesc = async () => {
-    try {
-      const text = descDraft.trim();
-      let descriptionTranslations: Record<string, string> = {};
-      if (text) {
-        try {
-          descriptionTranslations = (await translateDescription({ data: { text } })) ?? {};
-        } catch (err) {
-          console.error("translate failed", err);
-        }
-      }
-      await updateListing(listing.id, { description: text, descriptionTranslations });
-      toast.success(t("form.saved"));
-      setEditingDesc(false);
-    } catch {
-      toast.error("Error");
-    }
-  };
-
-  const startEditOpts = () => {
-    setOptsDraft([...(listing.options || [])]);
-    setEditingOpts(true);
-  };
-  const saveOpts = async () => {
-    try {
-      await updateListing(listing.id, { options: optsDraft });
-      toast.success(t("form.saved"));
-      setEditingOpts(false);
-    } catch {
-      toast.error("Error");
-    }
-  };
 
   return (
     <AppShell showSearch={false}>
@@ -168,7 +95,7 @@ function ListingDetailPage() {
               {listing.status === "available" ? t("card.available") : t("card.unavailable")}
             </span>
           </div>
-          <h1 className="text-xl font-bold leading-tight">{(lang !== "mn" && listing.titleTranslations?.[lang]) || listing.title}</h1>
+          <h1 className="text-xl font-bold leading-tight">{listing.title}</h1>
           <p className="mt-1.5 text-sm text-muted-foreground flex items-center gap-1">
             <MapPin className="h-3.5 w-3.5" />
             {listing.area ? `${t(`city.${listing.city}`)} · ${listing.area}` : t(`city.${listing.city}`)}
@@ -177,41 +104,6 @@ function ListingDetailPage() {
             <Eye className="h-3 w-3" />
             {t("card.views", { count: analytics.views[listing.id] || 0 })}
           </p>
-        </div>
-
-        {/* Payment type highlight */}
-        <div className="rounded-2xl border border-primary/30 bg-primary/5 p-3 flex items-center gap-3">
-          <div className="grid h-9 w-9 place-items-center rounded-full bg-primary/15 text-primary shrink-0">
-            <CreditCard className="h-4 w-4" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
-              {t("card.paymentType")}
-            </div>
-            <div className="text-sm font-semibold">
-              {paymentType === "quarterly" ? t("payment.quarterly") : t("payment.monthly")}
-            </div>
-          </div>
-          {isAdmin && (
-            <select
-              value={paymentType}
-              onChange={async (e) => {
-                try {
-                  await updateListing(listing.id, {
-                    paymentType: e.target.value as "monthly" | "quarterly",
-                  });
-                  toast.success(t("form.saved"));
-                } catch {
-                  toast.error("Error");
-                }
-              }}
-              className="text-xs rounded-md border bg-background px-2 py-1"
-              aria-label={t("form.paymentType")}
-            >
-              <option value="monthly">{t("payment.monthly")}</option>
-              <option value="quarterly">{t("payment.quarterly")}</option>
-            </select>
-          )}
         </div>
 
         {/* Price block */}
@@ -243,120 +135,24 @@ function ListingDetailPage() {
           <InfoRow icon={MapPin} label={t("card.address")} value={listing.address} />
         </div>
 
-        {/* Options (editable by admin) */}
-        <div>
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="font-bold text-sm">{t("card.options")}</h2>
-            {isAdmin && !editingOpts && (
-              <button
-                type="button"
-                onClick={startEditOpts}
-                className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium hover:bg-secondary"
-              >
-                <Pencil className="h-3 w-3" />
-                {t("admin.edit")}
-              </button>
-            )}
-          </div>
-
-          {editingOpts ? (
-            <div className="space-y-2">
-              <OptionsGrid selected={optsDraft} onChange={setOptsDraft} />
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={saveOpts}
-                  className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
-                >
-                  <Save className="h-3.5 w-3.5" />
-                  {t("form.save")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEditingOpts(false)}
-                  className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
-                >
-                  <X className="h-3.5 w-3.5" />
-                  {t("form.cancel")}
-                </button>
-              </div>
+        {/* Options */}
+        {listing.options.length > 0 && (
+          <div>
+            <h2 className="font-bold text-sm mb-2">{t("card.options")}</h2>
+            <div className="flex flex-wrap gap-1.5">
+              {listing.options.map((o) => (
+                <span key={o} className="text-xs px-2.5 py-1 rounded-full bg-secondary">
+                  {o}
+                </span>
+              ))}
             </div>
-          ) : listing.options.length > 0 ? (
-            <OptionChips options={listing.options} />
-          ) : (
-            <p className="text-xs text-muted-foreground">—</p>
-          )}
-        </div>
-
-        {/* Description (editable by admin) */}
-        <div>
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="font-bold text-sm">{t("card.description")}</h2>
-            {isAdmin && !editingDesc && (
-              <button
-                type="button"
-                onClick={startEditDesc}
-                className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium hover:bg-secondary"
-              >
-                <Pencil className="h-3 w-3" />
-                {t("admin.edit")}
-              </button>
-            )}
           </div>
+        )}
 
-          {editingDesc ? (
-            <div className="space-y-2">
-              <textarea
-                value={descDraft}
-                onChange={(e) => setDescDraft(e.target.value)}
-                placeholder={t("form.description.ph")}
-                rows={6}
-                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                autoFocus
-              />
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={saveDesc}
-                  className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
-                >
-                  <Save className="h-3.5 w-3.5" />
-                  {t("form.save")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEditingDesc(false)}
-                  className="inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-secondary"
-                >
-                  <X className="h-3.5 w-3.5" />
-                  {t("form.cancel")}
-                </button>
-              </div>
-            </div>
-          ) : (() => {
-            const translations = listing.descriptionTranslations || {};
-            const translated = lang !== "mn" ? translations[lang] : "";
-            const display = translated || listing.description;
-            const showOriginal = !!translated && !!listing.description && translated !== listing.description;
-            return (
-              <div className="space-y-2">
-                <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
-                  {display || (isAdmin ? "—" : "")}
-                </p>
-                {translated && (
-                  <p className="text-[10px] text-muted-foreground italic">
-                    🌐 AI translation
-                  </p>
-                )}
-                {showOriginal && (
-                  <details className="text-xs text-muted-foreground">
-                    <summary className="cursor-pointer">Эх (Монгол)</summary>
-                    <p className="mt-1 whitespace-pre-line">{listing.description}</p>
-                  </details>
-                )}
-              </div>
-            );
-          })()}
+        {/* Description */}
+        <div>
+          <h2 className="font-bold text-sm mb-2">{t("card.description")}</h2>
+          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">{listing.description}</p>
         </div>
 
         {/* Map */}

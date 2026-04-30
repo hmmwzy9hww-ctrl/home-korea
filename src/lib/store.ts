@@ -36,20 +36,6 @@ function rowToListing(row: Record<string, unknown>): Listing {
     messengerUrl: row.messenger_url ? String(row.messenger_url) : undefined,
     status: (row.status as ListingStatus) ?? "available",
     featured: Boolean(row.featured),
-    paymentType: (row.payment_type as string) ?? "monthly",
-    latitude: row.latitude == null ? null : Number(row.latitude),
-    longitude: row.longitude == null ? null : Number(row.longitude),
-    descriptionTranslations:
-      row.description_translations && typeof row.description_translations === "object"
-        ? (row.description_translations as Record<string, string>)
-        : {},
-    titleTranslations:
-      row.title_translations && typeof row.title_translations === "object"
-        ? (row.title_translations as Record<string, string>)
-        : {},
-    approvalStatus: (row.approval_status as "pending" | "approved" | "rejected") ?? "approved",
-    submittedBy: row.submitted_by ? String(row.submitted_by) : null,
-    rejectionReason: String(row.rejection_reason ?? ""),
     createdAt: Number(row.created_at ?? Date.now()),
   };
 }
@@ -80,17 +66,7 @@ function listingToRow(l: Partial<Listing>): Record<string, unknown> {
   if (l.messengerUrl !== undefined) row.messenger_url = l.messengerUrl || null;
   if (l.status !== undefined) row.status = l.status;
   if (l.featured !== undefined) row.featured = l.featured;
-  if (l.paymentType !== undefined) row.payment_type = l.paymentType;
-  if (l.latitude !== undefined) row.latitude = l.latitude;
-  if (l.longitude !== undefined) row.longitude = l.longitude;
-  if (l.descriptionTranslations !== undefined)
-    row.description_translations = l.descriptionTranslations ?? {};
-  if (l.titleTranslations !== undefined)
-    row.title_translations = l.titleTranslations ?? {};
   if (l.createdAt !== undefined) row.created_at = l.createdAt;
-  if (l.approvalStatus !== undefined) row.approval_status = l.approvalStatus;
-  if (l.submittedBy !== undefined) row.submitted_by = l.submittedBy;
-  if (l.rejectionReason !== undefined) row.rejection_reason = l.rejectionReason;
   return row;
 }
 
@@ -182,29 +158,12 @@ export function useListing(id: string | undefined): Listing | undefined {
 
 export async function addListing(listing: Omit<Listing, "id" | "createdAt">) {
   ensureInit();
-  // Determine current user (for submitted_by) and whether they are admin.
-  const { data: sess } = await supabase.auth.getSession();
-  const uid = sess.session?.user?.id ?? null;
-  let isAdmin = false;
-  if (uid) {
-    const { data: roleRow } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", uid)
-      .eq("role", "admin")
-      .maybeSingle();
-    isAdmin = !!roleRow;
-  }
   const newL: Listing = {
     ...listing,
     id: `l_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     createdAt: Date.now(),
-    // Admins auto-approve; public submissions go to pending queue.
-    approvalStatus: listing.approvalStatus ?? (isAdmin ? "approved" : "pending"),
-    submittedBy: listing.submittedBy ?? uid,
-    featured: isAdmin ? listing.featured : false,
   };
-  // Optimistic update (only show locally if it'll be visible to this user)
+  // Optimistic update
   memoryStore = [newL, ...memoryStore];
   emit();
   const { error } = await supabase.from("listings").insert(listingToRow(newL) as never);
@@ -214,18 +173,8 @@ export async function addListing(listing: Omit<Listing, "id" | "createdAt">) {
     emit();
     throw error;
   }
-  if (newL.approvalStatus === "approved") notifyNewListing(newL);
+  notifyNewListing(newL);
   return newL;
-}
-
-/** Admin: approve a pending listing. */
-export async function approveListing(id: string) {
-  return updateListing(id, { approvalStatus: "approved", rejectionReason: "" });
-}
-
-/** Admin: reject a pending listing with an optional reason. */
-export async function rejectListing(id: string, reason = "") {
-  return updateListing(id, { approvalStatus: "rejected", rejectionReason: reason });
 }
 
 export async function updateListing(id: string, patch: Partial<Listing>) {
@@ -314,12 +263,40 @@ export function toggleFavorite(id: string) {
   persistFavs();
 }
 
-// ===== Admin auth =====
-// Real auth-backed admin flag. Edit/delete UI throughout the site uses this
-// to hide controls from public visitors. Admin login lives at `/auth`.
-import { useAuth } from "@/hooks/useAuth";
+// ===== Admin auth (simple, client-side, password-protected) =====
+const AUTH_KEY = "ger.admin.v1";
+const authListeners = new Set<() => void>();
+
+export function isAdmin(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(AUTH_KEY) === "1";
+}
+
+export function loginAdmin(password: string, expected: string): boolean {
+  if (password !== expected) return false;
+  if (typeof window !== "undefined") window.localStorage.setItem(AUTH_KEY, "1");
+  authListeners.forEach((l) => l());
+  return true;
+}
+
+export function logoutAdmin() {
+  if (typeof window !== "undefined") window.localStorage.removeItem(AUTH_KEY);
+  authListeners.forEach((l) => l());
+}
+
 export function useAdmin(): boolean {
-  return useAuth().isAdmin;
+  // Always start as false on first render to match SSR output and avoid
+  // hydration mismatches. Then sync from localStorage in useEffect.
+  const [v, setV] = useState<boolean>(false);
+  useEffect(() => {
+    setV(isAdmin());
+    const cb = () => setV(isAdmin());
+    authListeners.add(cb);
+    return () => {
+      authListeners.delete(cb);
+    };
+  }, []);
+  return v;
 }
 
 // ===== Site settings (cover image, etc.) =====
@@ -340,92 +317,28 @@ const defaultSettings: SiteSettings = {
   textOverrides: {},
 };
 
-const SETTINGS_ROW_ID = "global";
-const SETTINGS_CACHE_KEY = "ger.settings.cache.v2";
-
 let settingsStore: SiteSettings | null = null;
-let settingsInitialized = false;
-let settingsLoaded = false;
 const settingsListeners = new Set<() => void>();
 
-function rowToSettings(row: Record<string, unknown>): SiteSettings {
-  const cover = String(row.cover_image_url ?? "") || DEFAULT_COVER_IMAGE;
-  const overrides =
-    row.text_overrides && typeof row.text_overrides === "object"
-      ? (row.text_overrides as Record<string, Record<string, string>>)
-      : {};
-  return { coverImageUrl: cover, textOverrides: overrides };
-}
-
-function loadCachedSettings(): SiteSettings {
+function loadSettings(): SiteSettings {
   if (typeof window === "undefined") return defaultSettings;
   try {
-    const raw = window.localStorage.getItem(SETTINGS_CACHE_KEY);
+    const raw = window.localStorage.getItem(SETTINGS_KEY);
     if (raw) return { ...defaultSettings, ...(JSON.parse(raw) as Partial<SiteSettings>) };
   } catch {}
   return defaultSettings;
 }
 
-function cacheSettings(s: SiteSettings) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(s));
-  } catch {}
-}
-
-async function fetchSettings() {
-  const { data, error } = await supabase
-    .from("site_settings")
-    .select("*")
-    .eq("id", SETTINGS_ROW_ID)
-    .maybeSingle();
-  if (error) {
-    console.error("[site_settings] fetch failed", error);
-    return;
-  }
-  if (data) {
-    settingsStore = rowToSettings(data as Record<string, unknown>);
-    settingsLoaded = true;
-    cacheSettings(settingsStore);
-    settingsListeners.forEach((l) => l());
-  }
-}
-
 function ensureSettings() {
-  if (settingsStore === null) settingsStore = loadCachedSettings();
-  if (settingsInitialized || typeof window === "undefined") return;
-  settingsInitialized = true;
-  void fetchSettings();
-  supabase
-    .channel("site-settings-changes")
-    .on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "site_settings" },
-      (payload) => {
-        if ((payload.eventType === "INSERT" || payload.eventType === "UPDATE") && payload.new) {
-          settingsStore = rowToSettings(payload.new as Record<string, unknown>);
-          settingsLoaded = true;
-          cacheSettings(settingsStore);
-          settingsListeners.forEach((l) => l());
-        }
-      },
-    )
-    .subscribe();
+  if (settingsStore === null) settingsStore = loadSettings();
 }
 
-async function persistSettingsRemote(s: SiteSettings) {
-  const { error } = await supabase
-    .from("site_settings")
-    .upsert(
-      {
-        id: SETTINGS_ROW_ID,
-        cover_image_url: s.coverImageUrl,
-        text_overrides: s.textOverrides ?? {},
-        updated_at: new Date().toISOString(),
-      } as never,
-      { onConflict: "id" },
-    );
-  if (error) console.error("[site_settings] upsert failed", error);
+function persistSettings() {
+  if (typeof window === "undefined" || !settingsStore) return;
+  try {
+    window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(settingsStore));
+  } catch {}
+  settingsListeners.forEach((l) => l());
 }
 
 function subSettings(cb: () => void) {
@@ -442,6 +355,8 @@ function getSettingsSnapshot(): SiteSettings {
 
 const getSettingsServerSnapshot = (): SiteSettings => defaultSettings;
 export function useSiteSettings(): SiteSettings {
+  // Use defaultSettings on first render to match SSR, then hydrate from
+  // localStorage after mount to avoid hydration mismatches.
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
@@ -460,9 +375,7 @@ export function updateSiteSettings(patch: Partial<SiteSettings>) {
     return;
   }
   settingsStore = next;
-  cacheSettings(settingsStore);
-  settingsListeners.forEach((l) => l());
-  void persistSettingsRemote(settingsStore);
+  persistSettings();
 }
 
 export function setTextOverride(lang: string, key: string, value: string) {
@@ -476,14 +389,8 @@ export function setTextOverride(lang: string, key: string, value: string) {
   else delete langMap[key];
   overrides[lang] = langMap;
   settingsStore = { ...settingsStore!, textOverrides: overrides };
-  cacheSettings(settingsStore);
-  settingsListeners.forEach((l) => l());
-  void persistSettingsRemote(settingsStore);
+  persistSettings();
 }
-
-// Suppress unused warning for legacy key
-void SETTINGS_KEY;
-void settingsLoaded;
 
 // ===== Listing views (analytics) =====
 const VIEWS_KEY = "ger.views.v1";

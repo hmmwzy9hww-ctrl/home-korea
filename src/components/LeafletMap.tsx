@@ -3,8 +3,7 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import type { Listing } from "@/lib/types";
-import { getCityCenter } from "@/lib/coords";
-import { geocodeListing, getDisplayCoords } from "@/lib/geocode";
+import { getCityCenter, getListingCoords } from "@/lib/coords";
 import { formatWon } from "@/lib/format";
 
 type LeafletModule = typeof import("leaflet");
@@ -48,7 +47,6 @@ export function LeafletMap({ listings, city, selectedId, onSelect, className, in
   const onSelectRef = useRef(onSelect);
   const cityRef = useRef(city);
   const zoomRef = useRef(initialZoom);
-  const hasAutoFittedRef = useRef(false);
   const [ready, setReady] = useState(false);
   onSelectRef.current = onSelect;
   cityRef.current = city;
@@ -108,7 +106,7 @@ export function LeafletMap({ listings, city, selectedId, onSelect, className, in
     mapRef.current.setView(getCityCenter(city), initialZoom ?? 12, { animate: true });
   }, [city, initialZoom, ready]);
 
-  // Sync markers with listings (geocode addresses for exact pin placement)
+  // Sync markers with listings
   useEffect(() => {
     const cluster = clusterRef.current;
     const L = leafletRef.current;
@@ -116,84 +114,15 @@ export function LeafletMap({ listings, city, selectedId, onSelect, className, in
     cluster.clearLayers();
     markersRef.current.clear();
 
-    let cancelled = false;
-
-    const preciseIds = new Set<string>();
-
-    const extractDong = (l: Listing): string => {
-      // Find tokens ending with 구 or 동 from address/area
-      const text = `${l.address ?? ""} ${l.area ?? ""}`.trim();
-      if (!text) return "";
-      const tokens = text.split(/[\s,]+/).filter(Boolean);
-      const matches = tokens.filter((t) => /[구동]$/.test(t));
-      if (matches.length > 0) return matches.slice(0, 2).join(" ");
-      return l.area ?? "";
-    };
-
-    const fitToMarkers = () => {
-      const map = mapRef.current;
-      const lib = leafletRef.current;
-      if (!map || !lib || markersRef.current.size === 0) return;
-      const latlngs = Array.from(markersRef.current.values()).map((m) => m.getLatLng());
-      const bounds = lib.latLngBounds(latlngs);
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16, animate: true });
-    };
-
-    const addMarker = (l: Listing, coords: [number, number], precise: boolean) => {
-      const c = clusterRef.current;
-      const lib = leafletRef.current;
-      if (cancelled || !c || !lib) return;
-      const existing = markersRef.current.get(l.id);
-      if (existing) c.removeLayer(existing);
-      const marker = lib.marker(coords, {
-        icon: pricePinIcon(lib, l.monthlyRent, l.id === selectedId),
+    listings.forEach((l) => {
+      const coords = getListingCoords(l);
+      const marker = L.marker(coords, {
+        icon: pricePinIcon(L, l.monthlyRent, l.id === selectedId),
       });
-      const dong = extractDong(l);
-      if (dong) {
-        marker.bindTooltip(dong, {
-          direction: "top",
-          offset: [0, -28],
-          opacity: 0.95,
-          className: "ger-dong-tooltip",
-        });
-      }
       marker.on("click", () => onSelectRef.current(l.id));
       markersRef.current.set(l.id, marker);
-      if (precise) preciseIds.add(l.id);
-      c.addLayer(marker);
-    };
-
-    // Initial pass: use cached precise coords if available, else city fallback
-    listings.forEach((l) => {
-      const cached = getDisplayCoords(l);
-      addMarker(l, cached, false);
+      cluster.addLayer(marker);
     });
-
-    // Auto-fit to current markers on load
-    if (!hasAutoFittedRef.current && listings.length > 0) {
-      hasAutoFittedRef.current = true;
-      fitToMarkers();
-    }
-
-    // Async pass: geocode any listings without cached precise coords
-    (async () => {
-      let updated = false;
-      for (const l of listings) {
-        if (cancelled) return;
-        if (!l.address?.trim() && !l.area?.trim()) continue;
-        const precise = await geocodeListing(l);
-        if (cancelled) return;
-        if (precise) {
-          addMarker(l, precise, true);
-          updated = true;
-        }
-      }
-      if (updated && !cancelled) fitToMarkers();
-    })();
-
-    return () => {
-      cancelled = true;
-    };
   }, [listings, selectedId, ready]);
 
   return (

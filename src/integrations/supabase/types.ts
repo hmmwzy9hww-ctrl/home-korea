@@ -14,136 +14,9 @@ export type Database = {
   }
   public: {
     Tables: {
-      cities: {
-        Row: {
-          created_at: string
-          emoji: string
-          id: string
-          name_en: string
-          name_ko: string
-          name_mn: string
-          name_ru: string
-          name_vi: string
-          name_zh: string
-          sort_order: number
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          emoji?: string
-          id: string
-          name_en?: string
-          name_ko?: string
-          name_mn?: string
-          name_ru?: string
-          name_vi?: string
-          name_zh?: string
-          sort_order?: number
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          emoji?: string
-          id?: string
-          name_en?: string
-          name_ko?: string
-          name_mn?: string
-          name_ru?: string
-          name_vi?: string
-          name_zh?: string
-          sort_order?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      floor_options: {
-        Row: {
-          created_at: string
-          emoji: string
-          id: string
-          name_en: string
-          name_ko: string
-          name_mn: string
-          name_ru: string
-          name_vi: string
-          name_zh: string
-          sort_order: number
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          emoji?: string
-          id: string
-          name_en?: string
-          name_ko?: string
-          name_mn?: string
-          name_ru?: string
-          name_vi?: string
-          name_zh?: string
-          sort_order?: number
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          emoji?: string
-          id?: string
-          name_en?: string
-          name_ko?: string
-          name_mn?: string
-          name_ru?: string
-          name_vi?: string
-          name_zh?: string
-          sort_order?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      listing_amenities: {
-        Row: {
-          created_at: string
-          icon: string
-          id: string
-          name_en: string
-          name_ko: string
-          name_mn: string
-          name_ru: string
-          name_vi: string
-          name_zh: string
-          sort_order: number
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          icon?: string
-          id: string
-          name_en?: string
-          name_ko?: string
-          name_mn?: string
-          name_ru?: string
-          name_vi?: string
-          name_zh?: string
-          sort_order?: number
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          icon?: string
-          id?: string
-          name_en?: string
-          name_ko?: string
-          name_mn?: string
-          name_ru?: string
-          name_vi?: string
-          name_zh?: string
-          sort_order?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
       listings: {
         Row: {
           address: string
-          approval_status: string
           area: string
           available_from: string
           bus_minutes: number
@@ -152,33 +25,25 @@ export type Database = {
           created_at: number
           deposit: number
           description: string
-          description_translations: Json
           featured: boolean
           floor: string
           id: string
-          latitude: number | null
-          longitude: number | null
           maintenance_fee: number
           maintenance_included: boolean | null
           messenger_url: string | null
           monthly_rent: number
           naver_map_url: string | null
           options: Json
-          payment_type: string
           photos: Json
-          rejection_reason: string
           room_type: string
           size: number
           status: string
-          submitted_by: string | null
           subway_minutes: number
           subway_station: string
           title: string
-          title_translations: Json
         }
         Insert: {
           address?: string
-          approval_status?: string
           area?: string
           available_from?: string
           bus_minutes?: number
@@ -187,33 +52,25 @@ export type Database = {
           created_at?: number
           deposit?: number
           description?: string
-          description_translations?: Json
           featured?: boolean
           floor?: string
           id: string
-          latitude?: number | null
-          longitude?: number | null
           maintenance_fee?: number
           maintenance_included?: boolean | null
           messenger_url?: string | null
           monthly_rent?: number
           naver_map_url?: string | null
           options?: Json
-          payment_type?: string
           photos?: Json
-          rejection_reason?: string
           room_type: string
           size?: number
           status?: string
-          submitted_by?: string | null
           subway_minutes?: number
           subway_station?: string
           title: string
-          title_translations?: Json
         }
         Update: {
           address?: string
-          approval_status?: string
           area?: string
           available_from?: string
           bus_minutes?: number
@@ -222,182 +79,22 @@ export type Database = {
           created_at?: number
           deposit?: number
           description?: string
-          description_translations?: Json
           featured?: boolean
           floor?: string
           id?: string
-          latitude?: number | null
-          longitude?: number | null
           maintenance_fee?: number
           maintenance_included?: boolean | null
           messenger_url?: string | null
           monthly_rent?: number
           naver_map_url?: string | null
           options?: Json
-          payment_type?: string
           photos?: Json
-          rejection_reason?: string
           room_type?: string
           size?: number
           status?: string
-          submitted_by?: string | null
           subway_minutes?: number
           subway_station?: string
           title?: string
-          title_translations?: Json
-        }
-        Relationships: []
-      }
-      payment_types: {
-        Row: {
-          created_at: string
-          emoji: string
-          id: string
-          name_en: string
-          name_ko: string
-          name_mn: string
-          name_ru: string
-          name_vi: string
-          name_zh: string
-          sort_order: number
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          emoji?: string
-          id: string
-          name_en?: string
-          name_ko?: string
-          name_mn?: string
-          name_ru?: string
-          name_vi?: string
-          name_zh?: string
-          sort_order?: number
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          emoji?: string
-          id?: string
-          name_en?: string
-          name_ko?: string
-          name_mn?: string
-          name_ru?: string
-          name_vi?: string
-          name_zh?: string
-          sort_order?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          avatar_url: string | null
-          created_at: string
-          display_name: string | null
-          id: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          display_name?: string | null
-          id?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          display_name?: string | null
-          id?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      room_types: {
-        Row: {
-          created_at: string
-          emoji: string
-          id: string
-          name_en: string
-          name_ko: string
-          name_mn: string
-          name_ru: string
-          name_vi: string
-          name_zh: string
-          sort_order: number
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          emoji?: string
-          id: string
-          name_en?: string
-          name_ko?: string
-          name_mn?: string
-          name_ru?: string
-          name_vi?: string
-          name_zh?: string
-          sort_order?: number
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          emoji?: string
-          id?: string
-          name_en?: string
-          name_ko?: string
-          name_mn?: string
-          name_ru?: string
-          name_vi?: string
-          name_zh?: string
-          sort_order?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      site_settings: {
-        Row: {
-          cover_image_url: string
-          id: string
-          text_overrides: Json
-          updated_at: string
-        }
-        Insert: {
-          cover_image_url?: string
-          id?: string
-          text_overrides?: Json
-          updated_at?: string
-        }
-        Update: {
-          cover_image_url?: string
-          id?: string
-          text_overrides?: Json
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      user_roles: {
-        Row: {
-          created_at: string
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
         }
         Relationships: []
       }
@@ -406,16 +103,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -542,8 +233,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      app_role: ["admin", "moderator", "user"],
-    },
+    Enums: {},
   },
 } as const

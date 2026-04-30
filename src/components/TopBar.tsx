@@ -1,8 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Search, Shield } from "lucide-react";
+import { Search } from "lucide-react";
 import { useState } from "react";
 import { useI18n } from "@/lib/i18n";
-import { useAuth } from "@/hooks/useAuth";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 
 export function TopBar({ showSearch = true }: { showSearch?: boolean }) {
@@ -36,23 +35,8 @@ export function TopBar({ showSearch = true }: { showSearch?: boolean }) {
             />
           </form>
         )}
-        <AdminLink />
         <LanguageSwitcher compact />
       </div>
     </header>
-  );
-}
-
-function AdminLink() {
-  const { isAdmin } = useAuth();
-  if (!isAdmin) return null;
-  return (
-    <Link
-      to="/admin"
-      className="shrink-0 inline-flex items-center justify-center h-8 w-8 rounded-full hover:bg-secondary text-foreground"
-      title="Admin"
-    >
-      <Shield className="h-4 w-4" />
-    </Link>
   );
 }
