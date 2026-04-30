@@ -1,12 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Save, X, Upload, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, X, Upload, Trash2, MapPin, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { useI18n } from "@/lib/i18n";
 import { useAdmin, useListing, addListing, updateListing } from "@/lib/store";
 import type { City, Listing, ListingStatus, RoomType } from "@/lib/types";
 import { AmenityPicker } from "@/components/AmenityPicker";
+import { resolveNaverCoords, parseNaverCoords } from "@/lib/coords";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/admin/edit/$id")({
   component: EditPage,
@@ -137,7 +139,31 @@ function EditPage() {
     );
   }
 
-  const handle = (e: React.FormEvent) => {
+  const [resolvingCoords, setResolvingCoords] = useState(false);
+
+  const invokeExpand = async (body: { url: string }) => {
+    const { data } = await supabase.functions.invoke("expand-naver-url", { body });
+    return data as { coords?: { lat: number; lng: number } | null } | null;
+  };
+
+  const updateCoordsFromUrl = async (url: string, silent = false): Promise<{ lat: number; lng: number } | null> => {
+    if (!url) return null;
+    setResolvingCoords(true);
+    try {
+      const coords = await resolveNaverCoords(url, invokeExpand);
+      if (coords) {
+        setForm((prev) => ({ ...prev, latitude: coords.lat, longitude: coords.lng }));
+        if (!silent) toast.success(`📍 ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`);
+        return coords;
+      }
+      if (!silent) toast.error(t("form.coordsNotFound") || "Координат олдсонгүй");
+      return null;
+    } finally {
+      setResolvingCoords(false);
+    }
+  };
+
+  const handle = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim()) {
       toast.error(t("form.required") + ": " + t("form.title"));
@@ -145,7 +171,21 @@ function EditPage() {
     }
     const cleanPhotos = photos.filter(Boolean).slice(0, MAX_PHOTOS);
     const options = optionsStr.split(",").map((o) => o.trim()).filter(Boolean);
-    const payload = { ...form, photos: cleanPhotos, options };
+
+    // If a Naver URL is set but coords missing/stale, try to resolve before save
+    let payload: Omit<Listing, "id" | "createdAt"> = { ...form, photos: cleanPhotos, options };
+    if (form.naverMapUrl) {
+      const direct = parseNaverCoords(form.naverMapUrl);
+      const needsResolve =
+        !direct &&
+        (form.latitude == null || form.longitude == null);
+      if (direct) {
+        payload = { ...payload, latitude: direct.lat, longitude: direct.lng };
+      } else if (needsResolve) {
+        const coords = await updateCoordsFromUrl(form.naverMapUrl, true);
+        if (coords) payload = { ...payload, latitude: coords.lat, longitude: coords.lng };
+      }
+    }
 
     if (isNew) {
       addListing(payload);
@@ -398,13 +438,46 @@ function EditPage() {
           </Field>
 
           <Field label={t("form.naver")}>
-            <input
-              type="url"
-              value={form.naverMapUrl || ""}
-              onChange={(e) => setForm({ ...form, naverMapUrl: e.target.value })}
-              placeholder="https://map.naver.com/..."
-              className={inputCls}
-            />
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={form.naverMapUrl || ""}
+                onChange={(e) => setForm({ ...form, naverMapUrl: e.target.value })}
+                onBlur={(e) => {
+                  const v = e.target.value.trim();
+                  if (!v) return;
+                  const direct = parseNaverCoords(v);
+                  if (direct) {
+                    setForm((prev) => ({ ...prev, latitude: direct.lat, longitude: direct.lng }));
+                  }
+                }}
+                placeholder="https://map.naver.com/... эсвэл https://naver.me/..."
+                className={inputCls + " flex-1"}
+              />
+              <button
+                type="button"
+                disabled={!form.naverMapUrl || resolvingCoords}
+                onClick={() => updateCoordsFromUrl(form.naverMapUrl || "")}
+                className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border bg-secondary px-3 text-sm font-medium hover:bg-secondary/80 disabled:opacity-50"
+                title="URL-аас координат татах"
+              >
+                {resolvingCoords ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <MapPin className="h-4 w-4" />
+                )}
+                <span className="hidden sm:inline">Pin</span>
+              </button>
+            </div>
+            {form.latitude != null && form.longitude != null ? (
+              <p className="mt-1 text-xs text-muted-foreground">
+                📍 {form.latitude.toFixed(5)}, {form.longitude.toFixed(5)}
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Naver Map линк оруулаад Pin товчийг дарвал газрын зураг дээрх бодит байршлыг олж тогтооно.
+              </p>
+            )}
           </Field>
 
           <Field label={t("form.messenger")}>
