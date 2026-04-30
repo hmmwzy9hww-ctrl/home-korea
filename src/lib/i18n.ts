@@ -17,7 +17,7 @@ type Dict = Record<string, string>;
 // Монгол хэл нь Солонгос дахь Монгол хүний жинхэнэ ярианы өнгөтэй.
 // Солонгос үг (won, ванрүм, метро, нийтийн зардал гэх мэт) кириллээр хэвээр.
 const mn: Dict = {
-  "brand": "Солонгос дахь байр",
+  "brand": "Гэр Олох",
   "tagline": "Солонгос дахь Монголчуудын байрны самбар",
 
   // Bottom nav
@@ -209,27 +209,10 @@ const mn: Dict = {
   "admin.analytics.cityInterest": "Хотын сонирхол",
   "admin.analytics.views": "Үзэлт",
   "admin.analytics.saves": "Хадгалалт",
-
-  // Cities manager (admin)
-  "cities.title": "Хот / газрын удирдлага",
-  "cities.add": "Шинэ хот нэмэх",
-  "cities.edit": "Хот засах",
-  "cities.field.emoji": "Эмоджи",
-  "cities.field.idHint": "Латин үсгээр (өөрчлөгдөхгүй). Хоосон үлдээвэл автоматаар үүсгэнэ.",
-  "cities.field.mn": "Монгол нэр",
-  "cities.field.ko": "Солонгос нэр",
-  "cities.field.en": "Англи нэр",
-  "cities.field.ru": "Орос нэр",
-  "cities.field.zh": "Хятад нэр",
-  "cities.field.vi": "Вьетнам нэр",
-  "cities.delete.confirm": "{name} хотыг устгах уу?",
-  "cities.err.name": "Ядаж нэг нэр шаардлагатай",
-  "cities.err.save": "Хадгалж чадсангүй",
-  "cities.err.delete": "Устгаж чадсангүй",
 };
 
 const ko: Dict = {
-  "brand": "한국의 집",
+  "brand": "게르 찾기",
   "tagline": "한국 거주 몽골인을 위한 부동산",
   "nav.home": "홈", "nav.search": "검색", "nav.favorites": "찜", "nav.admin": "관리",
   "search.placeholder": "지역, 지하철역, 키워드…",
@@ -298,30 +281,10 @@ const ko: Dict = {
   "form.required": "필수 입력",
   "common.back": "뒤로", "common.share": "공유", "common.included": "포함",
   "common.notIncluded": "별도", "common.now": "즉시", "lang.label": "언어",
-  "view.list": "목록", "view.map": "지도",
-  "map.empty": "지도에 표시할 매물이 없습니다.", "map.openExternal": "Naver Map에서 열기",
-  "card.views": "조회수 {count}회",
-  "notif.title": "알림", "notif.empty": "알림이 없습니다.",
-  "notif.markAll": "모두 읽음 처리", "notif.clear": "지우기",
-  "notif.subscribed": "{city} 알림이 켜졌습니다",
-  "notif.unsubscribed": "{city} 알림이 꺼졌습니다",
-  "subscribe.on": "알림 받기", "subscribe.off": "알림 끄기",
-  "admin.analytics.title": "분석", "admin.analytics.totalViews": "총 조회수",
-  "admin.analytics.totalSaves": "총 찜 수", "admin.analytics.subscribers": "도시 구독자",
-  "admin.analytics.byListing": "매물별", "admin.analytics.cityInterest": "도시별 관심도",
-  "admin.analytics.views": "조회수", "admin.analytics.saves": "찜",
-  "cities.title": "도시 / 지역 관리", "cities.add": "도시 추가", "cities.edit": "도시 수정",
-  "cities.field.emoji": "이모지",
-  "cities.field.idHint": "영문 ID (변경 불가). 비우면 자동 생성됩니다.",
-  "cities.field.mn": "몽골어 이름", "cities.field.ko": "한국어 이름", "cities.field.en": "영어 이름",
-  "cities.field.ru": "러시아어 이름", "cities.field.zh": "중국어 이름", "cities.field.vi": "베트남어 이름",
-  "cities.delete.confirm": "{name} 도시를 삭제하시겠습니까?",
-  "cities.err.name": "최소 하나의 이름이 필요합니다",
-  "cities.err.save": "저장 실패", "cities.err.delete": "삭제 실패",
 };
 
 const en: Dict = {
-  "brand": "Housing in Korea", "tagline": "Rentals for Mongolians in South Korea",
+  "brand": "Ger Finder", "tagline": "Rentals for Mongolians in South Korea",
   "nav.home": "Home", "nav.search": "Search", "nav.favorites": "Favorites", "nav.admin": "Admin",
   "search.placeholder": "Area, metro station, keyword…",
   "filter.title": "Filters", "filter.city": "City", "filter.area": "Area",
@@ -400,18 +363,10 @@ const en: Dict = {
   "admin.analytics.totalSaves": "Total saves", "admin.analytics.subscribers": "City subscribers",
   "admin.analytics.byListing": "Per listing", "admin.analytics.cityInterest": "City interest",
   "admin.analytics.views": "Views", "admin.analytics.saves": "Saves",
-  "cities.title": "City management", "cities.add": "Add city", "cities.edit": "Edit city",
-  "cities.field.emoji": "Emoji",
-  "cities.field.idHint": "Latin id (cannot change later). Leave empty to auto-generate.",
-  "cities.field.mn": "Mongolian name", "cities.field.ko": "Korean name", "cities.field.en": "English name",
-  "cities.field.ru": "Russian name", "cities.field.zh": "Chinese name", "cities.field.vi": "Vietnamese name",
-  "cities.delete.confirm": "Delete city {name}?",
-  "cities.err.name": "At least one name is required",
-  "cities.err.save": "Failed to save", "cities.err.delete": "Failed to delete",
 };
 
 const ru: Dict = {
-  "brand": "Жильё в Корее", "tagline": "Аренда жилья для монголов в Корее",
+  "brand": "Гэр Finder", "tagline": "Аренда жилья для монголов в Корее",
   "nav.home": "Главная", "nav.search": "Поиск", "nav.favorites": "Избранное", "nav.admin": "Админ",
   "search.placeholder": "Район, метро, ключевое слово…",
   "filter.title": "Фильтры", "filter.city": "Город", "filter.area": "Район",
@@ -476,22 +431,10 @@ const ru: Dict = {
   "common.back": "Назад", "common.share": "Поделиться",
   "common.included": "входит", "common.notIncluded": "отдельно",
   "common.now": "Сейчас", "lang.label": "Язык",
-  "view.list": "Список", "view.map": "Карта",
-  "map.empty": "Нет объявлений для отображения на карте.", "map.openExternal": "Открыть в Naver Map",
-  "card.views": "{count} просмотров",
-  "notif.title": "Уведомления", "notif.empty": "Нет уведомлений.",
-  "notif.markAll": "Отметить все прочитанными", "notif.clear": "Очистить",
-  "notif.subscribed": "Подписка на {city} включена",
-  "notif.unsubscribed": "Подписка на {city} отключена",
-  "subscribe.on": "Включить уведомления", "subscribe.off": "Отключить уведомления",
-  "admin.analytics.title": "Аналитика", "admin.analytics.totalViews": "Всего просмотров",
-  "admin.analytics.totalSaves": "Всего сохранений", "admin.analytics.subscribers": "Подписчики городов",
-  "admin.analytics.byListing": "По объявлениям", "admin.analytics.cityInterest": "Интерес по городам",
-  "admin.analytics.views": "Просмотры", "admin.analytics.saves": "Сохранения",
 };
 
 const zh: Dict = {
-  "brand": "韩国租房", "tagline": "在韩蒙古人租房平台",
+  "brand": "蒙古租房", "tagline": "在韩蒙古人租房平台",
   "nav.home": "首页", "nav.search": "搜索", "nav.favorites": "收藏", "nav.admin": "管理",
   "search.placeholder": "地区、地铁站、关键词…",
   "filter.title": "筛选", "filter.city": "城市", "filter.area": "区域",
@@ -556,22 +499,10 @@ const zh: Dict = {
   "common.back": "返回", "common.share": "分享",
   "common.included": "含", "common.notIncluded": "另付",
   "common.now": "立即", "lang.label": "语言",
-  "view.list": "列表", "view.map": "地图",
-  "map.empty": "地图上没有可显示的房源。", "map.openExternal": "在 Naver Map 打开",
-  "card.views": "浏览 {count} 次",
-  "notif.title": "通知", "notif.empty": "暂无通知。",
-  "notif.markAll": "全部标为已读", "notif.clear": "清空",
-  "notif.subscribed": "已开启 {city} 通知",
-  "notif.unsubscribed": "已关闭 {city} 通知",
-  "subscribe.on": "开启通知", "subscribe.off": "关闭通知",
-  "admin.analytics.title": "分析", "admin.analytics.totalViews": "总浏览量",
-  "admin.analytics.totalSaves": "总收藏数", "admin.analytics.subscribers": "城市订阅者",
-  "admin.analytics.byListing": "按房源", "admin.analytics.cityInterest": "城市关注度",
-  "admin.analytics.views": "浏览", "admin.analytics.saves": "收藏",
 };
 
 const vi: Dict = {
-  "brand": "Nhà ở Hàn Quốc", "tagline": "Cho thuê nhà cho người Mông Cổ tại Hàn Quốc",
+  "brand": "Ger Finder", "tagline": "Cho thuê nhà cho người Mông Cổ tại Hàn Quốc",
   "nav.home": "Trang chủ", "nav.search": "Tìm", "nav.favorites": "Yêu thích", "nav.admin": "Quản trị",
   "search.placeholder": "Khu vực, ga tàu, từ khoá…",
   "filter.title": "Bộ lọc", "filter.city": "Thành phố", "filter.area": "Khu vực",
@@ -636,18 +567,6 @@ const vi: Dict = {
   "common.back": "Quay lại", "common.share": "Chia sẻ",
   "common.included": "đã gồm", "common.notIncluded": "tính riêng",
   "common.now": "Ngay", "lang.label": "Ngôn ngữ",
-  "view.list": "Danh sách", "view.map": "Bản đồ",
-  "map.empty": "Không có tin đăng nào để hiển thị trên bản đồ.", "map.openExternal": "Mở trong Naver Map",
-  "card.views": "{count} lượt xem",
-  "notif.title": "Thông báo", "notif.empty": "Chưa có thông báo.",
-  "notif.markAll": "Đánh dấu đã đọc", "notif.clear": "Xoá",
-  "notif.subscribed": "Đã bật thông báo {city}",
-  "notif.unsubscribed": "Đã tắt thông báo {city}",
-  "subscribe.on": "Bật thông báo", "subscribe.off": "Tắt thông báo",
-  "admin.analytics.title": "Phân tích", "admin.analytics.totalViews": "Tổng lượt xem",
-  "admin.analytics.totalSaves": "Tổng lượt lưu", "admin.analytics.subscribers": "Người đăng ký theo thành phố",
-  "admin.analytics.byListing": "Theo tin đăng", "admin.analytics.cityInterest": "Quan tâm theo thành phố",
-  "admin.analytics.views": "Lượt xem", "admin.analytics.saves": "Lượt lưu",
 };
 
 export const dictionaries: Record<Lang, Dict> = { mn, ko, en, ru, zh, vi };

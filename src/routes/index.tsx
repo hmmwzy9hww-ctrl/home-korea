@@ -16,7 +16,7 @@ import {
   useListings,
   useSiteSettings,
 } from "@/lib/store";
-import { useCities, cityLabel } from "@/lib/citiesStore";
+import type { City } from "@/lib/types";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -33,22 +33,25 @@ function sortAvailableFirst<T extends { status: string; createdAt: number }>(ite
 }
 
 function HomePage() {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const all = useListings();
   const settings = useSiteSettings();
   const subs = useCitySubscriptions();
-  const cities = useCities();
 
   const featured = all.filter((l) => l.featured && l.status === "available").slice(0, 4);
   const latest = sortAvailableFirst(all).slice(0, 4);
 
-  const countByCity = (c: string) => all.filter((l) => l.city === c).length;
+  const cities: { code: City; emoji: string }[] = [
+    { code: "seoul", emoji: "🏙️" },
+    { code: "incheon", emoji: "✈️" },
+    { code: "gyeonggi", emoji: "🌆" },
+    { code: "busan", emoji: "🌊" },
+    { code: "other", emoji: "📍" },
+  ];
+
+  const countByCity = (c: City) => all.filter((l) => l.city === c).length;
   const countUnder = (price: number) => all.filter((l) => l.monthlyRent <= price).length;
   const countNearMetro = all.filter((l) => l.subwayMinutes <= 5).length;
-  const seoulCity = cities.find((c) => c.id === "seoul");
-  const incheonCity = cities.find((c) => c.id === "incheon");
-  const seoulName = seoulCity ? cityLabel(seoulCity, lang) : "Seoul";
-  const incheonName = incheonCity ? cityLabel(incheonCity, lang) : "Incheon";
 
   return (
     <AppShell>
@@ -109,22 +112,21 @@ function HomePage() {
         <h2 className="text-base font-bold mb-3">{t("home.section.cityStats")}</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {cities.map((c) => {
-            const count = countByCity(c.id);
-            const subscribed = subs.has(c.id);
-            const name = cityLabel(c, lang);
+            const count = countByCity(c.code);
+            const subscribed = subs.has(c.code);
             return (
               <div
-                key={c.id}
+                key={c.code}
                 className="flex items-center justify-between p-3 rounded-2xl border bg-gradient-to-br from-primary/10 to-accent"
               >
                 <Link
                   to="/listings"
-                  search={{ city: c.id } as never}
+                  search={{ city: c.code } as never}
                   className="flex items-center gap-2 min-w-0 flex-1"
                 >
                   <span className="text-xl shrink-0">{c.emoji}</span>
                   <div className="min-w-0">
-                    <div className="text-sm font-semibold truncate">{name}</div>
+                    <div className="text-sm font-semibold truncate">{t(`city.${c.code}`)}</div>
                     <div className="text-xs font-bold text-primary">
                       {t("home.cityStats.unit", { count })}
                     </div>
@@ -133,9 +135,11 @@ function HomePage() {
                 <button
                   type="button"
                   onClick={() => {
-                    toggleCitySubscription(c.id);
+                    toggleCitySubscription(c.code);
                     toast.success(
-                      t(subscribed ? "notif.unsubscribed" : "notif.subscribed", { city: name }),
+                      t(subscribed ? "notif.unsubscribed" : "notif.subscribed", {
+                        city: t(`city.${c.code}`),
+                      }),
                     );
                   }}
                   aria-label={subscribed ? t("subscribe.off") : t("subscribe.on")}
@@ -161,9 +165,9 @@ function HomePage() {
             search={{ city: "seoul" } as never}
             className="p-3 rounded-2xl border bg-card hover:shadow-card-hover transition-shadow"
           >
-            <div className="text-xs text-muted-foreground">{seoulName}</div>
+            <div className="text-xs text-muted-foreground">{t("city.seoul")}</div>
             <div className="text-base font-bold mt-0.5">
-              {t("summary.inCity", { city: seoulName, count: countByCity("seoul") })}
+              {t("summary.inCity", { city: t("city.seoul"), count: countByCity("seoul") })}
             </div>
           </Link>
           <Link
@@ -171,9 +175,9 @@ function HomePage() {
             search={{ city: "incheon" } as never}
             className="p-3 rounded-2xl border bg-card hover:shadow-card-hover transition-shadow"
           >
-            <div className="text-xs text-muted-foreground">{incheonName}</div>
+            <div className="text-xs text-muted-foreground">{t("city.incheon")}</div>
             <div className="text-base font-bold mt-0.5">
-              {t("summary.inCity", { city: incheonName, count: countByCity("incheon") })}
+              {t("summary.inCity", { city: t("city.incheon"), count: countByCity("incheon") })}
             </div>
           </Link>
           <Link

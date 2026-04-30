@@ -1,11 +1,19 @@
-// Cities, room types, payment types and amenities are now dynamic
-// (managed in Supabase tables). They're just string ids here.
-export type City = string;
-export type RoomType = string;
-export type PaymentType = string;
+export type City = "seoul" | "incheon" | "gyeonggi" | "busan" | "other";
+export type RoomType =
+  | "oneRoom"
+  | "twoRoom"
+  | "threeRoom"
+  | "officetel"
+  | "studio"
+  | "share"
+  | "dorm"
+  | "twoRoomSeparated"
+  | "villa"
+  | "apartment"
+  | "gosiwon";
 export type ListingStatus = "available" | "unavailable";
-export type ApprovalStatus = "pending" | "approved" | "rejected";
 export type SortKey = "newest" | "priceAsc" | "priceDesc";
+export type PaymentType = "monthly" | "quarterly";
 
 export interface Listing {
   id: string;
@@ -35,17 +43,6 @@ export interface Listing {
   paymentType?: PaymentType;
   latitude?: number | null;
   longitude?: number | null;
-  /** AI-generated translations of `description`, keyed by language code (ko, en, ru, zh, vi). */
-  descriptionTranslations?: Record<string, string>;
-  /** AI-generated translations of `title`, keyed by language code (ko, en, ru, zh, vi). */
-  titleTranslations?: Record<string, string>;
-  /** Approval workflow: "pending" submissions are hidden from the public until an admin approves.
-   *  Optional in the type so admin-created listings can omit it (defaults to "approved" in the store). */
-  approvalStatus?: ApprovalStatus;
-  /** Auth user id of the person who submitted the listing (admins or public submitters). */
-  submittedBy?: string | null;
-  /** Optional admin note when rejecting a listing. */
-  rejectionReason?: string;
   createdAt: number;
 }
 

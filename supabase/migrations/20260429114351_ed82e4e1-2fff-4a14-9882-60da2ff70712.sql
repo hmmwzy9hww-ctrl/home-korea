@@ -1,1 +1,0 @@
-ALTER TABLE public.listings ADD COLUMN IF NOT EXISTS title_translations jsonb NOT NULL DEFAULT '{}'::jsonb;

@@ -5,8 +5,6 @@ import { AppShell } from "@/components/AppShell";
 import { ListingCard } from "@/components/ListingCard";
 import { useI18n } from "@/lib/i18n";
 import { useListings } from "@/lib/store";
-import { useCities, cityLabel } from "@/lib/citiesStore";
-import { useCityName } from "@/lib/useCityName";
 import { formatWon } from "@/lib/format";
 import type { City, Listing, RoomType, SortKey } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -33,7 +31,7 @@ interface ListingsSearch {
 export const Route = createFileRoute("/listings")({
   validateSearch: (s: Record<string, unknown>): ListingsSearch => ({
     q: typeof s.q === "string" ? s.q : undefined,
-    city: typeof s.city === "string" && s.city ? s.city : undefined,
+    city: (["seoul", "incheon", "gyeonggi", "busan", "other"].includes(String(s.city)) ? s.city : undefined) as City | undefined,
     roomType: (["oneRoom", "twoRoom", "threeRoom", "officetel", "studio", "share"].includes(String(s.roomType)) ? s.roomType : undefined) as RoomType | undefined,
     minPrice: typeof s.minPrice === "number" ? s.minPrice : undefined,
     maxPrice: typeof s.maxPrice === "number" ? s.maxPrice : undefined,
@@ -47,15 +45,11 @@ export const Route = createFileRoute("/listings")({
   component: ListingsPage,
 });
 
-// City list is loaded dynamically from Supabase via useCities().
+const cities: (City | "all")[] = ["all", "seoul", "incheon", "gyeonggi", "busan", "other"];
 const roomTypes: (RoomType | "all")[] = ["all", "oneRoom", "twoRoom", "threeRoom", "officetel", "studio", "share"];
 
 function ListingsPage() {
-  const { t, lang } = useI18n();
-  const cityList = useCities();
-  const cityName = useCityName();
-  // ["all", ...city ids] for chip rows
-  const cityChips: string[] = ["all", ...cityList.map((c) => c.id)];
+  const { t } = useI18n();
   const search = Route.useSearch();
   const navigate = useNavigate();
   const all = useListings();
@@ -126,7 +120,7 @@ function ListingsPage() {
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <h1 className="font-bold text-sm flex-1 truncate">
-            {search.city ? cityName(search.city) : t("listings.title")}
+            {search.city ? t(`city.${search.city}`) : t("listings.title")}
           </h1>
           <button
             type="button"
@@ -144,19 +138,19 @@ function ListingsPage() {
         </div>
         {/* Quick chips */}
         <div className="flex items-center gap-1.5 px-4 pb-2.5 overflow-x-auto no-scrollbar">
-          {cityChips.map((c) => {
+          {cities.map((c) => {
             const active = (search.city ?? "all") === c;
             return (
               <button
                 key={c}
                 type="button"
-                onClick={() => update({ city: c === "all" ? undefined : c })}
+                onClick={() => update({ city: c === "all" ? undefined : (c as City) })}
                 className={cn(
                   "shrink-0 px-3 py-1 rounded-full text-xs font-medium border transition-colors",
                   active ? "bg-foreground text-background border-foreground" : "bg-background hover:bg-secondary",
                 )}
               >
-                {c === "all" ? t("filter.any") : cityName(c)}
+                {c === "all" ? t("filter.any") : t(`city.${c}`)}
               </button>
             );
           })}
@@ -231,13 +225,13 @@ function ListingsPage() {
             </div>
             <div className="px-5 py-4 space-y-5">
               <FilterGroup label={t("filter.city")}>
-                {cityChips.map((c) => (
+                {cities.map((c) => (
                   <Chip
                     key={c}
                     active={(search.city ?? "all") === c}
-                    onClick={() => update({ city: c === "all" ? undefined : c })}
+                    onClick={() => update({ city: c === "all" ? undefined : (c as City) })}
                   >
-                    {c === "all" ? t("filter.any") : cityName(c)}
+                    {c === "all" ? t("filter.any") : t(`city.${c}`)}
                   </Chip>
                 ))}
               </FilterGroup>
@@ -414,7 +408,6 @@ function MapView({
   onSelect: (id: string | null) => void;
 }) {
   const { t } = useI18n();
-  const cityName = useCityName();
   const selected = listings.find((l) => l.id === selectedId) || null;
 
   return (
@@ -456,7 +449,7 @@ function MapView({
             <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold truncate pr-6">{selected.title}</div>
               <div className="text-xs text-muted-foreground truncate">
-                {[cityName(selected.city), t(`room.${selected.roomType}`)]
+                {[t(`city.${selected.city}`), t(`room.${selected.roomType}`)]
                   .filter(Boolean)
                   .join(" · ")}
               </div>
