@@ -10,8 +10,9 @@ export interface AuthState {
 }
 
 /**
- * Auth hook that tracks the current Supabase session AND whether the
- * signed-in user has the `admin` role in `public.user_roles`.
+ * Auth hook that tracks the current session AND whether the
+ * signed-in user is an admin via `public.user_roles` and, when present,
+ * a legacy `role` field on `public.profiles`.
  *
  * Pattern: subscribe to `onAuthStateChange` BEFORE calling `getSession()`,
  * and never `await` async work inside the listener (to avoid deadlocks).
