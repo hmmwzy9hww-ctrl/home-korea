@@ -9,6 +9,31 @@ let initialized = false;
 let loaded = false;
 const listeners = new Set<() => void>();
 
+// sessionStorage cache so that repeat navigations within the same tab show
+// listings instantly while a fresh fetch runs in the background.
+const LISTINGS_CACHE_KEY = "ger.listings.cache.v1";
+
+function loadCachedListings(): Listing[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(LISTINGS_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Listing[];
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function persistCachedListings(rows: Listing[]) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(LISTINGS_CACHE_KEY, JSON.stringify(rows));
+  } catch {
+    // Quota errors are non-fatal — the in-memory store still works.
+  }
+}
+
 // Map a Supabase row (snake_case) to our Listing type (camelCase).
 function rowToListing(row: Record<string, unknown>): Listing {
   return {
