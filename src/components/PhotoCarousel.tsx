@@ -30,6 +30,7 @@ export function PhotoCarousel({ photos, alt = "", className, rounded = true }: P
         alt={alt}
         className="absolute inset-0 h-full w-full object-cover"
         loading="lazy"
+        decoding="async"
       />
       {safe.length > 1 && (
         <>
