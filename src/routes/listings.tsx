@@ -71,7 +71,12 @@ function ListingsPage() {
 
   const filtered = useMemo(() => {
     let r = all.slice();
-    if (search.city) r = r.filter((l) => l.city === search.city);
+    if (search.city) {
+      // include all districts under this city if it's a parent
+      const childIds = (districtsByParent.get(search.city) ?? []).map((d) => d.id);
+      const matchSet = new Set<string>([search.city, ...childIds]);
+      r = r.filter((l) => matchSet.has(l.city));
+    }
     if (search.roomType) r = r.filter((l) => l.roomType === search.roomType);
     if (search.minPrice) r = r.filter((l) => l.monthlyRent >= search.minPrice!);
     if (search.maxPrice) r = r.filter((l) => l.monthlyRent <= search.maxPrice!);
