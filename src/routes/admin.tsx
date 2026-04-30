@@ -20,13 +20,13 @@ import { CitiesManager } from "@/components/CitiesManager";
 import { useCities, cityLabel } from "@/lib/citiesStore";
 import { OptionsGrid } from "@/components/OptionsGrid";
 import { useI18n, translate, LANGS, type Lang } from "@/lib/i18n";
-import { ADMIN_PASSWORD } from "@/lib/config";
+
 import { formatWon } from "@/lib/format";
 import { EDITABLE_TEXTS } from "@/lib/editableTexts";
 import {
   addListing,
   deleteListing,
-  loginAdmin,
+  
   logoutAdmin,
   setTextOverride,
   updateListing,
