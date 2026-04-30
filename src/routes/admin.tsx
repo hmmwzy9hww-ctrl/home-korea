@@ -41,6 +41,8 @@ import {
 } from "@/lib/store";
 import type { City, Listing, ListingStatus, RoomType } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { AmenityPicker } from "@/components/AmenityPicker";
+import { AmenityManager } from "@/components/AmenityManager";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
