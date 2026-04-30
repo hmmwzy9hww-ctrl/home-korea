@@ -34,15 +34,31 @@ export function useAuth(): AuthState {
       }
       // Defer to next tick so we don't block the auth callback.
       setTimeout(async () => {
-        const { data, error } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", uid)
-          .eq("role", "admin")
-          .maybeSingle();
-        if (cancelled) return;
-        setIsAdmin(!error && !!data);
-        setLoading(false);
+        for (let attempt = 0; attempt < 5; attempt += 1) {
+          const { data, error } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", uid)
+            .eq("role", "admin")
+            .maybeSingle();
+
+          if (cancelled) return;
+
+          if (!error) {
+            setIsAdmin(!!data);
+            setLoading(false);
+            return;
+          }
+
+          if (attempt < 4) {
+            await new Promise((resolve) => window.setTimeout(resolve, 250 * (attempt + 1)));
+          }
+        }
+
+        if (!cancelled) {
+          setIsAdmin(false);
+          setLoading(false);
+        }
       }, 0);
     };
 
