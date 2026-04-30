@@ -11,22 +11,31 @@ import { listingTitle, listingArea } from "@/lib/listingI18n";
 // image with native lazy loading to keep scroll performance high.
 import { cn } from "@/lib/utils";
 
+const RENT_LABEL: Record<string, string> = {
+  mn: "1 сарын түрээс",
+  ko: "1개월 월세",
+  en: "1-month rent",
+  ru: "Аренда за 1 месяц",
+  zh: "1个月租金",
+  vi: "Thuê 1 tháng",
+};
+
 const PAYMENT_LABEL: Record<string, { mn: string; ko: string; en: string; ru: string; zh: string; vi: string }> = {
   monthly: {
-    mn: "1 сарын түрээс",
-    ko: "1개월 월세",
-    en: "1-month rent",
-    ru: "Аренда за 1 месяц",
-    zh: "1个月租金",
-    vi: "Thuê 1 tháng",
+    mn: "Сар бүр",
+    ko: "매월 납부",
+    en: "Monthly",
+    ru: "Ежемесячно",
+    zh: "每月支付",
+    vi: "Hàng tháng",
   },
   quarterly: {
     mn: "3 сараар бөөн",
     ko: "3개월 일시불",
-    en: "3 months upfront",
-    ru: "Аренда за 3 месяца",
-    zh: "3个月一次性",
-    vi: "Trả gộp 3 tháng",
+    en: "Every 3 months",
+    ru: "Раз в 3 месяца",
+    zh: "3个月一次",
+    vi: "3 tháng một lần",
   },
 };
 
