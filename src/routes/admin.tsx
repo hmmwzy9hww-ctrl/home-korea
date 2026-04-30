@@ -577,34 +577,64 @@ function AdminPage() {
                   />
                 </Field>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   <Field label={t("form.roomType")}>
                     <select
                       value={form.roomType}
                       onChange={(e) => setForm({ ...form, roomType: e.target.value as RoomType })}
                       className={inputCls}
                     >
-                      {roomTypes.map((roomType) => (
-                        <option key={roomType} value={roomType}>
-                          {t(`room.${roomType}`)}
+                      {roomTypesData.map((rt) => (
+                        <option key={rt.id} value={rt.id}>
+                          {rt.emoji ? `${rt.emoji} ` : ""}{roomTypeName(rt, lang)}
                         </option>
                       ))}
                     </select>
                   </Field>
-                  <Field label={t("form.city")}>
-                    <select
-                      value={form.city}
-                      onChange={(e) => setForm({ ...form, city: e.target.value as City })}
-                      className={inputCls}
-                    >
-                      {cities.map((city) => (
-                        <option key={city} value={city}>
-                          {t(`city.${city}`)}
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label={t("form.city")}>
+                      <select
+                        value={selectedParentId}
+                        onChange={(e) => {
+                          const parentId = e.target.value;
+                          // If chosen parent has districts, keep the parent as form.city until user picks a district.
+                          setForm({ ...form, city: parentId as City });
+                        }}
+                        className={inputCls}
+                      >
+                        <option value="">—</option>
+                        {parentCities.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.emoji ? `${c.emoji} ` : ""}{cityName(c, lang)}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field label={lang === "ko" ? "구/군" : "Дүүрэг (구)"}>
+                      <select
+                        value={selectedCityRow?.parent_id ? form.city : ""}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            city: (e.target.value || selectedParentId) as City,
+                          })
+                        }
+                        className={inputCls}
+                        disabled={districtOptions.length === 0}
+                      >
+                        <option value="">
+                          {districtOptions.length === 0 ? "—" : (lang === "ko" ? "전체" : "Бүгд")}
                         </option>
-                      ))}
-                    </select>
-                  </Field>
+                        {districtOptions.map((d) => (
+                          <option key={d.id} value={d.id}>
+                            {cityName(d, lang)}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  </div>
                 </div>
+
 
                 <div className="grid grid-cols-2 gap-3">
                   <Field label={t("form.area")}>
