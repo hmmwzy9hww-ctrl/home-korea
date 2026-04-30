@@ -110,8 +110,6 @@ function AdminPage() {
   const settings = useSiteSettings();
   const analytics = useAnalytics();
   const subs = useCitySubscriptions();
-  const [pw, setPw] = useState("");
-  const [err, setErr] = useState("");
   const [editor, setEditor] = useState<EditorState>(null);
   const [form, setForm] = useState<ListingForm>(createEmptyListing());
   // options live on form.options directly
