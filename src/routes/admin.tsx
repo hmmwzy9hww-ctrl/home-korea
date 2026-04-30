@@ -108,8 +108,7 @@ function AdminPage() {
     const c = cities.find((x) => x.id === id);
     return c ? cityLabel(c, lang) : id;
   };
-  const isAdmin = useAdmin();
-  const { loading: authLoading, session } = useAuth();
+  const { isAdmin, loading: authLoading } = useAuth();
   const listings = useListings();
   const settings = useSiteSettings();
   const analytics = useAnalytics();
