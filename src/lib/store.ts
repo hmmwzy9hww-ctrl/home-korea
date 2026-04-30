@@ -14,8 +14,8 @@ function rowToListing(row: Record<string, unknown>): Listing {
   return {
     id: String(row.id),
     title: String(row.title ?? ""),
-    roomType: (row.room_type as RoomType) ?? "oneRoom",
-    city: (row.city as City) ?? "other",
+    roomType: (row.room_type as string) ?? "oneRoom",
+    city: (row.city as string) ?? "other",
     area: String(row.area ?? ""),
     address: String(row.address ?? ""),
     monthlyRent: Number(row.monthly_rent ?? 0),
@@ -39,6 +39,15 @@ function rowToListing(row: Record<string, unknown>): Listing {
     createdAt: Number(row.created_at ?? Date.now()),
     latitude: row.latitude == null ? undefined : Number(row.latitude),
     longitude: row.longitude == null ? undefined : Number(row.longitude),
+    paymentType: row.payment_type ? String(row.payment_type) : "monthly",
+    titleTranslations: (row.title_translations as Record<string, string>) ?? {},
+    descriptionTranslations:
+      (row.description_translations as Record<string, string>) ?? {},
+    addressTranslations:
+      (row.address_translations as Record<string, string>) ?? {},
+    areaTranslations: (row.area_translations as Record<string, string>) ?? {},
+    optionsTranslations:
+      (row.options_translations as Record<string, string[]>) ?? {},
   };
 }
 
@@ -71,6 +80,12 @@ function listingToRow(l: Partial<Listing>): Record<string, unknown> {
   if (l.createdAt !== undefined) row.created_at = l.createdAt;
   if (l.latitude !== undefined) row.latitude = l.latitude;
   if (l.longitude !== undefined) row.longitude = l.longitude;
+  if (l.paymentType !== undefined) row.payment_type = l.paymentType;
+  if (l.titleTranslations !== undefined) row.title_translations = l.titleTranslations;
+  if (l.descriptionTranslations !== undefined) row.description_translations = l.descriptionTranslations;
+  if (l.addressTranslations !== undefined) row.address_translations = l.addressTranslations;
+  if (l.areaTranslations !== undefined) row.area_translations = l.areaTranslations;
+  if (l.optionsTranslations !== undefined) row.options_translations = l.optionsTranslations;
   return row;
 }
 
