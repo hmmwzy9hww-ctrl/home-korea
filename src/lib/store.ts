@@ -36,7 +36,7 @@ function rowToListing(row: Record<string, unknown>): Listing {
     messengerUrl: row.messenger_url ? String(row.messenger_url) : undefined,
     status: (row.status as ListingStatus) ?? "available",
     featured: Boolean(row.featured),
-    paymentType: (row.payment_type as "monthly" | "quarterly") ?? "monthly",
+    paymentType: (row.payment_type as string) ?? "monthly",
     latitude: row.latitude == null ? null : Number(row.latitude),
     longitude: row.longitude == null ? null : Number(row.longitude),
     descriptionTranslations:
@@ -47,6 +47,9 @@ function rowToListing(row: Record<string, unknown>): Listing {
       row.title_translations && typeof row.title_translations === "object"
         ? (row.title_translations as Record<string, string>)
         : {},
+    approvalStatus: (row.approval_status as "pending" | "approved" | "rejected") ?? "approved",
+    submittedBy: row.submitted_by ? String(row.submitted_by) : null,
+    rejectionReason: String(row.rejection_reason ?? ""),
     createdAt: Number(row.created_at ?? Date.now()),
   };
 }
@@ -85,6 +88,9 @@ function listingToRow(l: Partial<Listing>): Record<string, unknown> {
   if (l.titleTranslations !== undefined)
     row.title_translations = l.titleTranslations ?? {};
   if (l.createdAt !== undefined) row.created_at = l.createdAt;
+  if (l.approvalStatus !== undefined) row.approval_status = l.approvalStatus;
+  if (l.submittedBy !== undefined) row.submitted_by = l.submittedBy;
+  if (l.rejectionReason !== undefined) row.rejection_reason = l.rejectionReason;
   return row;
 }
 
@@ -176,12 +182,29 @@ export function useListing(id: string | undefined): Listing | undefined {
 
 export async function addListing(listing: Omit<Listing, "id" | "createdAt">) {
   ensureInit();
+  // Determine current user (for submitted_by) and whether they are admin.
+  const { data: sess } = await supabase.auth.getSession();
+  const uid = sess.session?.user?.id ?? null;
+  let isAdmin = false;
+  if (uid) {
+    const { data: roleRow } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", uid)
+      .eq("role", "admin")
+      .maybeSingle();
+    isAdmin = !!roleRow;
+  }
   const newL: Listing = {
     ...listing,
     id: `l_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     createdAt: Date.now(),
+    // Admins auto-approve; public submissions go to pending queue.
+    approvalStatus: listing.approvalStatus ?? (isAdmin ? "approved" : "pending"),
+    submittedBy: listing.submittedBy ?? uid,
+    featured: isAdmin ? listing.featured : false,
   };
-  // Optimistic update
+  // Optimistic update (only show locally if it'll be visible to this user)
   memoryStore = [newL, ...memoryStore];
   emit();
   const { error } = await supabase.from("listings").insert(listingToRow(newL) as never);
@@ -191,8 +214,18 @@ export async function addListing(listing: Omit<Listing, "id" | "createdAt">) {
     emit();
     throw error;
   }
-  notifyNewListing(newL);
+  if (newL.approvalStatus === "approved") notifyNewListing(newL);
   return newL;
+}
+
+/** Admin: approve a pending listing. */
+export async function approveListing(id: string) {
+  return updateListing(id, { approvalStatus: "approved", rejectionReason: "" });
+}
+
+/** Admin: reject a pending listing with an optional reason. */
+export async function rejectListing(id: string, reason = "") {
+  return updateListing(id, { approvalStatus: "rejected", rejectionReason: reason });
 }
 
 export async function updateListing(id: string, patch: Partial<Listing>) {
