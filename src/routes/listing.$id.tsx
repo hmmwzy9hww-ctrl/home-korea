@@ -126,7 +126,7 @@ function ListingDetailPage() {
               {listing.status === "available" ? t("card.available") : t("card.unavailable")}
             </span>
           </div>
-          <h1 className="text-xl font-bold leading-tight">{titleI18n}</h1>
+          <h1 className="text-xl font-bold leading-tight">{titleAuto || titleI18n}</h1>
           <p className="mt-1.5 text-sm text-muted-foreground flex items-center gap-1">
             <MapPin className="h-3.5 w-3.5" />
             {(() => { const cn2 = lookupCityName(listing.city, lang) || t(`city.${listing.city}`); return areaI18n ? `${cn2} · ${areaI18n}` : cn2; })()}
