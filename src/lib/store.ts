@@ -638,3 +638,37 @@ function notifyRented(listing: Listing) {
     city: listing.city,
   });
 }
+
+// ===== Translation helper (calls translate-listing edge function) =====
+export interface TranslateInput {
+  sourceLang?: "mn" | "ko" | "en" | "ru" | "zh" | "vi";
+  fields: {
+    title?: string;
+    description?: string;
+    address?: string;
+    area?: string;
+    options?: string[];
+  };
+}
+
+export interface TranslateResult {
+  titleTranslations?: Record<string, string>;
+  descriptionTranslations?: Record<string, string>;
+  addressTranslations?: Record<string, string>;
+  areaTranslations?: Record<string, string>;
+  optionsTranslations?: Record<string, string[]>;
+}
+
+export async function translateListingFields(
+  input: TranslateInput,
+): Promise<TranslateResult> {
+  const { data, error } = await supabase.functions.invoke<TranslateResult>(
+    "translate-listing",
+    { body: input },
+  );
+  if (error) {
+    console.error("[translate-listing] failed", error);
+    throw error;
+  }
+  return data ?? {};
+}
