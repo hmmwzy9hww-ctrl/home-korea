@@ -96,6 +96,28 @@ function AdminPage() {
   const settings = useSiteSettings();
   const analytics = useAnalytics();
   const subs = useCitySubscriptions();
+  const citiesData = useCitiesData();
+  const roomTypesData = useRoomTypesData();
+  const lang = (t("__lang") as string) || "mn";
+
+  const parentCities = useMemo(() => citiesData.filter((c) => !c.parent_id), [citiesData]);
+  const childrenByParent = useMemo(() => {
+    const map = new Map<string, typeof citiesData>();
+    for (const c of citiesData) {
+      if (c.parent_id) {
+        const arr = map.get(c.parent_id) ?? [];
+        arr.push(c);
+        map.set(c.parent_id, arr);
+      }
+    }
+    return map;
+  }, [citiesData]);
+
+  // form.city stores the leaf id (district if present, else parent).
+  // Derive selected parent for the current form.city value.
+  const selectedCityRow = citiesData.find((c) => c.id === form.city);
+  const selectedParentId = selectedCityRow?.parent_id ?? selectedCityRow?.id ?? "";
+  const districtOptions = selectedParentId ? (childrenByParent.get(selectedParentId) ?? []) : [];
   const [pw, setPw] = useState("");
   const [err, setErr] = useState("");
   const [editor, setEditor] = useState<EditorState>(null);
