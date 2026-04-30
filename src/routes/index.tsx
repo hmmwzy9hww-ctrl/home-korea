@@ -5,6 +5,7 @@ import { ClientOnly } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { ListingCard } from "@/components/ListingCard";
+import { ListingCardSkeletonGrid } from "@/components/ListingCardSkeleton";
 import { useI18n } from "@/lib/i18n";
 
 const HomeMap = lazy(() =>
@@ -14,6 +15,7 @@ import {
   toggleCitySubscription,
   useCitySubscriptions,
   useListings,
+  useListingsLoaded,
   useSiteSettings,
 } from "@/lib/store";
 import type { City } from "@/lib/types";
@@ -35,6 +37,7 @@ function sortAvailableFirst<T extends { status: string; createdAt: number }>(ite
 function HomePage() {
   const { t } = useI18n();
   const all = useListings();
+  const loaded = useListingsLoaded();
   const settings = useSiteSettings();
   const subs = useCitySubscriptions();
 
@@ -227,11 +230,15 @@ function HomePage() {
       {/* Latest */}
       <section className="px-4 pb-6">
         <h2 className="text-base font-bold mb-3">{t("home.section.latest")}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {latest.map((l) => (
-            <ListingCard key={l.id} listing={l} />
-          ))}
-        </div>
+        {!loaded && all.length === 0 ? (
+          <ListingCardSkeletonGrid count={4} />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {latest.map((l) => (
+              <ListingCard key={l.id} listing={l} />
+            ))}
+          </div>
+        )}
       </section>
     </AppShell>
   );
