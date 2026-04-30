@@ -57,33 +57,21 @@ export function ListingCard({ listing }: { listing: Listing }) {
 
   return (
     <article className="group bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover transition-shadow border">
-      <div className="relative">
-        <div className="relative w-full aspect-[4/3] overflow-hidden bg-muted">
-          <img
-            src={listing.photos?.[0] || "https://placehold.co/800x600?text=No+photo"}
-            alt={title}
-            className="absolute inset-0 h-full w-full object-cover"
-            loading="lazy"
-            decoding="async"
-          />
-          {listing.photos && listing.photos.length > 1 && (
-            <span className="absolute bottom-2 right-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-background/85 backdrop-blur text-foreground">
-              {listing.photos.length}
-            </span>
-          )}
-        </div>
+      <Link to="/listing/$id" params={{ id: listing.id }} className="block relative">
+        <CardPhotoGrid photos={listing.photos || []} alt={title} />
         <button
           type="button"
           onClick={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             toggleFavorite(listing.id);
           }}
           aria-label={isFav ? t("card.fav.remove") : t("card.fav.add")}
-          className="absolute top-3 right-3 grid place-items-center h-9 w-9 rounded-full bg-background/85 backdrop-blur shadow-card hover:bg-background"
+          className="absolute top-3 right-3 z-10 grid place-items-center h-9 w-9 rounded-full bg-background/85 backdrop-blur shadow-card hover:bg-background"
         >
           <Heart className={cn("h-5 w-5", isFav ? "fill-destructive text-destructive" : "text-foreground")} />
         </button>
-        <div className="absolute top-3 left-3 flex gap-1.5">
+        <div className="absolute top-3 left-3 z-10 flex gap-1.5">
           {listing.featured && (
             <span className="text-[10px] font-semibold px-2 py-1 rounded-full bg-primary text-primary-foreground">
               {t("card.featured")}
@@ -95,7 +83,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
             </span>
           )}
         </div>
-      </div>
+      </Link>
 
       <div className="p-3.5 space-y-2.5">
         <div className="flex items-baseline gap-2 flex-wrap">
