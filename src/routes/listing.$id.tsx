@@ -79,7 +79,7 @@ function ListingDetailPage() {
         >
           <Heart className={cn("h-5 w-5", isFav ? "fill-destructive text-destructive" : "")} />
         </button>
-        <PhotoGrid photos={listing.photos} alt={listingTitle(listing, t("__lang") || "mn")} />
+        <PhotoGrid photos={listing.photos} alt={listingTitle(listing, lang)} />
       </div>
 
       <div className="px-4 py-4 space-y-5">
