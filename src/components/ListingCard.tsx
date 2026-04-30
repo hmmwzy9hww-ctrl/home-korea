@@ -1,28 +1,38 @@
 import { Link } from "@tanstack/react-router";
-import { Heart, MapPin, Train, Bus, MessageCircle, ExternalLink } from "lucide-react";
+import { Heart, MapPin, Train, Bus, MessageCircle, ExternalLink, Wallet } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useFavorites, toggleFavorite } from "@/lib/store";
 import { buildMessengerUrl } from "@/lib/config";
 import { buildNaverMapSearchUrl } from "@/lib/maps";
 import type { Listing } from "@/lib/types";
 import { formatWon } from "@/lib/format";
+import { listingTitle, listingArea } from "@/lib/listingI18n";
 import { PhotoCarousel } from "./PhotoCarousel";
 import { cn } from "@/lib/utils";
 
+const PAYMENT_LABEL: Record<string, { mn: string; ko: string; en: string; ru: string; zh: string; vi: string }> = {
+  monthly: { mn: "Сар бүр", ko: "월세", en: "Monthly", ru: "Ежемесячно", zh: "月租", vi: "Hàng tháng" },
+  quarterly: { mn: "Бөөн төлбөр", ko: "전세", en: "Lump-sum", ru: "Залог", zh: "全租", vi: "Tiền cọc" },
+};
+
 export function ListingCard({ listing }: { listing: Listing }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const favs = useFavorites();
   const isFav = favs.has(listing.id);
+  const title = listingTitle(listing, lang);
+  const area = listingArea(listing, lang);
   const messenger = buildMessengerUrl({
     listingId: listing.id,
-    listingTitle: listing.title,
+    listingTitle: title,
   });
   const mapsUrl = listing.address?.trim() ? buildNaverMapSearchUrl(listing.address.trim()) : "";
+  const paymentKey = listing.paymentType || "monthly";
+  const paymentLabel = PAYMENT_LABEL[paymentKey]?.[lang as "mn"] ?? paymentKey;
 
   return (
     <article className="group bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover transition-shadow border">
       <div className="relative">
-        <PhotoCarousel photos={listing.photos} alt={listing.title} rounded={false} />
+        <PhotoCarousel photos={listing.photos} alt={title} rounded={false} />
         <button
           type="button"
           onClick={(e) => {
@@ -49,12 +59,16 @@ export function ListingCard({ listing }: { listing: Listing }) {
       </div>
 
       <div className="p-3.5 space-y-2.5">
-        <div className="flex items-baseline gap-2">
+        <div className="flex items-baseline gap-2 flex-wrap">
           <span className="text-lg font-bold text-foreground">{formatWon(listing.monthlyRent)}</span>
-          <span className="text-xs text-muted-foreground">/ {t("card.monthly").toLowerCase()}</span>
+          <span className="text-xs text-muted-foreground">/ {paymentLabel}</span>
+          <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+            <Wallet className="h-3 w-3" />
+            {paymentLabel}
+          </span>
         </div>
         <h3 className="font-semibold text-sm text-foreground line-clamp-2 leading-snug">
-          {listing.title}
+          {title}
         </h3>
 
         <div className="flex flex-wrap gap-1.5 text-[11px] text-muted-foreground">
@@ -70,7 +84,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
         <div className="text-[12px] text-muted-foreground space-y-1">
           <div className="flex items-center gap-1.5 min-w-0">
             <MapPin className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{listing.area ? `${t(`city.${listing.city}`)} · ${listing.area}` : t(`city.${listing.city}`)}</span>
+            <span className="truncate">{area ? `${t(`city.${listing.city}`)} · ${area}` : t(`city.${listing.city}`)}</span>
           </div>
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
