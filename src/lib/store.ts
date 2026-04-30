@@ -314,30 +314,12 @@ export function toggleFavorite(id: string) {
   persistFavs();
 }
 
-// ===== Admin auth (simple, client-side, password-protected) =====
-// ===== Admin auth (Supabase-backed, role-checked) =====
-// Backed by `useAuth` hook which subscribes to Supabase session + checks the
-// `user_roles` table for an `admin` row. Kept under the `useAdmin` name so
-// existing call sites (admin.tsx, admin.edit.$id.tsx, listing.$id.tsx) work
-// unchanged.
-import { useAuth, signOut as authSignOut } from "@/hooks/useAuth";
-
+// ===== Admin auth =====
+// Admin login UI was removed; the site is read-only for visitors and admins
+// manage content directly via the Supabase dashboard. `useAdmin` always
+// returns false so all edit/delete UI stays hidden on the public site.
 export function useAdmin(): boolean {
-  const { isAdmin } = useAuth();
-  return isAdmin;
-}
-
-/**
- * Legacy password login is gone — admins now sign in via /auth.
- * Kept as a no-op for backwards compatibility; always returns false so any
- * remaining UI shows an error and we route users to /auth.
- */
-export function loginAdmin(_password: string, _expected: string): boolean {
   return false;
-}
-
-export async function logoutAdmin() {
-  await authSignOut();
 }
 
 // ===== Site settings (cover image, etc.) =====
