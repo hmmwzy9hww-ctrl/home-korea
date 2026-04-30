@@ -31,8 +31,8 @@ interface ListingsSearch {
 export const Route = createFileRoute("/listings")({
   validateSearch: (s: Record<string, unknown>): ListingsSearch => ({
     q: typeof s.q === "string" ? s.q : undefined,
-    city: (["seoul", "incheon", "gyeonggi", "busan", "other"].includes(String(s.city)) ? s.city : undefined) as City | undefined,
-    roomType: (["oneRoom", "twoRoom", "threeRoom", "officetel", "studio", "share"].includes(String(s.roomType)) ? s.roomType : undefined) as RoomType | undefined,
+    city: typeof s.city === "string" && s.city ? (s.city as City) : undefined,
+    roomType: typeof s.roomType === "string" && s.roomType ? (s.roomType as RoomType) : undefined,
     minPrice: typeof s.minPrice === "number" ? s.minPrice : undefined,
     maxPrice: typeof s.maxPrice === "number" ? s.maxPrice : undefined,
     minDeposit: typeof s.minDeposit === "number" ? s.minDeposit : undefined,
@@ -45,8 +45,6 @@ export const Route = createFileRoute("/listings")({
   component: ListingsPage,
 });
 
-const cities: (City | "all")[] = ["all", "seoul", "incheon", "gyeonggi", "busan", "other"];
-const roomTypes: (RoomType | "all")[] = ["all", "oneRoom", "twoRoom", "threeRoom", "officetel", "studio", "share"];
 
 function ListingsPage() {
   const { t } = useI18n();
