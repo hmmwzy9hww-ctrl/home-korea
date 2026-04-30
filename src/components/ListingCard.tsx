@@ -73,7 +73,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
         </h3>
 
         <div className="flex flex-wrap gap-1.5 text-[11px] text-muted-foreground">
-          <span className="px-2 py-0.5 rounded-md bg-secondary">{t(`room.${listing.roomType}`)}</span>
+          <span className="px-2 py-0.5 rounded-md bg-secondary">{lookupRoomTypeName(listing.roomType, lang) || t(`room.${listing.roomType}`)}</span>
           <span className="px-2 py-0.5 rounded-md bg-secondary">
             {t("card.deposit")} {formatWon(listing.deposit)}
           </span>
