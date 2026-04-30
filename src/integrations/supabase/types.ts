@@ -25,6 +25,7 @@ export type Database = {
           name_ru: string
           name_vi: string
           name_zh: string
+          parent_id: string | null
           sort_order: number
           updated_at: string
         }
@@ -38,6 +39,7 @@ export type Database = {
           name_ru?: string
           name_vi?: string
           name_zh?: string
+          parent_id?: string | null
           sort_order?: number
           updated_at?: string
         }
@@ -51,10 +53,19 @@ export type Database = {
           name_ru?: string
           name_vi?: string
           name_zh?: string
+          parent_id?: string | null
           sort_order?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "cities_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       floor_options: {
         Row: {
