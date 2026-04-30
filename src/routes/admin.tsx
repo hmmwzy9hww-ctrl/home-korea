@@ -443,6 +443,9 @@ function AdminPage() {
         {/* Editable site texts */}
         <TextEditor settings={settings} />
 
+        {/* Amenities (icon-based options) manager */}
+        <AmenityManager />
+
         <button
           type="button"
           onClick={openAdd}
