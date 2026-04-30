@@ -144,16 +144,16 @@ function ListingDetailPage() {
           <InfoRow icon={Train} label={t("card.subway")} value={`${listing.subwayStation} · ${listing.subwayMinutes} ${t("card.minWalk")}`} />
           <InfoRow icon={Bus} label={t("card.bus")} value={`${listing.busStop} · ${listing.busMinutes} ${t("card.minWalk")}`} />
           <InfoRow icon={Calendar} label={t("card.availableFrom")} value={listing.availableFrom} />
-          <InfoRow icon={MapPin} label={t("card.address")} value={listing.address} />
+          <InfoRow icon={MapPin} label={t("card.address")} value={addressI18n} />
         </div>
 
         {/* Options */}
-        {listing.options.length > 0 && (
+        {optionsI18n.length > 0 && (
           <div>
             <h2 className="font-bold text-sm mb-2">{t("card.options")}</h2>
             <div className="flex flex-wrap gap-1.5">
-              {listing.options.map((o) => (
-                <span key={o} className="text-xs px-2.5 py-1 rounded-full bg-secondary">
+              {optionsI18n.map((o, i) => (
+                <span key={`${o}-${i}`} className="text-xs px-2.5 py-1 rounded-full bg-secondary">
                   {o}
                 </span>
               ))}
@@ -164,7 +164,7 @@ function ListingDetailPage() {
         {/* Description */}
         <div>
           <h2 className="font-bold text-sm mb-2">{t("card.description")}</h2>
-          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">{listing.description}</p>
+          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">{descriptionI18n}</p>
         </div>
 
         {/* Map */}
