@@ -315,11 +315,11 @@ export function toggleFavorite(id: string) {
 }
 
 // ===== Admin auth =====
-// Admin login UI was removed; the site is read-only for visitors and admins
-// manage content directly via the Supabase dashboard. `useAdmin` always
-// returns false so all edit/delete UI stays hidden on the public site.
+// Real auth-backed admin flag. Edit/delete UI throughout the site uses this
+// to hide controls from public visitors. Admin login lives at `/auth`.
+import { useAuth } from "@/hooks/useAuth";
 export function useAdmin(): boolean {
-  return false;
+  return useAuth().isAdmin;
 }
 
 // ===== Site settings (cover image, etc.) =====
