@@ -85,7 +85,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
         <div className="text-[12px] text-muted-foreground space-y-1">
           <div className="flex items-center gap-1.5 min-w-0">
             <MapPin className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{area ? `${t(`city.${listing.city}`)} · ${area}` : t(`city.${listing.city}`)}</span>
+            <span className="truncate">{(() => { const cn2 = lookupCityName(listing.city, lang) || t(`city.${listing.city}`); return area ? `${cn2} · ${area}` : cn2; })()}</span>
           </div>
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
