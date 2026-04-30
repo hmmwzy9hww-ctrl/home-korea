@@ -22,17 +22,21 @@ import { formatWon } from "@/lib/format";
 import { EDITABLE_TEXTS } from "@/lib/editableTexts";
 import {
   addListing,
+  cityName,
   deleteListing,
   loginAdmin,
   logoutAdmin,
+  roomTypeName,
   setTextOverride,
   translateListingFields,
   updateListing,
   updateSiteSettings,
   useAdmin,
   useAnalytics,
+  useCitiesData,
   useCitySubscriptions,
   useListings,
+  useRoomTypesData,
   useSiteSettings,
 } from "@/lib/store";
 import type { City, Listing, ListingStatus, RoomType } from "@/lib/types";
@@ -42,8 +46,6 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-const cities: City[] = ["seoul", "incheon", "gyeonggi", "busan", "other"];
-const roomTypes: RoomType[] = ["oneRoom", "twoRoom", "threeRoom", "officetel", "studio", "share"];
 const paymentTypes: { id: string; label: string }[] = [
   { id: "monthly", label: "Сар бүр (월세 / Monthly)" },
   { id: "quarterly", label: "Улирал бүр (전세 / Lump-sum)" },
