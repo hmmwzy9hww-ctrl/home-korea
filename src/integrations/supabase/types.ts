@@ -56,9 +56,94 @@ export type Database = {
         }
         Relationships: []
       }
+      floor_options: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          name_en: string
+          name_ko: string
+          name_mn: string
+          name_ru: string
+          name_vi: string
+          name_zh: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string
+          id: string
+          name_en?: string
+          name_ko?: string
+          name_mn?: string
+          name_ru?: string
+          name_vi?: string
+          name_zh?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          name_en?: string
+          name_ko?: string
+          name_mn?: string
+          name_ru?: string
+          name_vi?: string
+          name_zh?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      listing_amenities: {
+        Row: {
+          created_at: string
+          icon: string
+          id: string
+          name_en: string
+          name_ko: string
+          name_mn: string
+          name_ru: string
+          name_vi: string
+          name_zh: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          icon?: string
+          id: string
+          name_en?: string
+          name_ko?: string
+          name_mn?: string
+          name_ru?: string
+          name_vi?: string
+          name_zh?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          icon?: string
+          id?: string
+          name_en?: string
+          name_ko?: string
+          name_mn?: string
+          name_ru?: string
+          name_vi?: string
+          name_zh?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       listings: {
         Row: {
           address: string
+          approval_status: string
           area: string
           available_from: string
           bus_minutes: number
@@ -81,9 +166,11 @@ export type Database = {
           options: Json
           payment_type: string
           photos: Json
+          rejection_reason: string
           room_type: string
           size: number
           status: string
+          submitted_by: string | null
           subway_minutes: number
           subway_station: string
           title: string
@@ -91,6 +178,7 @@ export type Database = {
         }
         Insert: {
           address?: string
+          approval_status?: string
           area?: string
           available_from?: string
           bus_minutes?: number
@@ -113,9 +201,11 @@ export type Database = {
           options?: Json
           payment_type?: string
           photos?: Json
+          rejection_reason?: string
           room_type: string
           size?: number
           status?: string
+          submitted_by?: string | null
           subway_minutes?: number
           subway_station?: string
           title: string
@@ -123,6 +213,7 @@ export type Database = {
         }
         Update: {
           address?: string
+          approval_status?: string
           area?: string
           available_from?: string
           bus_minutes?: number
@@ -145,13 +236,57 @@ export type Database = {
           options?: Json
           payment_type?: string
           photos?: Json
+          rejection_reason?: string
           room_type?: string
           size?: number
           status?: string
+          submitted_by?: string | null
           subway_minutes?: number
           subway_station?: string
           title?: string
           title_translations?: Json
+        }
+        Relationships: []
+      }
+      payment_types: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          name_en: string
+          name_ko: string
+          name_mn: string
+          name_ru: string
+          name_vi: string
+          name_zh: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string
+          id: string
+          name_en?: string
+          name_ko?: string
+          name_mn?: string
+          name_ru?: string
+          name_vi?: string
+          name_zh?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          name_en?: string
+          name_ko?: string
+          name_mn?: string
+          name_ru?: string
+          name_vi?: string
+          name_zh?: string
+          sort_order?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -179,6 +314,48 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      room_types: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          name_en: string
+          name_ko: string
+          name_mn: string
+          name_ru: string
+          name_vi: string
+          name_zh: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          emoji?: string
+          id: string
+          name_en?: string
+          name_ko?: string
+          name_mn?: string
+          name_ru?: string
+          name_vi?: string
+          name_zh?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          name_en?: string
+          name_ko?: string
+          name_mn?: string
+          name_ru?: string
+          name_vi?: string
+          name_zh?: string
+          sort_order?: number
+          updated_at?: string
         }
         Relationships: []
       }
