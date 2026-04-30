@@ -113,6 +113,7 @@ export type Database = {
         Row: {
           created_at: string
           icon: string
+          icon_url: string
           id: string
           name_en: string
           name_ko: string
@@ -126,6 +127,7 @@ export type Database = {
         Insert: {
           created_at?: string
           icon?: string
+          icon_url?: string
           id: string
           name_en?: string
           name_ko?: string
@@ -139,6 +141,7 @@ export type Database = {
         Update: {
           created_at?: string
           icon?: string
+          icon_url?: string
           id?: string
           name_en?: string
           name_ko?: string
