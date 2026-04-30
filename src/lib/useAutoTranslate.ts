@@ -259,8 +259,9 @@ export function usePrefetchTranslations(listings: PrefetchListing[], targetLang:
 
         await callTranslate(l.id, sourceLang, fields);
         if (cancelled) return;
-        // Small gap between requests to avoid bursting the gateway.
-        await new Promise((r) => setTimeout(r, 250));
+        // Larger gap to avoid spawning many concurrent edge function workers
+        // (which can trigger transient BOOT_ERROR / 503 from the runtime).
+        await new Promise((r) => setTimeout(r, 600));
       }
     };
 
