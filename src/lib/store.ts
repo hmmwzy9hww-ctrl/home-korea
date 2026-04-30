@@ -282,39 +282,29 @@ export function toggleFavorite(id: string) {
 }
 
 // ===== Admin auth (simple, client-side, password-protected) =====
-const AUTH_KEY = "ger.admin.v1";
-const authListeners = new Set<() => void>();
-
-export function isAdmin(): boolean {
-  if (typeof window === "undefined") return false;
-  return window.localStorage.getItem(AUTH_KEY) === "1";
-}
-
-export function loginAdmin(password: string, expected: string): boolean {
-  if (password !== expected) return false;
-  if (typeof window !== "undefined") window.localStorage.setItem(AUTH_KEY, "1");
-  authListeners.forEach((l) => l());
-  return true;
-}
-
-export function logoutAdmin() {
-  if (typeof window !== "undefined") window.localStorage.removeItem(AUTH_KEY);
-  authListeners.forEach((l) => l());
-}
+// ===== Admin auth (Supabase-backed, role-checked) =====
+// Backed by `useAuth` hook which subscribes to Supabase session + checks the
+// `user_roles` table for an `admin` row. Kept under the `useAdmin` name so
+// existing call sites (admin.tsx, admin.edit.$id.tsx, listing.$id.tsx) work
+// unchanged.
+import { useAuth, signOut as authSignOut } from "@/hooks/useAuth";
 
 export function useAdmin(): boolean {
-  // Always start as false on first render to match SSR output and avoid
-  // hydration mismatches. Then sync from localStorage in useEffect.
-  const [v, setV] = useState<boolean>(false);
-  useEffect(() => {
-    setV(isAdmin());
-    const cb = () => setV(isAdmin());
-    authListeners.add(cb);
-    return () => {
-      authListeners.delete(cb);
-    };
-  }, []);
-  return v;
+  const { isAdmin } = useAuth();
+  return isAdmin;
+}
+
+/**
+ * Legacy password login is gone — admins now sign in via /auth.
+ * Kept as a no-op for backwards compatibility; always returns false so any
+ * remaining UI shows an error and we route users to /auth.
+ */
+export function loginAdmin(_password: string, _expected: string): boolean {
+  return false;
+}
+
+export async function logoutAdmin() {
+  await authSignOut();
 }
 
 // ===== Site settings (cover image, etc.) =====
