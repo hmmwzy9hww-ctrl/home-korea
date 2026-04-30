@@ -23,39 +23,72 @@ export function useAuth(): AuthState {
 
   useEffect(() => {
     let cancelled = false;
+    let requestId = 0;
+
+    const isRetryableRoleError = (error: unknown) => {
+      if (!error || typeof error !== "object") return false;
+      const code = "code" in error ? String(error.code ?? "") : "";
+      const message = "message" in error ? String(error.message ?? "") : "";
+      return (
+        code === "PGRST001" ||
+        code === "PGRST002" ||
+        message.includes("schema cache") ||
+        message.includes("Database client error") ||
+        message.includes("Failed to fetch")
+      );
+    };
 
     const checkRole = (uid: string | undefined) => {
+      const currentRequestId = ++requestId;
+
       if (!uid) {
-        if (!cancelled) {
+        if (!cancelled && currentRequestId === requestId) {
           setIsAdmin(false);
           setLoading(false);
         }
         return;
       }
+
       // Defer to next tick so we don't block the auth callback.
       setTimeout(async () => {
-        for (let attempt = 0; attempt < 5; attempt += 1) {
-          const { data, error } = await supabase
-            .from("user_roles")
-            .select("role")
-            .eq("user_id", uid)
-            .eq("role", "admin")
-            .maybeSingle();
+        for (let attempt = 0; attempt < 6; attempt += 1) {
+          const [userRolesResult, profileResult] = await Promise.all([
+            supabase
+              .from("user_roles")
+              .select("role")
+              .eq("user_id", uid)
+              .eq("role", "admin")
+              .maybeSingle(),
+            (supabase.from("profiles") as any).select("*").eq("user_id", uid).maybeSingle(),
+          ]);
 
-          if (cancelled) return;
+          if (cancelled || currentRequestId !== requestId) return;
 
-          if (!error) {
-            setIsAdmin(!!data);
+          const userRolesIsAdmin = !userRolesResult.error && !!userRolesResult.data;
+          const profileIsAdmin =
+            !profileResult.error && ((profileResult.data as { role?: string } | null)?.role === "admin");
+
+          if (userRolesIsAdmin || profileIsAdmin) {
+            setIsAdmin(true);
             setLoading(false);
             return;
           }
 
-          if (attempt < 4) {
-            await new Promise((resolve) => window.setTimeout(resolve, 250 * (attempt + 1)));
+          const shouldRetry =
+            isRetryableRoleError(userRolesResult.error) || isRetryableRoleError(profileResult.error);
+
+          if (!shouldRetry) {
+            setIsAdmin(false);
+            setLoading(false);
+            return;
+          }
+
+          if (attempt < 5) {
+            await new Promise((resolve) => window.setTimeout(resolve, 300 * (attempt + 1)));
           }
         }
 
-        if (!cancelled) {
+        if (!cancelled && currentRequestId === requestId) {
           setIsAdmin(false);
           setLoading(false);
         }
