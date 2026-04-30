@@ -215,7 +215,7 @@ const ko: Dict = {
   "sort.newest": "최신순", "sort.priceAsc": "낮은 가격순", "sort.priceDesc": "높은 가격순",
   "card.monthly": "월세", "card.deposit": "보증금", "card.maint": "관리비",
   "card.roomType": "방 종류", "card.subway": "지하철", "card.bus": "버스",
-  "card.minWalk": "분 도보", "card.availableFrom": "입주 가능일",
+  "card.minWalk": "분 도보", "card.minBus": "분 버스", "card.toMetro": "지하철까지", "card.availableFrom": "입주 가능일",
   "card.address": "주소", "card.floor": "층", "card.size": "면적",
   "card.options": "옵션", "card.description": "상세 설명",
   "card.viewDetail": "상세 보기", "card.contact": "Messenger로 연락",
