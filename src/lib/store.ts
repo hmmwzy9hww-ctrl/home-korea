@@ -186,6 +186,7 @@ function ensureInit() {
       (payload) => {
         if (payload.eventType === "INSERT" && payload.new) {
           const l = rowToListing(payload.new as Record<string, unknown>);
+          fullyLoadedIds.add(l.id);
           if (!memoryStore.some((x) => x.id === l.id)) {
             memoryStore = [l, ...memoryStore];
             emit();
@@ -193,6 +194,7 @@ function ensureInit() {
           }
         } else if (payload.eventType === "UPDATE" && payload.new) {
           const l = rowToListing(payload.new as Record<string, unknown>);
+          fullyLoadedIds.add(l.id);
           const before = memoryStore.find((x) => x.id === l.id);
           memoryStore = memoryStore.map((x) => (x.id === l.id ? l : x));
           emit();
@@ -202,6 +204,7 @@ function ensureInit() {
         } else if (payload.eventType === "DELETE" && payload.old) {
           const oldId = String((payload.old as { id?: unknown }).id ?? "");
           if (oldId) {
+            fullyLoadedIds.delete(oldId);
             memoryStore = memoryStore.filter((x) => x.id !== oldId);
             emit();
           }
