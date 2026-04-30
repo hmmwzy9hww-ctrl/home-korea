@@ -8,6 +8,7 @@ import type { Listing } from "@/lib/types";
 import { formatWon } from "@/lib/format";
 import { PhotoGrid } from "./PhotoGrid";
 import { OptionChips } from "./OptionChips";
+import { useCityName } from "@/lib/useCityName";
 import { cn } from "@/lib/utils";
 
 export function ListingCard({ listing }: { listing: Listing }) {
@@ -15,6 +16,8 @@ export function ListingCard({ listing }: { listing: Listing }) {
   const favs = useFavorites();
   const isFav = favs.has(listing.id);
   const displayTitle = (lang !== "mn" && listing.titleTranslations?.[lang]) || listing.title;
+  const getCityName = useCityName();
+  const cityName = getCityName(listing.city);
   const messenger = buildMessengerUrl({
     listingId: listing.id,
     listingTitle: listing.title,
@@ -78,7 +81,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
         <div className="text-[12px] text-muted-foreground space-y-1">
           <div className="flex items-center gap-1.5 min-w-0">
             <MapPin className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{listing.area ? `${t(`city.${listing.city}`)} · ${listing.area}` : t(`city.${listing.city}`)}</span>
+            <span className="truncate">{listing.area ? `${cityName} · ${listing.area}` : cityName}</span>
           </div>
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
