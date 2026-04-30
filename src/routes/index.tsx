@@ -19,6 +19,7 @@ import {
   useSiteSettings,
 } from "@/lib/store";
 import type { City } from "@/lib/types";
+import { usePrefetchTranslations } from "@/lib/useAutoTranslate";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -35,7 +36,7 @@ function sortAvailableFirst<T extends { status: string; createdAt: number }>(ite
 }
 
 function HomePage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const all = useListings();
   const loaded = useListingsLoaded();
   const settings = useSiteSettings();
@@ -43,6 +44,9 @@ function HomePage() {
 
   const featured = all.filter((l) => l.featured && l.status === "available").slice(0, 4);
   const latest = sortAvailableFirst(all).slice(0, 4);
+
+  // Prefetch AI translations for the listings shown on this page.
+  usePrefetchTranslations([...featured, ...latest], lang);
 
   const cities: { code: City; emoji: string }[] = [
     { code: "seoul", emoji: "🏙️" },

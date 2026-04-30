@@ -5,15 +5,17 @@ const LANGS = ["mn", "ko", "en", "ru", "zh", "vi"] as const;
 type Lang = (typeof LANGS)[number];
 
 type Field = "title" | "description";
-const memCache = new Map<string, string>(); // key: `${field}:${id}:${lang}`
 
-function ssGet(key: string): string | null {
+// In-memory cache: `${field}:${id}:${lang}` -> translated string
+const memCache = new Map<string, string>();
+
+function lsGet(key: string): string | null {
   if (typeof window === "undefined") return null;
-  try { return window.sessionStorage.getItem(key); } catch { return null; }
+  try { return window.localStorage.getItem(key); } catch { return null; }
 }
-function ssSet(key: string, value: string) {
+function lsSet(key: string, value: string) {
   if (typeof window === "undefined") return;
-  try { window.sessionStorage.setItem(key, value); } catch { /* ignore */ }
+  try { window.localStorage.setItem(key, value); } catch { /* ignore quota */ }
 }
 
 function detectSourceLang(text: string): Lang {
@@ -23,7 +25,25 @@ function detectSourceLang(text: string): Lang {
   return "en";
 }
 
-// In-flight request dedupe so multiple cards don't fire the same translation.
+function cacheGet(field: Field, id: string, lang: string): string | null {
+  const memKey = `${field}:${id}:${lang}`;
+  const m = memCache.get(memKey);
+  if (m) return m;
+  const ls = lsGet(`tr:${field}:${id}:${lang}`);
+  if (ls) {
+    memCache.set(memKey, ls);
+    return ls;
+  }
+  return null;
+}
+
+function cacheSet(field: Field, id: string, lang: string, value: string) {
+  if (!value) return;
+  memCache.set(`${field}:${id}:${lang}`, value);
+  lsSet(`tr:${field}:${id}:${lang}`, value);
+}
+
+// In-flight request dedupe so multiple cards / prefetches don't fire dupes.
 const inflight = new Map<string, Promise<Record<string, { title?: string; description?: string }> | null>>();
 
 function callTranslate(
@@ -47,16 +67,32 @@ function callTranslate(
       for (const l of langs) {
         out[l] = { title: titleMap[l], description: descMap[l] };
       }
+      // Persist every returned language for both fields.
+      for (const [l, vals] of Object.entries(out)) {
+        if (vals.title) cacheSet("title", listingId, l, vals.title);
+        if (vals.description) cacheSet("description", listingId, l, vals.description);
+      }
       return out;
     } catch {
       return null;
     } finally {
-      // Allow re-fetch later if needed
       setTimeout(() => inflight.delete(dedupeKey), 0);
     }
   })();
   inflight.set(dedupeKey, p);
   return p;
+}
+
+function pickSourceLang(opts: {
+  source: string;
+  existing?: Record<string, string | undefined>;
+}): Lang {
+  if (opts.existing) {
+    for (const l of LANGS) {
+      if (opts.existing[l] && opts.existing[l]!.trim()) return l;
+    }
+  }
+  return detectSourceLang(opts.source);
 }
 
 function useAutoTranslatedField(opts: {
@@ -65,19 +101,15 @@ function useAutoTranslatedField(opts: {
   targetLang: string;
   source: string;
   existing?: Record<string, string | undefined>;
-  // Companion field included in the same AI call to save a round trip
   companion?: { field: Field; source: string; existing?: Record<string, string | undefined> };
 }): { text: string; loading: boolean } {
   const { field, listingId, targetLang, source, existing, companion } = opts;
   const direct = existing?.[targetLang];
-  const cacheKey = `tr:${field}:${listingId}:${targetLang}`;
 
   const initial = (() => {
     if (direct && direct.trim()) return direct;
-    const mem = memCache.get(`${field}:${listingId}:${targetLang}`);
-    if (mem) return mem;
-    const ss = ssGet(cacheKey);
-    if (ss) return ss;
+    const cached = cacheGet(field, listingId, targetLang);
+    if (cached) return cached;
     return source;
   })();
   const [text, setText] = useState<string>(initial);
@@ -86,19 +118,11 @@ function useAutoTranslatedField(opts: {
   useEffect(() => {
     let cancelled = false;
     if (direct && direct.trim()) { setText(direct); return; }
-    const mem = memCache.get(`${field}:${listingId}:${targetLang}`);
-    if (mem) { setText(mem); return; }
-    const ss = ssGet(cacheKey);
-    if (ss) { setText(ss); return; }
+    const cached = cacheGet(field, listingId, targetLang);
+    if (cached) { setText(cached); return; }
     if (!source?.trim()) return;
 
-    // Detect source language: prefer first available existing translation
-    let sourceLang: Lang = detectSourceLang(source);
-    if (existing) {
-      for (const l of LANGS) {
-        if (existing[l] && existing[l]!.trim()) { sourceLang = l; break; }
-      }
-    }
+    const sourceLang = pickSourceLang({ source, existing });
     if (sourceLang === targetLang) { setText(source); return; }
 
     setLoading(true);
@@ -108,17 +132,6 @@ function useAutoTranslatedField(opts: {
     callTranslate(listingId, sourceLang, fields).then((result) => {
       if (cancelled) return;
       if (!result) { setText(source); setLoading(false); return; }
-      // Cache all returned languages for both fields
-      for (const [l, vals] of Object.entries(result)) {
-        if (vals.title) {
-          memCache.set(`title:${listingId}:${l}`, vals.title);
-          ssSet(`tr:title:${listingId}:${l}`, vals.title);
-        }
-        if (vals.description) {
-          memCache.set(`description:${listingId}:${l}`, vals.description);
-          ssSet(`tr:description:${listingId}:${l}`, vals.description);
-        }
-      }
       const target = result[targetLang]?.[field];
       if (target && target.trim()) setText(target);
       else setText(source);
@@ -172,3 +185,71 @@ export function useAutoTranslatedTitle(opts: {
   });
 }
 
+// ---- Bulk prefetch ----
+
+interface PrefetchListing {
+  id: string;
+  title: string;
+  description: string;
+  titleTranslations?: Record<string, string | undefined>;
+  descriptionTranslations?: Record<string, string | undefined>;
+}
+
+/**
+ * Pre-translate title + description for every listing into the target language.
+ * Skips items already cached (memory or localStorage) or already present in
+ * the listing's stored translations. Runs requests sequentially with a small
+ * gap to be friendly to the AI gateway.
+ */
+export function usePrefetchTranslations(listings: PrefetchListing[], targetLang: string) {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!listings?.length) return;
+
+    let cancelled = false;
+
+    const work = async () => {
+      for (const l of listings) {
+        if (cancelled) return;
+
+        const titleHas =
+          (l.titleTranslations?.[targetLang]?.trim() ?? "") !== "" ||
+          cacheGet("title", l.id, targetLang) !== null;
+        const descHas =
+          (l.descriptionTranslations?.[targetLang]?.trim() ?? "") !== "" ||
+          cacheGet("description", l.id, targetLang) !== null;
+
+        if (titleHas && descHas) continue;
+        if (!l.title?.trim() && !l.description?.trim()) continue;
+
+        const sourceLang = pickSourceLang({
+          source: l.description || l.title || "",
+          existing: (l.descriptionTranslations || l.titleTranslations) as
+            | Record<string, string | undefined>
+            | undefined,
+        });
+        if (sourceLang === (targetLang as Lang)) continue;
+
+        const fields: { title?: string; description?: string } = {};
+        if (!titleHas && l.title?.trim()) fields.title = l.title;
+        if (!descHas && l.description?.trim()) fields.description = l.description;
+        if (!fields.title && !fields.description) continue;
+
+        await callTranslate(l.id, sourceLang, fields);
+        if (cancelled) return;
+        // Small gap between requests to avoid bursting the gateway.
+        await new Promise((r) => setTimeout(r, 250));
+      }
+    };
+
+    // Defer slightly so initial paint isn't blocked.
+    const handle = setTimeout(() => { void work(); }, 50);
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
+    // We intentionally only depend on the IDs joined + target lang to avoid
+    // re-running on every reference change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listings.map((l) => l.id).join(","), targetLang]);
+}
