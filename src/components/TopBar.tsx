@@ -1,7 +1,8 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Search } from "lucide-react";
+import { Search, Shield } from "lucide-react";
 import { useState } from "react";
 import { useI18n } from "@/lib/i18n";
+import { useAuth } from "@/hooks/useAuth";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 
 export function TopBar({ showSearch = true }: { showSearch?: boolean }) {
