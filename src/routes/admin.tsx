@@ -645,6 +645,20 @@ function AdminPage() {
                   </button>
                 </div>
 
+                <Field label="Төлбөрийн төрөл (Payment type)">
+                  <select
+                    value={form.paymentType ?? "monthly"}
+                    onChange={(e) => setForm({ ...form, paymentType: e.target.value })}
+                    className={inputCls}
+                  >
+                    {paymentTypes.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+
                 <div className="grid grid-cols-3 gap-3">
                   <Field label={t("form.monthly")}>
                     <input
