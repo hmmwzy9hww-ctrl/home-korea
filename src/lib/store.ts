@@ -74,13 +74,18 @@ function emit() {
   listeners.forEach((l) => l());
 }
 
-async function fetchAll() {
+async function fetchAll(attempt = 0): Promise<void> {
   const { data, error } = await supabase
     .from("listings")
     .select("*")
     .order("created_at", { ascending: false });
   if (error) {
     console.error("[listings] fetch failed", error);
+    // Retry transient connection errors with exponential backoff
+    if (attempt < 5) {
+      const delay = Math.min(1000 * Math.pow(2, attempt), 8000);
+      setTimeout(() => { void fetchAll(attempt + 1); }, delay);
+    }
     return;
   }
   memoryStore = (data ?? []).map((r) => rowToListing(r as Record<string, unknown>));
