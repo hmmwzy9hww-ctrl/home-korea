@@ -39,8 +39,9 @@ export interface Listing {
   descriptionTranslations?: Record<string, string>;
   /** AI-generated translations of `title`, keyed by language code (ko, en, ru, zh, vi). */
   titleTranslations?: Record<string, string>;
-  /** Approval workflow: "pending" submissions are hidden from the public until an admin approves. */
-  approvalStatus: ApprovalStatus;
+  /** Approval workflow: "pending" submissions are hidden from the public until an admin approves.
+   *  Optional in the type so admin-created listings can omit it (defaults to "approved" in the store). */
+  approvalStatus?: ApprovalStatus;
   /** Auth user id of the person who submitted the listing (admins or public submitters). */
   submittedBy?: string | null;
   /** Optional admin note when rejecting a listing. */
