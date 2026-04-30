@@ -24,6 +24,15 @@ function hash01(seed: string): number {
  * based on the listing id. ~3km spread.
  */
 export function getListingCoords(listing: Listing): [number, number] {
+  // Use real coordinates if present
+  if (
+    typeof listing.latitude === "number" &&
+    typeof listing.longitude === "number" &&
+    Number.isFinite(listing.latitude) &&
+    Number.isFinite(listing.longitude)
+  ) {
+    return [listing.latitude, listing.longitude];
+  }
   const [lat, lng] = CITY_CENTERS[listing.city] ?? CITY_CENTERS.other;
   const jLat = hash01(listing.id + ":lat") * 0.025; // ~2.7km
   const jLng = hash01(listing.id + ":lng") * 0.03;
