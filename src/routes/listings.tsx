@@ -218,7 +218,9 @@ function ListingsPage() {
           </div>
         </div>
 
-        {filtered.length === 0 ? (
+        {!loaded && all.length === 0 ? (
+          <ListingCardSkeletonGrid count={6} />
+        ) : filtered.length === 0 ? (
           <div className="py-16 text-center text-sm text-muted-foreground">
             {t("listings.empty")}
           </div>
