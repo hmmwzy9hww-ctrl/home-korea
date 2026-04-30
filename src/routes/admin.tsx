@@ -25,9 +25,10 @@ import { formatWon } from "@/lib/format";
 import { EDITABLE_TEXTS } from "@/lib/editableTexts";
 import {
   addListing,
+  approveListing,
   deleteListing,
-  
   logoutAdmin,
+  rejectListing,
   setTextOverride,
   updateListing,
   updateSiteSettings,
@@ -37,6 +38,7 @@ import {
   useListings,
   useSiteSettings,
 } from "@/lib/store";
+import { DropdownManager } from "@/components/DropdownManager";
 import type { City, Listing, ListingStatus, RoomType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -329,6 +331,62 @@ function AdminPage() {
         {/* City / area management */}
         <CitiesManager />
 
+        {/* DB-backed dropdown managers */}
+        <DropdownManager kind="roomTypes"    title="Өрөөний төрөл (Room types)" />
+        <DropdownManager kind="paymentTypes" title="Төлбөрийн төрөл (Payment types)" />
+        <DropdownManager kind="floorOptions" title="Давхар (Floor options)" />
+        <DropdownManager kind="amenities"    title="Тоног төхөөрөмж (Amenities)" iconAsText iconLabel="Lucide icon" />
+
+        {/* Pending approvals queue */}
+        {(() => {
+          const pending = listings.filter((l) => l.approvalStatus === "pending");
+          if (pending.length === 0) return null;
+          return (
+            <div className="mb-4 rounded-2xl border border-warning/40 bg-warning/5 p-3">
+              <h2 className="mb-2 text-sm font-bold">
+                Зөвшөөрөл хүлээж буй ({pending.length})
+              </h2>
+              <ul className="space-y-2">
+                {pending.map((l) => (
+                  <li key={l.id} className="flex items-center gap-2 rounded-xl border bg-background p-2">
+                    <img
+                      src={l.photos[0] || "https://placehold.co/80x80?text=No"}
+                      alt=""
+                      className="h-12 w-12 rounded-lg object-cover bg-muted shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-xs font-semibold truncate">{l.title || "-"}</div>
+                      <div className="text-[11px] text-muted-foreground truncate">
+                        {cityName(l.city)} · {formatWon(l.monthlyRent)}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try { await approveListing(l.id); toast.success("Зөвшөөрсөн"); }
+                        catch { toast.error("Алдаа"); }
+                      }}
+                      className="rounded-full bg-success/15 text-success px-2.5 py-1 text-[11px] font-semibold hover:bg-success/25"
+                    >
+                      ✓ Зөвшөөрөх
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const reason = prompt("Татгалзах шалтгаан (заавал биш):") ?? "";
+                        try { await rejectListing(l.id, reason); toast.success("Татгалзсан"); }
+                        catch { toast.error("Алдаа"); }
+                      }}
+                      className="rounded-full bg-destructive/15 text-destructive px-2.5 py-1 text-[11px] font-semibold hover:bg-destructive/25"
+                    >
+                      ✕ Татгалзах
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })()}
 
         <button
           type="button"
