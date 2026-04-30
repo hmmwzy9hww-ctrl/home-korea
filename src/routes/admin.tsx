@@ -561,6 +561,49 @@ function AdminPage() {
                   </Field>
                 </div>
 
+                <div className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end">
+                  <Field label="Latitude">
+                    <input
+                      type="number"
+                      step="any"
+                      inputMode="decimal"
+                      value={form.latitude ?? ""}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          latitude: e.target.value === "" ? undefined : Number(e.target.value),
+                        })
+                      }
+                      placeholder="37.5665"
+                      className={inputCls}
+                    />
+                  </Field>
+                  <Field label="Longitude">
+                    <input
+                      type="number"
+                      step="any"
+                      inputMode="decimal"
+                      value={form.longitude ?? ""}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          longitude: e.target.value === "" ? undefined : Number(e.target.value),
+                        })
+                      }
+                      placeholder="126.9780"
+                      className={inputCls}
+                    />
+                  </Field>
+                  <button
+                    type="button"
+                    onClick={geocodeAddress}
+                    disabled={geocoding}
+                    className="h-10 rounded-xl border bg-secondary px-3 text-sm font-medium hover:bg-secondary/80 disabled:opacity-50"
+                  >
+                    {geocoding ? "..." : "📍 Хаягаас авах"}
+                  </button>
+                </div>
+
                 <div className="grid grid-cols-3 gap-3">
                   <Field label={t("form.monthly")}>
                     <input
