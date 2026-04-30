@@ -7,6 +7,7 @@ import { useI18n } from "@/lib/i18n";
 import { useAdmin, useListing, addListing, updateListing } from "@/lib/store";
 import type { City, Listing, ListingStatus, RoomType } from "@/lib/types";
 import { AmenityPicker } from "@/components/AmenityPicker";
+import { MultiLangField } from "@/components/MultiLangField";
 import { resolveNaverCoords, parseNaverCoords } from "@/lib/coords";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -211,16 +212,14 @@ function EditPage() {
         </div>
 
         <form onSubmit={handle} className="space-y-4">
-          <Field label={t("form.title")}>
-            <input
-              type="text"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder={t("form.title.ph")}
-              className={inputCls}
-              required
-            />
-          </Field>
+          <MultiLangField
+            baseLabel={t("form.title")}
+            baseValue={form.title}
+            onBaseChange={(v) => setForm({ ...form, title: v })}
+            translations={form.titleTranslations}
+            onTranslationsChange={(next) => setForm({ ...form, titleTranslations: next })}
+            placeholder={t("form.title.ph")}
+          />
 
           <div className="grid grid-cols-2 gap-3">
             <Field label={t("form.roomType")}>
@@ -247,24 +246,22 @@ function EditPage() {
             </Field>
           </div>
 
-          <Field label={t("form.area")}>
-            <input
-              type="text"
-              value={form.area}
-              onChange={(e) => setForm({ ...form, area: e.target.value })}
-              placeholder={t("form.area.ph")}
-              className={inputCls}
-            />
-          </Field>
+          <MultiLangField
+            baseLabel={t("form.area")}
+            baseValue={form.area}
+            onBaseChange={(v) => setForm({ ...form, area: v })}
+            translations={form.areaTranslations}
+            onTranslationsChange={(next) => setForm({ ...form, areaTranslations: next })}
+            placeholder={t("form.area.ph")}
+          />
 
-          <Field label={t("form.address")}>
-            <input
-              type="text"
-              value={form.address}
-              onChange={(e) => setForm({ ...form, address: e.target.value })}
-              className={inputCls}
-            />
-          </Field>
+          <MultiLangField
+            baseLabel={t("form.address")}
+            baseValue={form.address}
+            onBaseChange={(v) => setForm({ ...form, address: v })}
+            translations={form.addressTranslations}
+            onTranslationsChange={(next) => setForm({ ...form, addressTranslations: next })}
+          />
 
           <div className="grid grid-cols-3 gap-3">
             <Field label={t("form.monthly")}>
@@ -377,15 +374,16 @@ function EditPage() {
             />
           </Field>
 
-          <Field label={t("form.description")}>
-            <textarea
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder={t("form.description.ph")}
-              rows={4}
-              className={inputCls}
-            />
-          </Field>
+          <MultiLangField
+            baseLabel={t("form.description")}
+            baseValue={form.description}
+            onBaseChange={(v) => setForm({ ...form, description: v })}
+            translations={form.descriptionTranslations}
+            onTranslationsChange={(next) => setForm({ ...form, descriptionTranslations: next })}
+            placeholder={t("form.description.ph")}
+            textarea
+            rows={4}
+          />
 
           <Field label={`${t("form.photos")} (${photos.length}/${MAX_PHOTOS})`}>
             <div className="space-y-3">
