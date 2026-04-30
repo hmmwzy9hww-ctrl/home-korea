@@ -9,6 +9,7 @@ import { cityName, roomTypeName, useCitiesData, useListings, useListingsLoaded, 
 import { formatWon } from "@/lib/format";
 import type { City, Listing, RoomType, SortKey } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { usePrefetchTranslations } from "@/lib/useAutoTranslate";
 
 const LeafletMap = lazy(() =>
   import("@/components/LeafletMap").then((m) => ({ default: m.LeafletMap })),
@@ -111,6 +112,10 @@ function ListingsPage() {
     });
     return r;
   }, [all, search, districtsByParent]);
+
+  // Prefetch AI translations for currently-visible listings into the active
+  // language. First time hits the AI; subsequent visits read from localStorage.
+  usePrefetchTranslations(filtered, lang);
 
   const update = (patch: Partial<ListingsSearch>) => {
     navigate({ to: "/listings", search: { ...search, ...patch } as never });
