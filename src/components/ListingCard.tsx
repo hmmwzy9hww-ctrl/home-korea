@@ -53,6 +53,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
   const mapsUrl = listing.address?.trim() ? buildNaverMapSearchUrl(listing.address.trim()) : "";
   const paymentKey = listing.paymentType || "monthly";
   const paymentLabel = PAYMENT_LABEL[paymentKey]?.[lang as "mn"] ?? paymentKey;
+  const rentLabel = RENT_LABEL[lang] ?? RENT_LABEL.mn;
 
   return (
     <article className="group bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover transition-shadow border">
