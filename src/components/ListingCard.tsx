@@ -15,6 +15,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
   const { t, lang } = useI18n();
   const favs = useFavorites();
   const isFav = favs.has(listing.id);
+  const displayTitle = (lang !== "mn" && listing.titleTranslations?.[lang]) || listing.title;
   const getCityName = useCityName();
   const cityName = getCityName(listing.city);
   const messenger = buildMessengerUrl({
