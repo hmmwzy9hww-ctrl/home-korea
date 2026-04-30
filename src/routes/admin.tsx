@@ -257,6 +257,16 @@ function AdminPage() {
     closeEditor();
   };
 
+  if (authLoading) {
+    return (
+      <AppShell showSearch={false}>
+        <div className="px-4 py-10 max-w-sm mx-auto text-center text-sm text-muted-foreground">
+          ...
+        </div>
+      </AppShell>
+    );
+  }
+
   if (!isAdmin) {
     return (
       <AppShell showSearch={false}>
