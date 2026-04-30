@@ -271,6 +271,27 @@ export function useListings(): Listing[] {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
+// True once the first network fetch has completed (or hydrated from cache).
+// Components use this to show skeletons before any data is available.
+export function useListingsLoaded(): boolean {
+  const [v, setV] = useState<boolean>(() => loaded);
+  useEffect(() => {
+    if (loaded) {
+      setV(true);
+      return;
+    }
+    const cb = () => {
+      if (loaded) setV(true);
+    };
+    listeners.add(cb);
+    ensureInit();
+    return () => {
+      listeners.delete(cb);
+    };
+  }, []);
+  return v;
+}
+
 export function useListing(id: string | undefined): Listing | undefined {
   const all = useListings();
   // When a single listing is opened, lazily fetch the heavy fields
