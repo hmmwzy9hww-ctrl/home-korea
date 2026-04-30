@@ -46,6 +46,30 @@ function cacheSet(field: Field, id: string, lang: string, value: string) {
 // In-flight request dedupe so multiple cards / prefetches don't fire dupes.
 const inflight = new Map<string, Promise<Record<string, { title?: string; description?: string }> | null>>();
 
+async function invokeWithRetry(
+  body: { sourceLang: Lang; fields: { title?: string; description?: string } },
+  attempt = 0,
+): Promise<{ titleTranslations?: Record<string, string>; descriptionTranslations?: Record<string, string> } | null> {
+  try {
+    const { data, error } = await supabase.functions.invoke("translate-listing", { body });
+    if (error || !data) {
+      // Retry on transient boot/timeout errors up to 3 times with backoff.
+      if (attempt < 3) {
+        await new Promise((r) => setTimeout(r, 800 * Math.pow(2, attempt)));
+        return invokeWithRetry(body, attempt + 1);
+      }
+      return null;
+    }
+    return data as never;
+  } catch {
+    if (attempt < 3) {
+      await new Promise((r) => setTimeout(r, 800 * Math.pow(2, attempt)));
+      return invokeWithRetry(body, attempt + 1);
+    }
+    return null;
+  }
+}
+
 function callTranslate(
   listingId: string,
   sourceLang: Lang,
@@ -56,10 +80,8 @@ function callTranslate(
   if (existing) return existing;
   const p = (async () => {
     try {
-      const { data, error } = await supabase.functions.invoke("translate-listing", {
-        body: { sourceLang, fields },
-      });
-      if (error || !data) return null;
+      const data = await invokeWithRetry({ sourceLang, fields });
+      if (!data) return null;
       const out: Record<string, { title?: string; description?: string }> = {};
       const titleMap = (data.titleTranslations ?? {}) as Record<string, string>;
       const descMap = (data.descriptionTranslations ?? {}) as Record<string, string>;
@@ -237,8 +259,9 @@ export function usePrefetchTranslations(listings: PrefetchListing[], targetLang:
 
         await callTranslate(l.id, sourceLang, fields);
         if (cancelled) return;
-        // Small gap between requests to avoid bursting the gateway.
-        await new Promise((r) => setTimeout(r, 250));
+        // Larger gap to avoid spawning many concurrent edge function workers
+        // (which can trigger transient BOOT_ERROR / 503 from the runtime).
+        await new Promise((r) => setTimeout(r, 600));
       }
     };
 
