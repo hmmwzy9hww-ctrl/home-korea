@@ -1,5 +1,4 @@
 // City and RoomType are dynamic strings backed by the cities/room_types tables.
-// We keep the legacy fixed unions for backwards compatibility but allow any string.
 export type City = string;
 export type RoomType = string;
 export type PaymentType = string;
@@ -38,6 +37,12 @@ export interface Listing {
   createdAt: number;
   latitude?: number;
   longitude?: number;
+  paymentType?: PaymentType;
+  titleTranslations?: Translations;
+  descriptionTranslations?: Translations;
+  addressTranslations?: Translations;
+  areaTranslations?: Translations;
+  optionsTranslations?: ArrayTranslations;
 }
 
 export interface Filters {
