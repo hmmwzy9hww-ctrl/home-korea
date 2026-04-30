@@ -91,10 +91,6 @@ export function ListingCard({ listing }: { listing: Listing }) {
         <div className="flex items-baseline gap-2 flex-wrap">
           <span className="text-lg font-bold text-foreground">{formatWon(listing.monthlyRent)}</span>
           <span className="text-xs text-muted-foreground">/ {paymentLabel}</span>
-          <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-            <Wallet className="h-3 w-3" />
-            {paymentLabel}
-          </span>
         </div>
         <h3 className="font-semibold text-sm text-foreground line-clamp-2 leading-snug">
           {title}
