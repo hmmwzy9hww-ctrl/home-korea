@@ -7,8 +7,7 @@ import { buildNaverMapSearchUrl } from "@/lib/maps";
 import type { Listing } from "@/lib/types";
 import { formatWon } from "@/lib/format";
 import { listingTitle, listingArea } from "@/lib/listingI18n";
-// PhotoCarousel intentionally not used here — list cards show only the cover
-// image with native lazy loading to keep scroll performance high.
+import { useAutoTranslatedTitle } from "@/lib/useAutoTranslate";
 import { cn } from "@/lib/utils";
 
 const RENT_LABEL: Record<string, string> = {
@@ -44,7 +43,16 @@ export function ListingCard({ listing }: { listing: Listing }) {
   useReferenceData(); // ensures cache loads + re-renders when ready
   const favs = useFavorites();
   const isFav = favs.has(listing.id);
-  const title = listingTitle(listing, lang);
+  const titleFallback = listingTitle(listing, lang);
+  const { text: title } = useAutoTranslatedTitle({
+    listingId: listing.id,
+    targetLang: lang,
+    title: listing.title,
+    existing: listing.titleTranslations as Record<string, string | undefined> | undefined,
+    descriptionSource: listing.description,
+    descriptionExisting: listing.descriptionTranslations as Record<string, string | undefined> | undefined,
+  });
+  const _ = titleFallback; void _;
   const area = listingArea(listing, lang);
   const messenger = buildMessengerUrl({
     listingId: listing.id,
