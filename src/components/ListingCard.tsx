@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Heart, MapPin, Train, Bus, MessageCircle, ExternalLink } from "lucide-react";
+import { Heart, MapPin, Train, Bus, MessageCircle, ExternalLink, Wallet } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { lookupCityName, lookupRoomTypeName, useFavorites, useReferenceData, toggleFavorite } from "@/lib/store";
 import { buildMessengerUrl } from "@/lib/config";
@@ -11,22 +11,31 @@ import { listingTitle, listingArea } from "@/lib/listingI18n";
 // image with native lazy loading to keep scroll performance high.
 import { cn } from "@/lib/utils";
 
+const RENT_LABEL: Record<string, string> = {
+  mn: "1 сарын түрээс",
+  ko: "1개월 월세",
+  en: "1-month rent",
+  ru: "Аренда за 1 месяц",
+  zh: "1个月租金",
+  vi: "Thuê 1 tháng",
+};
+
 const PAYMENT_LABEL: Record<string, { mn: string; ko: string; en: string; ru: string; zh: string; vi: string }> = {
   monthly: {
-    mn: "1 сарын түрээс",
-    ko: "1개월 월세",
-    en: "1-month rent",
-    ru: "Аренда за 1 месяц",
-    zh: "1个月租金",
-    vi: "Thuê 1 tháng",
+    mn: "Сар бүр",
+    ko: "매월 납부",
+    en: "Monthly",
+    ru: "Ежемесячно",
+    zh: "每月支付",
+    vi: "Hàng tháng",
   },
   quarterly: {
     mn: "3 сараар бөөн",
     ko: "3개월 일시불",
-    en: "3 months upfront",
-    ru: "Аренда за 3 месяца",
-    zh: "3个月一次性",
-    vi: "Trả gộp 3 tháng",
+    en: "Every 3 months",
+    ru: "Раз в 3 месяца",
+    zh: "3个月一次",
+    vi: "3 tháng một lần",
   },
 };
 
@@ -44,6 +53,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
   const mapsUrl = listing.address?.trim() ? buildNaverMapSearchUrl(listing.address.trim()) : "";
   const paymentKey = listing.paymentType || "monthly";
   const paymentLabel = PAYMENT_LABEL[paymentKey]?.[lang as "mn"] ?? paymentKey;
+  const rentLabel = RENT_LABEL[lang] ?? RENT_LABEL.mn;
 
   return (
     <article className="group bg-card rounded-2xl overflow-hidden shadow-card hover:shadow-card-hover transition-shadow border">
@@ -90,7 +100,11 @@ export function ListingCard({ listing }: { listing: Listing }) {
       <div className="p-3.5 space-y-2.5">
         <div className="flex items-baseline gap-2 flex-wrap">
           <span className="text-lg font-bold text-foreground">{formatWon(listing.monthlyRent)}</span>
-          <span className="text-xs text-muted-foreground">/ {paymentLabel}</span>
+          <span className="text-xs text-muted-foreground">/ {rentLabel}</span>
+          <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+            <Wallet className="h-3 w-3" />
+            {paymentLabel}
+          </span>
         </div>
         <h3 className="font-semibold text-sm text-foreground line-clamp-2 leading-snug">
           {title}
