@@ -6,16 +6,37 @@ type Lang = (typeof LANGS)[number];
 
 type Field = "title" | "description";
 
-// In-memory cache: `${field}:${id}:${lang}` -> translated string
+// In-memory cache: `${field}:${id}:${lang}:${sourceSig}` -> translated string
 const memCache = new Map<string, string>();
 
-function lsGet(key: string): string | null {
+function storageGet(key: string): string | null {
   if (typeof window === "undefined") return null;
-  try { return window.localStorage.getItem(key); } catch { return null; }
+  try {
+    const sessionValue = window.sessionStorage.getItem(key);
+    if (sessionValue) return sessionValue;
+
+    const legacyValue = window.localStorage.getItem(key);
+    if (legacyValue) {
+      window.sessionStorage.setItem(key, legacyValue);
+      return legacyValue;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
-function lsSet(key: string, value: string) {
+function storageSet(key: string, value: string) {
   if (typeof window === "undefined") return;
-  try { window.localStorage.setItem(key, value); } catch { /* ignore quota */ }
+  try { window.sessionStorage.setItem(key, value); } catch { /* ignore quota */ }
+}
+
+function sourceSignature(source: string): string {
+  let hash = 2166136261;
+  for (let i = 0; i < source.length; i += 1) {
+    hash ^= source.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return Math.abs(hash >>> 0).toString(36);
 }
 
 function detectSourceLang(text: string): Lang {
@@ -25,11 +46,15 @@ function detectSourceLang(text: string): Lang {
   return "en";
 }
 
-function cacheGet(field: Field, id: string, lang: string): string | null {
-  const memKey = `${field}:${id}:${lang}`;
+function cacheKey(field: Field, id: string, lang: string, source: string): string {
+  return `tr:v2:${field}:${id}:${lang}:${sourceSignature(source)}`;
+}
+
+function cacheGet(field: Field, id: string, lang: string, source: string): string | null {
+  const memKey = cacheKey(field, id, lang, source);
   const m = memCache.get(memKey);
   if (m) return m;
-  const ls = lsGet(`tr:${field}:${id}:${lang}`);
+  const ls = storageGet(memKey);
   if (ls) {
     memCache.set(memKey, ls);
     return ls;
@@ -37,10 +62,11 @@ function cacheGet(field: Field, id: string, lang: string): string | null {
   return null;
 }
 
-function cacheSet(field: Field, id: string, lang: string, value: string) {
+function cacheSet(field: Field, id: string, lang: string, source: string, value: string) {
   if (!value) return;
-  memCache.set(`${field}:${id}:${lang}`, value);
-  lsSet(`tr:${field}:${id}:${lang}`, value);
+  const key = cacheKey(field, id, lang, source);
+  memCache.set(key, value);
+  storageSet(key, value);
 }
 
 // In-flight request dedupe so multiple cards / prefetches don't fire dupes.
@@ -91,8 +117,8 @@ function callTranslate(
       }
       // Persist every returned language for both fields.
       for (const [l, vals] of Object.entries(out)) {
-        if (vals.title) cacheSet("title", listingId, l, vals.title);
-        if (vals.description) cacheSet("description", listingId, l, vals.description);
+        if (vals.title && fields.title) cacheSet("title", listingId, l, fields.title, vals.title);
+        if (vals.description && fields.description) cacheSet("description", listingId, l, fields.description, vals.description);
       }
       return out;
     } catch {
@@ -130,7 +156,7 @@ function useAutoTranslatedField(opts: {
 
   const initial = (() => {
     if (direct && direct.trim()) return direct;
-    const cached = cacheGet(field, listingId, targetLang);
+    const cached = cacheGet(field, listingId, targetLang, source);
     if (cached) return cached;
     return source;
   })();
@@ -140,7 +166,7 @@ function useAutoTranslatedField(opts: {
   useEffect(() => {
     let cancelled = false;
     if (direct && direct.trim()) { setText(direct); return; }
-    const cached = cacheGet(field, listingId, targetLang);
+    const cached = cacheGet(field, listingId, targetLang, source);
     if (cached) { setText(cached); return; }
     if (!source?.trim()) return;
 
@@ -236,10 +262,10 @@ export function usePrefetchTranslations(listings: PrefetchListing[], targetLang:
 
         const titleHas =
           (l.titleTranslations?.[targetLang]?.trim() ?? "") !== "" ||
-          cacheGet("title", l.id, targetLang) !== null;
+          cacheGet("title", l.id, targetLang, l.title) !== null;
         const descHas =
           (l.descriptionTranslations?.[targetLang]?.trim() ?? "") !== "" ||
-          cacheGet("description", l.id, targetLang) !== null;
+          cacheGet("description", l.id, targetLang, l.description) !== null;
 
         if (titleHas && descHas) continue;
         if (!l.title?.trim() && !l.description?.trim()) continue;
