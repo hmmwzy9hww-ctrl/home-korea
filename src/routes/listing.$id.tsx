@@ -4,7 +4,7 @@ import { ArrowLeft, Heart, MapPin, Train, Bus, Calendar, Ruler, Building2, Messa
 import { AppShell } from "@/components/AppShell";
 import { PhotoGrid } from "@/components/PhotoGrid";
 import { useI18n } from "@/lib/i18n";
-import { useListing, useFavorites, toggleFavorite, trackView, useAnalytics } from "@/lib/store";
+import { lookupCityName, lookupRoomTypeName, useListing, useFavorites, useReferenceData, toggleFavorite, trackView, useAnalytics } from "@/lib/store";
 import { buildMessengerUrl } from "@/lib/config";
 import { buildNaverMapSearchUrl } from "@/lib/maps";
 import { formatWon } from "@/lib/format";
