@@ -1,14 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { ArrowLeft, Heart, MapPin, Train, Bus, Calendar, Ruler, Building2, MessageCircle, ExternalLink, Eye } from "lucide-react";
+import { ArrowLeft, Heart, MapPin, Train, Bus, Calendar, Ruler, Building2, MessageCircle, ExternalLink, Eye, Wallet } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { PhotoCarousel } from "@/components/PhotoCarousel";
+import { PhotoGrid } from "@/components/PhotoGrid";
 import { useI18n } from "@/lib/i18n";
 import { useListing, useFavorites, toggleFavorite, trackView, useAnalytics } from "@/lib/store";
 import { buildMessengerUrl } from "@/lib/config";
 import { buildNaverMapSearchUrl } from "@/lib/maps";
 import { formatWon } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { listingTitle, listingDescription, listingAddress, listingArea, listingOptions } from "@/lib/listingI18n";
+
+const PAYMENT_LABEL: Record<string, Record<string, string>> = {
+  monthly: { mn: "Сар бүр", ko: "월세", en: "Monthly", ru: "Ежемесячно", zh: "月租", vi: "Hàng tháng" },
+  quarterly: { mn: "Бөөн төлбөр", ko: "전세", en: "Lump-sum", ru: "Залог", zh: "全租", vi: "Tiền cọc" },
+};
 
 export const Route = createFileRoute("/listing/$id")({
   component: ListingDetailPage,

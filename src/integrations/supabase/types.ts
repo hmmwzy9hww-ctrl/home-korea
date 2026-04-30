@@ -143,8 +143,10 @@ export type Database = {
       listings: {
         Row: {
           address: string
+          address_translations: Json
           approval_status: string
           area: string
+          area_translations: Json
           available_from: string
           bus_minutes: number
           bus_stop: string
@@ -164,6 +166,7 @@ export type Database = {
           monthly_rent: number
           naver_map_url: string | null
           options: Json
+          options_translations: Json
           payment_type: string
           photos: Json
           rejection_reason: string
@@ -178,8 +181,10 @@ export type Database = {
         }
         Insert: {
           address?: string
+          address_translations?: Json
           approval_status?: string
           area?: string
+          area_translations?: Json
           available_from?: string
           bus_minutes?: number
           bus_stop?: string
@@ -199,6 +204,7 @@ export type Database = {
           monthly_rent?: number
           naver_map_url?: string | null
           options?: Json
+          options_translations?: Json
           payment_type?: string
           photos?: Json
           rejection_reason?: string
@@ -213,8 +219,10 @@ export type Database = {
         }
         Update: {
           address?: string
+          address_translations?: Json
           approval_status?: string
           area?: string
+          area_translations?: Json
           available_from?: string
           bus_minutes?: number
           bus_stop?: string
@@ -234,6 +242,7 @@ export type Database = {
           monthly_rent?: number
           naver_map_url?: string | null
           options?: Json
+          options_translations?: Json
           payment_type?: string
           photos?: Json
           rejection_reason?: string

@@ -1,7 +1,13 @@
-export type City = "seoul" | "incheon" | "gyeonggi" | "busan" | "other";
-export type RoomType = "oneRoom" | "twoRoom" | "threeRoom" | "officetel" | "studio" | "share";
+// City and RoomType are dynamic strings backed by the cities/room_types tables.
+export type City = string;
+export type RoomType = string;
+export type PaymentType = string;
 export type ListingStatus = "available" | "unavailable";
 export type SortKey = "newest" | "priceAsc" | "priceDesc";
+
+export type LangCode = "mn" | "ko" | "en" | "ru" | "zh" | "vi";
+export type Translations = Partial<Record<LangCode, string>>;
+export type ArrayTranslations = Partial<Record<LangCode, string[]>>;
 
 export interface Listing {
   id: string;
@@ -31,6 +37,12 @@ export interface Listing {
   createdAt: number;
   latitude?: number;
   longitude?: number;
+  paymentType?: PaymentType;
+  titleTranslations?: Translations;
+  descriptionTranslations?: Translations;
+  addressTranslations?: Translations;
+  areaTranslations?: Translations;
+  optionsTranslations?: ArrayTranslations;
 }
 
 export interface Filters {
