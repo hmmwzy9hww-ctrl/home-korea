@@ -249,7 +249,7 @@ function AdminPage() {
     setErr("");
   };
 
-  const saveListing = (e: FormEvent<HTMLFormElement>) => {
+  const saveListing = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const title = form.title.trim();
@@ -258,7 +258,12 @@ function AdminPage() {
       return;
     }
 
-    const payload: ListingForm = {
+    const optionsArr = optionsStr
+      .split(",")
+      .map((option) => option.trim())
+      .filter(Boolean);
+
+    const basePayload: ListingForm = {
       ...form,
       title,
       area: form.area.trim(),
@@ -268,21 +273,51 @@ function AdminPage() {
       busStop: form.busStop.trim(),
       availableFrom: form.availableFrom.trim(),
       description: form.description.trim(),
-      options: optionsStr
-        .split(",")
-        .map((option) => option.trim())
-        .filter(Boolean),
+      options: optionsArr,
       photos: photos.filter(Boolean).slice(0, MAX_PHOTOS),
       naverMapUrl: "",
       messengerUrl: "",
       latitude: form.latitude,
       longitude: form.longitude,
+      paymentType: form.paymentType || "monthly",
+    };
+
+    // Show a toast while we translate so admins know what's happening.
+    const translatingToast = toast.loading("Бүх хэл рүү орчуулж байна...");
+    let translations: Awaited<ReturnType<typeof translateListingFields>> = {};
+    try {
+      translations = await translateListingFields({
+        sourceLang: "mn",
+        fields: {
+          title: basePayload.title,
+          description: basePayload.description,
+          address: basePayload.address,
+          area: basePayload.area,
+          options: basePayload.options,
+        },
+      });
+      toast.dismiss(translatingToast);
+    } catch (err) {
+      toast.dismiss(translatingToast);
+      console.error(err);
+      toast.error(
+        "Орчуулга амжилтгүй боллоо. Зар Монгол дээр хадгалагдана.",
+      );
+    }
+
+    const payload: ListingForm = {
+      ...basePayload,
+      titleTranslations: translations.titleTranslations,
+      descriptionTranslations: translations.descriptionTranslations,
+      addressTranslations: translations.addressTranslations,
+      areaTranslations: translations.areaTranslations,
+      optionsTranslations: translations.optionsTranslations,
     };
 
     if (editor?.mode === "edit" && editingListing) {
-      updateListing(editingListing.id, payload);
+      await updateListing(editingListing.id, payload);
     } else {
-      addListing(payload);
+      await addListing(payload);
     }
 
     toast.success(t("form.saved"));
