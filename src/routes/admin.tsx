@@ -95,8 +95,36 @@ function AdminPage() {
   const [optionsStr, setOptionsStr] = useState("");
   const [photos, setPhotos] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [coverDraft, setCoverDraft] = useState(settings.coverImageUrl);
+
+  const geocodeAddress = async () => {
+    const q = form.address.trim();
+    if (!q) {
+      toast.error("Хаягаа эхлээд оруулна уу");
+      return;
+    }
+    setGeocoding(true);
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`;
+      const res = await fetch(url, { headers: { "Accept-Language": "ko" } });
+      const data = (await res.json()) as Array<{ lat: string; lon: string }>;
+      if (!data?.length) {
+        toast.error("Байршил олдсонгүй");
+        return;
+      }
+      const lat = Number(data[0].lat);
+      const lng = Number(data[0].lon);
+      setForm((f) => ({ ...f, latitude: lat, longitude: lng }));
+      toast.success("Байршил олдлоо");
+    } catch (e) {
+      console.error(e);
+      toast.error("Алдаа гарлаа");
+    } finally {
+      setGeocoding(false);
+    }
+  };
 
   useEffect(() => {
     setCoverDraft((current) => (current === settings.coverImageUrl ? current : settings.coverImageUrl));
