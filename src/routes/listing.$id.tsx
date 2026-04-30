@@ -36,6 +36,7 @@ function ListingDetailPage() {
   const listing = useListing(id);
   const favs = useFavorites();
   const analytics = useAnalytics();
+  useReferenceData();
 
   useEffect(() => {
     if (id) trackView(id);
