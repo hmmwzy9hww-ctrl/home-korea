@@ -107,8 +107,7 @@ function ListingsPage() {
       const bA = b.status === "available" ? 0 : 1;
       return aA - bA;
     });
-    return r;
-  }, [all, search]);
+  }, [all, search, districtsByParent]);
 
   const update = (patch: Partial<ListingsSearch>) => {
     navigate({ to: "/listings", search: { ...search, ...patch } as never });
