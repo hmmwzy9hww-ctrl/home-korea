@@ -438,13 +438,46 @@ function EditPage() {
           </Field>
 
           <Field label={t("form.naver")}>
-            <input
-              type="url"
-              value={form.naverMapUrl || ""}
-              onChange={(e) => setForm({ ...form, naverMapUrl: e.target.value })}
-              placeholder="https://map.naver.com/..."
-              className={inputCls}
-            />
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={form.naverMapUrl || ""}
+                onChange={(e) => setForm({ ...form, naverMapUrl: e.target.value })}
+                onBlur={(e) => {
+                  const v = e.target.value.trim();
+                  if (!v) return;
+                  const direct = parseNaverCoords(v);
+                  if (direct) {
+                    setForm((prev) => ({ ...prev, latitude: direct.lat, longitude: direct.lng }));
+                  }
+                }}
+                placeholder="https://map.naver.com/... эсвэл https://naver.me/..."
+                className={inputCls + " flex-1"}
+              />
+              <button
+                type="button"
+                disabled={!form.naverMapUrl || resolvingCoords}
+                onClick={() => updateCoordsFromUrl(form.naverMapUrl || "")}
+                className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border bg-secondary px-3 text-sm font-medium hover:bg-secondary/80 disabled:opacity-50"
+                title="URL-аас координат татах"
+              >
+                {resolvingCoords ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <MapPin className="h-4 w-4" />
+                )}
+                <span className="hidden sm:inline">Pin</span>
+              </button>
+            </div>
+            {form.latitude != null && form.longitude != null ? (
+              <p className="mt-1 text-xs text-muted-foreground">
+                📍 {form.latitude.toFixed(5)}, {form.longitude.toFixed(5)}
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Naver Map линк оруулаад Pin товчийг дарвал газрын зураг дээрх бодит байршлыг олж тогтооно.
+              </p>
+            )}
           </Field>
 
           <Field label={t("form.messenger")}>
