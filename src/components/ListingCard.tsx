@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Heart, MapPin, Train, Bus, MessageCircle, ExternalLink, Wallet } from "lucide-react";
+import { Heart, MapPin, Train, Bus, MessageCircle, ExternalLink, Wallet, Footprints } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { lookupCityName, lookupRoomTypeName, useFavorites, useReferenceData, toggleFavorite } from "@/lib/store";
 import { buildMessengerUrl } from "@/lib/config";
@@ -125,15 +125,31 @@ export function ListingCard({ listing }: { listing: Listing }) {
             <MapPin className="h-3.5 w-3.5 shrink-0" />
             <span className="truncate">{(() => { const cn2 = lookupCityName(listing.city, lang) || t(`city.${listing.city}`); return area ? `${cn2} · ${area}` : cn2; })()}</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <span className="flex items-center gap-1">
               <Train className="h-3.5 w-3.5" />
-              {listing.subwayMinutes > 0 ? `${listing.subwayMinutes} ${t("card.minWalk")}` : listing.subwayStation || "-"}
+              {listing.subwayStation || "-"}
             </span>
-            <span className="flex items-center gap-1">
-              <Bus className="h-3.5 w-3.5" />
-              {listing.busMinutes > 0 ? `${listing.busMinutes} ${t("card.minWalk")}` : listing.busStop || "-"}
-            </span>
+            {(() => {
+              // To metro: walking if subwayMinutes > 0, else by bus if busMinutes > 0
+              if (listing.subwayMinutes > 0) {
+                return (
+                  <span className="flex items-center gap-1">
+                    <Footprints className="h-3.5 w-3.5" />
+                    {listing.subwayMinutes} {t("card.minWalk")} {t("card.toMetro")}
+                  </span>
+                );
+              }
+              if (listing.busMinutes > 0) {
+                return (
+                  <span className="flex items-center gap-1">
+                    <Bus className="h-3.5 w-3.5" />
+                    {listing.busMinutes} {t("card.minBus")} {t("card.toMetro")}
+                  </span>
+                );
+              }
+              return null;
+            })()}
           </div>
         </div>
 
