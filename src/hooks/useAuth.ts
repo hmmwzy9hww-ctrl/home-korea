@@ -26,7 +26,10 @@ export function useAuth(): AuthState {
 
     const checkRole = (uid: string | undefined) => {
       if (!uid) {
-        if (!cancelled) setIsAdmin(false);
+        if (!cancelled) {
+          setIsAdmin(false);
+          setLoading(false);
+        }
         return;
       }
       // Defer to next tick so we don't block the auth callback.
@@ -39,6 +42,7 @@ export function useAuth(): AuthState {
           .maybeSingle();
         if (cancelled) return;
         setIsAdmin(!error && !!data);
+        setLoading(false);
       }, 0);
     };
 
@@ -47,6 +51,7 @@ export function useAuth(): AuthState {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
+      setLoading(true);
       checkRole(newSession?.user?.id);
     });
 
@@ -55,7 +60,6 @@ export function useAuth(): AuthState {
       if (cancelled) return;
       setSession(existing);
       checkRole(existing?.user?.id);
-      setLoading(false);
     });
 
     return () => {
