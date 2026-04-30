@@ -98,7 +98,7 @@ function AdminPage() {
   const subs = useCitySubscriptions();
   const citiesData = useCitiesData();
   const roomTypesData = useRoomTypesData();
-  const lang = (t("__lang") as string) || "mn";
+  
 
   const parentCities = useMemo(() => citiesData.filter((c) => !c.parent_id), [citiesData]);
   const childrenByParent = useMemo(() => {
