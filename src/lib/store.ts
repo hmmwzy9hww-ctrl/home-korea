@@ -182,12 +182,29 @@ export function useListing(id: string | undefined): Listing | undefined {
 
 export async function addListing(listing: Omit<Listing, "id" | "createdAt">) {
   ensureInit();
+  // Determine current user (for submitted_by) and whether they are admin.
+  const { data: sess } = await supabase.auth.getSession();
+  const uid = sess.session?.user?.id ?? null;
+  let isAdmin = false;
+  if (uid) {
+    const { data: roleRow } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", uid)
+      .eq("role", "admin")
+      .maybeSingle();
+    isAdmin = !!roleRow;
+  }
   const newL: Listing = {
     ...listing,
     id: `l_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     createdAt: Date.now(),
+    // Admins auto-approve; public submissions go to pending queue.
+    approvalStatus: listing.approvalStatus ?? (isAdmin ? "approved" : "pending"),
+    submittedBy: listing.submittedBy ?? uid,
+    featured: isAdmin ? listing.featured : false,
   };
-  // Optimistic update
+  // Optimistic update (only show locally if it'll be visible to this user)
   memoryStore = [newL, ...memoryStore];
   emit();
   const { error } = await supabase.from("listings").insert(listingToRow(newL) as never);
@@ -197,8 +214,18 @@ export async function addListing(listing: Omit<Listing, "id" | "createdAt">) {
     emit();
     throw error;
   }
-  notifyNewListing(newL);
+  if (newL.approvalStatus === "approved") notifyNewListing(newL);
   return newL;
+}
+
+/** Admin: approve a pending listing. */
+export async function approveListing(id: string) {
+  return updateListing(id, { approvalStatus: "approved", rejectionReason: "" });
+}
+
+/** Admin: reject a pending listing with an optional reason. */
+export async function rejectListing(id: string, reason = "") {
+  return updateListing(id, { approvalStatus: "rejected", rejectionReason: reason });
 }
 
 export async function updateListing(id: string, patch: Partial<Listing>) {
