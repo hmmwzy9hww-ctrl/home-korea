@@ -93,10 +93,48 @@ function emit() {
   listeners.forEach((l) => l());
 }
 
+// Lightweight column set used for list/grid/map views. Heavy fields like
+// description and per-language translation maps are fetched on demand by
+// fetchOne() when a user opens a single listing.
+const LIST_COLUMNS = [
+  "id",
+  "title",
+  "room_type",
+  "city",
+  "area",
+  "address",
+  "monthly_rent",
+  "deposit",
+  "maintenance_fee",
+  "maintenance_included",
+  "floor",
+  "size",
+  "subway_station",
+  "subway_minutes",
+  "bus_stop",
+  "bus_minutes",
+  "available_from",
+  "options",
+  "description",
+  "photos",
+  "naver_map_url",
+  "messenger_url",
+  "status",
+  "featured",
+  "created_at",
+  "payment_type",
+  "latitude",
+  "longitude",
+  "title_translations",
+  "area_translations",
+].join(",");
+
+const fullyLoadedIds = new Set<string>();
+
 async function fetchAll(attempt = 0): Promise<void> {
   const { data, error } = await supabase
     .from("listings")
-    .select("*")
+    .select(LIST_COLUMNS)
     .order("created_at", { ascending: false });
   if (error) {
     console.error("[listings] fetch failed", error);
@@ -107,8 +145,31 @@ async function fetchAll(attempt = 0): Promise<void> {
     }
     return;
   }
-  memoryStore = (data ?? []).map((r) => rowToListing(r as Record<string, unknown>));
+  const rows = (data ?? []) as unknown as Record<string, unknown>[];
+  memoryStore = rows.map((r) => rowToListing(r));
   loaded = true;
+  emit();
+}
+
+async function fetchOne(id: string): Promise<void> {
+  const { data, error } = await supabase
+    .from("listings")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) {
+    console.error("[listings] fetch one failed", error);
+    return;
+  }
+  if (!data) return;
+  const full = rowToListing(data as Record<string, unknown>);
+  fullyLoadedIds.add(id);
+  const idx = memoryStore.findIndex((l) => l.id === id);
+  if (idx >= 0) {
+    memoryStore = memoryStore.map((l) => (l.id === id ? full : l));
+  } else {
+    memoryStore = [full, ...memoryStore];
+  }
   emit();
 }
 
@@ -125,6 +186,7 @@ function ensureInit() {
       (payload) => {
         if (payload.eventType === "INSERT" && payload.new) {
           const l = rowToListing(payload.new as Record<string, unknown>);
+          fullyLoadedIds.add(l.id);
           if (!memoryStore.some((x) => x.id === l.id)) {
             memoryStore = [l, ...memoryStore];
             emit();
@@ -132,6 +194,7 @@ function ensureInit() {
           }
         } else if (payload.eventType === "UPDATE" && payload.new) {
           const l = rowToListing(payload.new as Record<string, unknown>);
+          fullyLoadedIds.add(l.id);
           const before = memoryStore.find((x) => x.id === l.id);
           memoryStore = memoryStore.map((x) => (x.id === l.id ? l : x));
           emit();
@@ -141,6 +204,7 @@ function ensureInit() {
         } else if (payload.eventType === "DELETE" && payload.old) {
           const oldId = String((payload.old as { id?: unknown }).id ?? "");
           if (oldId) {
+            fullyLoadedIds.delete(oldId);
             memoryStore = memoryStore.filter((x) => x.id !== oldId);
             emit();
           }
@@ -177,6 +241,14 @@ export function useListings(): Listing[] {
 
 export function useListing(id: string | undefined): Listing | undefined {
   const all = useListings();
+  // When a single listing is opened, lazily fetch the heavy fields
+  // (description + per-language translations) that are omitted from the
+  // lightweight list query.
+  useEffect(() => {
+    if (!id) return;
+    if (fullyLoadedIds.has(id)) return;
+    void fetchOne(id);
+  }, [id]);
   return all.find((l) => l.id === id);
 }
 
