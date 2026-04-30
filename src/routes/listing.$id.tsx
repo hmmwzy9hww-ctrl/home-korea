@@ -56,11 +56,16 @@ function ListingDetailPage() {
   }
 
   const isFav = favs.has(listing.id);
+  const titleI18n = listingTitle(listing, lang);
+  const descriptionI18n = listingDescription(listing, lang);
+  const addressI18n = listingAddress(listing, lang);
+  const areaI18n = listingArea(listing, lang);
+  const optionsI18n = listingOptions(listing, lang);
   const messenger = buildMessengerUrl({
     listingId: listing.id,
-    listingTitle: listing.title,
+    listingTitle: titleI18n,
   });
-  const mapUrl = listing.address?.trim() ? buildNaverMapSearchUrl(listing.address.trim()) : "";
+  const mapUrl = addressI18n?.trim() ? buildNaverMapSearchUrl(addressI18n.trim()) : "";
 
   return (
     <AppShell showSearch={false}>
