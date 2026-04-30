@@ -11,6 +11,7 @@ import { formatWon } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { listingTitle, listingDescription, listingAddress, listingArea, listingOptions } from "@/lib/listingI18n";
 import { AmenityIcon } from "@/components/AmenityIcon";
+import { useAutoTranslatedDescription } from "@/lib/useAutoTranslate";
 
 const PAYMENT_LABEL: Record<string, Record<string, string>> = {
   monthly: { mn: "Сар бүр", ko: "월세", en: "Monthly", ru: "Ежемесячно", zh: "月租", vi: "Hàng tháng" },
@@ -60,6 +61,12 @@ function ListingDetailPage() {
   const isFav = favs.has(listing.id);
   const titleI18n = listingTitle(listing, lang);
   const descriptionI18n = listingDescription(listing, lang);
+  const { text: descriptionAuto, loading: descLoading } = useAutoTranslatedDescription({
+    listingId: listing.id,
+    targetLang: lang,
+    description: listing.description,
+    existing: listing.descriptionTranslations as Record<string, string | undefined> | undefined,
+  });
   const addressI18n = listingAddress(listing, lang);
   const areaI18n = listingArea(listing, lang);
   const optionsI18n = listingOptions(listing, lang);
@@ -177,7 +184,12 @@ function ListingDetailPage() {
         {/* Description */}
         <div>
           <h2 className="font-bold text-sm mb-2">{t("card.description")}</h2>
-          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">{descriptionI18n}</p>
+          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
+            {descLoading && !descriptionAuto ? descriptionI18n : (descriptionAuto || descriptionI18n)}
+          </p>
+          {descLoading && (
+            <p className="mt-1 text-[11px] text-muted-foreground italic">…</p>
+          )}
         </div>
 
         {/* Map */}
