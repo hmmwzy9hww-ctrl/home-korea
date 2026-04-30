@@ -40,6 +40,7 @@ import {
 import type { City, Listing, ListingStatus, RoomType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -106,6 +107,7 @@ function AdminPage() {
     return c ? cityLabel(c, lang) : id;
   };
   const isAdmin = useAdmin();
+  const { loading: authLoading, session } = useAuth();
   const listings = useListings();
   const settings = useSiteSettings();
   const analytics = useAnalytics();
@@ -254,6 +256,16 @@ function AdminPage() {
     toast.success(t("form.saved"));
     closeEditor();
   };
+
+  if (authLoading) {
+    return (
+      <AppShell showSearch={false}>
+        <div className="px-4 py-10 max-w-sm mx-auto text-center text-sm text-muted-foreground">
+          ...
+        </div>
+      </AppShell>
+    );
+  }
 
   if (!isAdmin) {
     return (
