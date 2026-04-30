@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Heart, MapPin, Train, Bus, MessageCircle, ExternalLink, Wallet } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
-import { useFavorites, toggleFavorite } from "@/lib/store";
+import { lookupCityName, lookupRoomTypeName, useFavorites, useReferenceData, toggleFavorite } from "@/lib/store";
 import { buildMessengerUrl } from "@/lib/config";
 import { buildNaverMapSearchUrl } from "@/lib/maps";
 import type { Listing } from "@/lib/types";
