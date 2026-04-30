@@ -20,13 +20,13 @@ import { CitiesManager } from "@/components/CitiesManager";
 import { useCities, cityLabel } from "@/lib/citiesStore";
 import { OptionsGrid } from "@/components/OptionsGrid";
 import { useI18n, translate, LANGS, type Lang } from "@/lib/i18n";
-import { ADMIN_PASSWORD } from "@/lib/config";
+
 import { formatWon } from "@/lib/format";
 import { EDITABLE_TEXTS } from "@/lib/editableTexts";
 import {
   addListing,
   deleteListing,
-  loginAdmin,
+  
   logoutAdmin,
   setTextOverride,
   updateListing,
@@ -110,8 +110,6 @@ function AdminPage() {
   const settings = useSiteSettings();
   const analytics = useAnalytics();
   const subs = useCitySubscriptions();
-  const [pw, setPw] = useState("");
-  const [err, setErr] = useState("");
   const [editor, setEditor] = useState<EditorState>(null);
   const [form, setForm] = useState<ListingForm>(createEmptyListing());
   // options live on form.options directly
@@ -221,16 +219,6 @@ function AdminPage() {
     setEditor({ mode: "edit", id });
   };
 
-  const submitLogin = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const ok = loginAdmin(pw, ADMIN_PASSWORD);
-    if (!ok) {
-      setErr(t("admin.login.wrong"));
-      return;
-    }
-    setPw("");
-    setErr("");
-  };
 
   const saveListing = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -276,27 +264,16 @@ function AdminPage() {
               <Lock className="h-5 w-5 text-primary" />
             </div>
             <h1 className="text-lg font-bold text-center">{t("admin.login.title")}</h1>
-            <p className="mt-1 text-xs text-muted-foreground text-center">{t("admin.login.sub")}</p>
-            <form onSubmit={submitLogin} className="mt-5 space-y-3">
-              <input
-                type="password"
-                value={pw}
-                onChange={(e) => {
-                  setPw(e.target.value);
-                  setErr("");
-                }}
-                placeholder={t("admin.login.password")}
-                className="w-full px-4 py-2.5 text-sm rounded-xl border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                autoFocus
-              />
-              {err && <p className="text-xs text-destructive">{err}</p>}
-              <button
-                type="submit"
-                className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90"
-              >
-                {t("admin.login.submit")}
-              </button>
-            </form>
+            <p className="mt-1 text-xs text-muted-foreground text-center">
+              {t("admin.login.sub")}
+            </p>
+            <a
+              href="/auth"
+              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
+            >
+              <Lock className="h-4 w-4" />
+              {t("admin.login.submit")}
+            </a>
           </div>
         </div>
       </AppShell>
