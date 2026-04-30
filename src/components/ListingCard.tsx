@@ -31,7 +31,7 @@ const PAYMENT_LABEL: Record<string, { mn: string; ko: string; en: string; ru: st
   },
   quarterly: {
     mn: "3 сараар бөөн",
-    ko: "3개월 일시불",
+    ko: "3개월 선납",
     en: "Every 3 months",
     ru: "Раз в 3 месяца",
     zh: "3个月一次",

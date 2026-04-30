@@ -14,7 +14,7 @@ import { AmenityIcon } from "@/components/AmenityIcon";
 
 const PAYMENT_LABEL: Record<string, Record<string, string>> = {
   monthly: { mn: "Сар бүр", ko: "월세", en: "Monthly", ru: "Ежемесячно", zh: "月租", vi: "Hàng tháng" },
-  quarterly: { mn: "Бөөн төлбөр", ko: "전세", en: "Lump-sum", ru: "Залог", zh: "全租", vi: "Tiền cọc" },
+  quarterly: { mn: "3 сараар бөөн", ko: "3개월 선납", en: "Every 3 months", ru: "Раз в 3 месяца", zh: "3个月一次", vi: "3 tháng một lần" },
 };
 
 export const Route = createFileRoute("/listing/$id")({
