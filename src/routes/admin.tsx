@@ -26,6 +26,7 @@ import {
   loginAdmin,
   logoutAdmin,
   setTextOverride,
+  translateListingFields,
   updateListing,
   updateSiteSettings,
   useAdmin,
@@ -43,6 +44,10 @@ export const Route = createFileRoute("/admin")({
 
 const cities: City[] = ["seoul", "incheon", "gyeonggi", "busan", "other"];
 const roomTypes: RoomType[] = ["oneRoom", "twoRoom", "threeRoom", "officetel", "studio", "share"];
+const paymentTypes: { id: string; label: string }[] = [
+  { id: "monthly", label: "Сар бүр (월세 / Monthly)" },
+  { id: "quarterly", label: "Улирал бүр (전세 / Lump-sum)" },
+];
 
 type ListingForm = Omit<Listing, "id" | "createdAt">;
 type EditorState = { mode: "add" } | { mode: "edit"; id: string } | null;
@@ -72,6 +77,7 @@ function createEmptyListing(): ListingForm {
     messengerUrl: "",
     status: "available",
     featured: false,
+    paymentType: "monthly",
   };
 }
 
