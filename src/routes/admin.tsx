@@ -106,6 +106,7 @@ function AdminPage() {
     return c ? cityLabel(c, lang) : id;
   };
   const isAdmin = useAdmin();
+  const { loading: authLoading, session } = useAuth();
   const listings = useListings();
   const settings = useSiteSettings();
   const analytics = useAnalytics();
