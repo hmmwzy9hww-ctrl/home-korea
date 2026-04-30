@@ -173,6 +173,7 @@ async function fetchAll(attempt = 0): Promise<void> {
   const rows = (data ?? []) as unknown as Record<string, unknown>[];
   memoryStore = rows.map((r) => rowToListing(r));
   loaded = true;
+  persistCachedListings(memoryStore);
   emit();
 }
 
@@ -201,6 +202,12 @@ async function fetchOne(id: string): Promise<void> {
 function ensureInit() {
   if (initialized || typeof window === "undefined") return;
   initialized = true;
+  // Hydrate from sessionStorage cache so the UI shows data immediately.
+  const cached = loadCachedListings();
+  if (cached && cached.length > 0) {
+    memoryStore = cached;
+    loaded = true;
+  }
   void fetchAll();
   // Realtime subscription so all devices stay in sync.
   supabase
