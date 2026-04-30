@@ -134,7 +134,7 @@ function ListingDetailPage() {
 
         {/* Info rows */}
         <div className="rounded-2xl border bg-card divide-y">
-          <InfoRow icon={Building2} label={t("card.roomType")} value={t(`room.${listing.roomType}`)} />
+          <InfoRow icon={Building2} label={t("card.roomType")} value={lookupRoomTypeName(listing.roomType, lang) || t(`room.${listing.roomType}`)} />
           <InfoRow icon={Ruler} label={t("card.size")} value={`${listing.size} m² · ${listing.floor} ${t("card.floor")}`} />
           <InfoRow icon={Train} label={t("card.subway")} value={`${listing.subwayStation} · ${listing.subwayMinutes} ${t("card.minWalk")}`} />
           <InfoRow icon={Bus} label={t("card.bus")} value={`${listing.busStop} · ${listing.busMinutes} ${t("card.minWalk")}`} />
