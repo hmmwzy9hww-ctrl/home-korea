@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Heart, MapPin, Train, Bus, MessageCircle, ExternalLink, Wallet } from "lucide-react";
+import { Heart, MapPin, Train, Bus, MessageCircle, ExternalLink } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { lookupCityName, lookupRoomTypeName, useFavorites, useReferenceData, toggleFavorite } from "@/lib/store";
 import { buildMessengerUrl } from "@/lib/config";
@@ -13,20 +13,20 @@ import { cn } from "@/lib/utils";
 
 const PAYMENT_LABEL: Record<string, { mn: string; ko: string; en: string; ru: string; zh: string; vi: string }> = {
   monthly: {
-    mn: "Түрээс: 1 сарын түрээс (сар бүр)",
-    ko: "월세 (매월 납부)",
-    en: "Rent: 1-month rent (monthly)",
-    ru: "Аренда: помесячно (1 месяц)",
-    zh: "租金:月租(每月)",
-    vi: "Thuê: theo tháng (1 tháng)",
+    mn: "1 сарын түрээс",
+    ko: "1개월 월세",
+    en: "1-month rent",
+    ru: "Аренда за 1 месяц",
+    zh: "1个月租金",
+    vi: "Thuê 1 tháng",
   },
   quarterly: {
-    mn: "Түрээс: 3 сараар бөөн",
-    ko: "월세 (3개월 일시불)",
-    en: "Rent: 3 months upfront",
-    ru: "Аренда: за 3 месяца сразу",
-    zh: "租金:3个月一次性",
-    vi: "Thuê: trả gộp 3 tháng",
+    mn: "3 сараар бөөн",
+    ko: "3개월 일시불",
+    en: "3 months upfront",
+    ru: "Аренда за 3 месяца",
+    zh: "3个月一次性",
+    vi: "Trả gộp 3 tháng",
   },
 };
 
@@ -91,10 +91,6 @@ export function ListingCard({ listing }: { listing: Listing }) {
         <div className="flex items-baseline gap-2 flex-wrap">
           <span className="text-lg font-bold text-foreground">{formatWon(listing.monthlyRent)}</span>
           <span className="text-xs text-muted-foreground">/ {paymentLabel}</span>
-          <span className="ml-auto inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-            <Wallet className="h-3 w-3" />
-            {paymentLabel}
-          </span>
         </div>
         <h3 className="font-semibold text-sm text-foreground line-clamp-2 leading-snug">
           {title}
