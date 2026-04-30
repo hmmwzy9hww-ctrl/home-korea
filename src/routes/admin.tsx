@@ -113,15 +113,16 @@ function AdminPage() {
     return map;
   }, [citiesData]);
 
+  const [pw, setPw] = useState("");
+  const [err, setErr] = useState("");
+  const [editor, setEditor] = useState<EditorState>(null);
+  const [form, setForm] = useState<ListingForm>(createEmptyListing());
+
   // form.city stores the leaf id (district if present, else parent).
   // Derive selected parent for the current form.city value.
   const selectedCityRow = citiesData.find((c) => c.id === form.city);
   const selectedParentId = selectedCityRow?.parent_id ?? selectedCityRow?.id ?? "";
   const districtOptions = selectedParentId ? (childrenByParent.get(selectedParentId) ?? []) : [];
-  const [pw, setPw] = useState("");
-  const [err, setErr] = useState("");
-  const [editor, setEditor] = useState<EditorState>(null);
-  const [form, setForm] = useState<ListingForm>(createEmptyListing());
   const [optionsStr, setOptionsStr] = useState("");
   const [photos, setPhotos] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
