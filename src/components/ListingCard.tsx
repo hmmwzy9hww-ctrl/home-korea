@@ -13,20 +13,20 @@ import { cn } from "@/lib/utils";
 
 const PAYMENT_LABEL: Record<string, { mn: string; ko: string; en: string; ru: string; zh: string; vi: string }> = {
   monthly: {
-    mn: "Түрээс: 1 сарын түрээс (сар бүр)",
-    ko: "월세 (매월 납부)",
-    en: "Rent: 1-month rent (monthly)",
-    ru: "Аренда: помесячно (1 месяц)",
-    zh: "租金:月租(每月)",
-    vi: "Thuê: theo tháng (1 tháng)",
+    mn: "1 сарын түрээс",
+    ko: "1개월 월세",
+    en: "1-month rent",
+    ru: "Аренда за 1 месяц",
+    zh: "1个月租金",
+    vi: "Thuê 1 tháng",
   },
   quarterly: {
-    mn: "Түрээс: 3 сараар бөөн",
-    ko: "월세 (3개월 일시불)",
-    en: "Rent: 3 months upfront",
-    ru: "Аренда: за 3 месяца сразу",
-    zh: "租金:3个月一次性",
-    vi: "Thuê: trả gộp 3 tháng",
+    mn: "3 сараар бөөн",
+    ko: "3개월 일시불",
+    en: "3 months upfront",
+    ru: "Аренда за 3 месяца",
+    zh: "3个月一次性",
+    vi: "Trả gộp 3 tháng",
   },
 };
 
