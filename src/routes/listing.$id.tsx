@@ -56,11 +56,16 @@ function ListingDetailPage() {
   }
 
   const isFav = favs.has(listing.id);
+  const titleI18n = listingTitle(listing, lang);
+  const descriptionI18n = listingDescription(listing, lang);
+  const addressI18n = listingAddress(listing, lang);
+  const areaI18n = listingArea(listing, lang);
+  const optionsI18n = listingOptions(listing, lang);
   const messenger = buildMessengerUrl({
     listingId: listing.id,
-    listingTitle: listing.title,
+    listingTitle: titleI18n,
   });
-  const mapUrl = listing.address?.trim() ? buildNaverMapSearchUrl(listing.address.trim()) : "";
+  const mapUrl = addressI18n?.trim() ? buildNaverMapSearchUrl(addressI18n.trim()) : "";
 
   return (
     <AppShell showSearch={false}>
@@ -102,10 +107,10 @@ function ListingDetailPage() {
               {listing.status === "available" ? t("card.available") : t("card.unavailable")}
             </span>
           </div>
-          <h1 className="text-xl font-bold leading-tight">{listing.title}</h1>
+          <h1 className="text-xl font-bold leading-tight">{titleI18n}</h1>
           <p className="mt-1.5 text-sm text-muted-foreground flex items-center gap-1">
             <MapPin className="h-3.5 w-3.5" />
-            {(() => { const cn2 = lookupCityName(listing.city, lang) || t(`city.${listing.city}`); return listing.area ? `${cn2} · ${listing.area}` : cn2; })()}
+            {(() => { const cn2 = lookupCityName(listing.city, lang) || t(`city.${listing.city}`); return areaI18n ? `${cn2} · ${areaI18n}` : cn2; })()}
           </p>
           <p className="mt-1 text-xs text-muted-foreground inline-flex items-center gap-1">
             <Eye className="h-3 w-3" />
@@ -139,16 +144,16 @@ function ListingDetailPage() {
           <InfoRow icon={Train} label={t("card.subway")} value={`${listing.subwayStation} · ${listing.subwayMinutes} ${t("card.minWalk")}`} />
           <InfoRow icon={Bus} label={t("card.bus")} value={`${listing.busStop} · ${listing.busMinutes} ${t("card.minWalk")}`} />
           <InfoRow icon={Calendar} label={t("card.availableFrom")} value={listing.availableFrom} />
-          <InfoRow icon={MapPin} label={t("card.address")} value={listing.address} />
+          <InfoRow icon={MapPin} label={t("card.address")} value={addressI18n} />
         </div>
 
         {/* Options */}
-        {listing.options.length > 0 && (
+        {optionsI18n.length > 0 && (
           <div>
             <h2 className="font-bold text-sm mb-2">{t("card.options")}</h2>
             <div className="flex flex-wrap gap-1.5">
-              {listing.options.map((o) => (
-                <span key={o} className="text-xs px-2.5 py-1 rounded-full bg-secondary">
+              {optionsI18n.map((o, i) => (
+                <span key={`${o}-${i}`} className="text-xs px-2.5 py-1 rounded-full bg-secondary">
                   {o}
                 </span>
               ))}
@@ -159,7 +164,7 @@ function ListingDetailPage() {
         {/* Description */}
         <div>
           <h2 className="font-bold text-sm mb-2">{t("card.description")}</h2>
-          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">{listing.description}</p>
+          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">{descriptionI18n}</p>
         </div>
 
         {/* Map */}
