@@ -12,8 +12,22 @@ import { listingTitle, listingArea } from "@/lib/listingI18n";
 import { cn } from "@/lib/utils";
 
 const PAYMENT_LABEL: Record<string, { mn: string; ko: string; en: string; ru: string; zh: string; vi: string }> = {
-  monthly: { mn: "Сар бүр", ko: "월세", en: "Monthly", ru: "Ежемесячно", zh: "月租", vi: "Hàng tháng" },
-  quarterly: { mn: "Бөөн төлбөр", ko: "전세", en: "Lump-sum", ru: "Залог", zh: "全租", vi: "Tiền cọc" },
+  monthly: {
+    mn: "Түрээс: 1 сарын түрээс (сар бүр)",
+    ko: "월세 (매월 납부)",
+    en: "Rent: 1-month rent (monthly)",
+    ru: "Аренда: помесячно (1 месяц)",
+    zh: "租金:月租(每月)",
+    vi: "Thuê: theo tháng (1 tháng)",
+  },
+  quarterly: {
+    mn: "Түрээс: 3 сараар бөөн",
+    ko: "월세 (3개월 일시불)",
+    en: "Rent: 3 months upfront",
+    ru: "Аренда: за 3 месяца сразу",
+    zh: "租金:3个月一次性",
+    vi: "Thuê: trả gộp 3 tháng",
+  },
 };
 
 export function ListingCard({ listing }: { listing: Listing }) {
