@@ -8,6 +8,8 @@ let memoryStore: Listing[] = [];
 let initialized = false;
 let loaded = false;
 const listeners = new Set<() => void>();
+let fetchRetryTimer: ReturnType<typeof setTimeout> | null = null;
+let fetchInFlight = false;
 
 // sessionStorage cache so that repeat navigations within the same tab show
 // listings instantly while a fresh fetch runs in the background.
@@ -156,20 +158,35 @@ const LIST_COLUMNS = [
 
 const fullyLoadedIds = new Set<string>();
 
+function clearFetchRetryTimer() {
+  if (fetchRetryTimer === null) return;
+  clearTimeout(fetchRetryTimer);
+  fetchRetryTimer = null;
+}
+
+function scheduleFetchRetry(attempt: number) {
+  if (typeof window === "undefined" || fetchRetryTimer !== null) return;
+  const delay = Math.min(1000 * Math.pow(2, Math.min(attempt, 4)), 15000);
+  fetchRetryTimer = window.setTimeout(() => {
+    fetchRetryTimer = null;
+    void fetchAll(attempt + 1);
+  }, delay);
+}
+
 async function fetchAll(attempt = 0): Promise<void> {
+  if (fetchInFlight) return;
+  fetchInFlight = true;
   const { data, error } = await supabase
     .from("listings")
     .select(LIST_COLUMNS)
     .order("created_at", { ascending: false });
+  fetchInFlight = false;
   if (error) {
     console.error("[listings] fetch failed", error);
-    // Retry transient connection errors with exponential backoff
-    if (attempt < 5) {
-      const delay = Math.min(1000 * Math.pow(2, attempt), 8000);
-      setTimeout(() => { void fetchAll(attempt + 1); }, delay);
-    }
+    scheduleFetchRetry(attempt);
     return;
   }
+  clearFetchRetryTimer();
   const rows = (data ?? []) as unknown as Record<string, unknown>[];
   memoryStore = rows.map((r) => rowToListing(r));
   loaded = true;
@@ -209,6 +226,13 @@ function ensureInit() {
     loaded = true;
   }
   void fetchAll();
+  window.addEventListener("online", () => {
+    clearFetchRetryTimer();
+    void fetchAll();
+  });
+  window.addEventListener("focus", () => {
+    if (!fetchInFlight) void fetchAll();
+  });
   // Realtime subscription so all devices stay in sync.
   supabase
     .channel("listings-changes")
