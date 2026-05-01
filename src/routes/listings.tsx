@@ -3,8 +3,9 @@ import { lazy, Suspense, useMemo, useState } from "react";
 import { ArrowLeft, List, Map as MapIcon, SlidersHorizontal, X } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ListingCard } from "@/components/ListingCard";
+import { ListingCardSkeletonGrid } from "@/components/ListingCardSkeleton";
 import { useI18n } from "@/lib/i18n";
-import { useListings } from "@/lib/store";
+import { cityName, roomTypeName, useCitiesData, useListings, useListingsLoaded, useRoomTypesData } from "@/lib/store";
 import { formatWon } from "@/lib/format";
 import type { City, Listing, RoomType, SortKey } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -31,8 +32,8 @@ interface ListingsSearch {
 export const Route = createFileRoute("/listings")({
   validateSearch: (s: Record<string, unknown>): ListingsSearch => ({
     q: typeof s.q === "string" ? s.q : undefined,
-    city: (["seoul", "incheon", "gyeonggi", "busan", "other"].includes(String(s.city)) ? s.city : undefined) as City | undefined,
-    roomType: (["oneRoom", "twoRoom", "threeRoom", "officetel", "studio", "share"].includes(String(s.roomType)) ? s.roomType : undefined) as RoomType | undefined,
+    city: typeof s.city === "string" && s.city ? (s.city as City) : undefined,
+    roomType: typeof s.roomType === "string" && s.roomType ? (s.roomType as RoomType) : undefined,
     minPrice: typeof s.minPrice === "number" ? s.minPrice : undefined,
     maxPrice: typeof s.maxPrice === "number" ? s.maxPrice : undefined,
     minDeposit: typeof s.minDeposit === "number" ? s.minDeposit : undefined,
@@ -45,21 +46,39 @@ export const Route = createFileRoute("/listings")({
   component: ListingsPage,
 });
 
-const cities: (City | "all")[] = ["all", "seoul", "incheon", "gyeonggi", "busan", "other"];
-const roomTypes: (RoomType | "all")[] = ["all", "oneRoom", "twoRoom", "threeRoom", "officetel", "studio", "share"];
 
 function ListingsPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const citiesData = useCitiesData();
+  const roomTypesData = useRoomTypesData();
+  const parentCities = useMemo(() => citiesData.filter((c) => !c.parent_id), [citiesData]);
+  const districtsByParent = useMemo(() => {
+    const m = new Map<string, typeof citiesData>();
+    for (const c of citiesData) {
+      if (c.parent_id) {
+        const arr = m.get(c.parent_id) ?? [];
+        arr.push(c);
+        m.set(c.parent_id, arr);
+      }
+    }
+    return m;
+  }, [citiesData]);
   const search = Route.useSearch();
   const navigate = useNavigate();
   const all = useListings();
+  const loaded = useListingsLoaded();
   const [filterOpen, setFilterOpen] = useState(false);
   const [view, setView] = useState<"list" | "map">("list");
   const [selectedPin, setSelectedPin] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     let r = all.slice();
-    if (search.city) r = r.filter((l) => l.city === search.city);
+    if (search.city) {
+      // include all districts under this city if it's a parent
+      const childIds = (districtsByParent.get(search.city) ?? []).map((d) => d.id);
+      const matchSet = new Set<string>([search.city, ...childIds]);
+      r = r.filter((l) => matchSet.has(l.city));
+    }
     if (search.roomType) r = r.filter((l) => l.roomType === search.roomType);
     if (search.minPrice) r = r.filter((l) => l.monthlyRent >= search.minPrice!);
     if (search.maxPrice) r = r.filter((l) => l.monthlyRent <= search.maxPrice!);
@@ -91,7 +110,7 @@ function ListingsPage() {
       return aA - bA;
     });
     return r;
-  }, [all, search]);
+  }, [all, search, districtsByParent]);
 
   const update = (patch: Partial<ListingsSearch>) => {
     navigate({ to: "/listings", search: { ...search, ...patch } as never });
@@ -120,7 +139,7 @@ function ListingsPage() {
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <h1 className="font-bold text-sm flex-1 truncate">
-            {search.city ? t(`city.${search.city}`) : t("listings.title")}
+            {search.city ? cityName(citiesData.find((c) => c.id === search.city), lang) : t("listings.title")}
           </h1>
           <button
             type="button"
@@ -138,19 +157,29 @@ function ListingsPage() {
         </div>
         {/* Quick chips */}
         <div className="flex items-center gap-1.5 px-4 pb-2.5 overflow-x-auto no-scrollbar">
-          {cities.map((c) => {
-            const active = (search.city ?? "all") === c;
+          <button
+            type="button"
+            onClick={() => update({ city: undefined })}
+            className={cn(
+              "shrink-0 px-3 py-1 rounded-full text-xs font-medium border transition-colors",
+              !search.city ? "bg-foreground text-background border-foreground" : "bg-background hover:bg-secondary",
+            )}
+          >
+            {t("filter.any")}
+          </button>
+          {parentCities.map((c) => {
+            const active = search.city === c.id;
             return (
               <button
-                key={c}
+                key={c.id}
                 type="button"
-                onClick={() => update({ city: c === "all" ? undefined : (c as City) })}
+                onClick={() => update({ city: c.id as City })}
                 className={cn(
                   "shrink-0 px-3 py-1 rounded-full text-xs font-medium border transition-colors",
                   active ? "bg-foreground text-background border-foreground" : "bg-background hover:bg-secondary",
                 )}
               >
-                {c === "all" ? t("filter.any") : t(`city.${c}`)}
+                {c.emoji ? `${c.emoji} ` : ""}{cityName(c, lang)}
               </button>
             );
           })}
@@ -189,7 +218,9 @@ function ListingsPage() {
           </div>
         </div>
 
-        {filtered.length === 0 ? (
+        {!loaded && all.length === 0 ? (
+          <ListingCardSkeletonGrid count={6} />
+        ) : filtered.length === 0 ? (
           <div className="py-16 text-center text-sm text-muted-foreground">
             {t("listings.empty")}
           </div>
@@ -225,24 +256,48 @@ function ListingsPage() {
             </div>
             <div className="px-5 py-4 space-y-5">
               <FilterGroup label={t("filter.city")}>
-                {cities.map((c) => (
-                  <Chip
-                    key={c}
-                    active={(search.city ?? "all") === c}
-                    onClick={() => update({ city: c === "all" ? undefined : (c as City) })}
-                  >
-                    {c === "all" ? t("filter.any") : t(`city.${c}`)}
-                  </Chip>
-                ))}
+                <Chip active={!search.city} onClick={() => update({ city: undefined })}>
+                  {t("filter.any")}
+                </Chip>
+                {parentCities.map((c) => {
+                  const districts = districtsByParent.get(c.id) ?? [];
+                  const parentActive = search.city === c.id || districts.some((d) => d.id === search.city);
+                  return (
+                    <div key={c.id} className="w-full">
+                      <Chip
+                        active={parentActive}
+                        onClick={() => update({ city: c.id as City })}
+                      >
+                        {c.emoji ? `${c.emoji} ` : ""}{cityName(c, lang)}
+                      </Chip>
+                      {parentActive && districts.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-1.5 ml-3">
+                          {districts.map((d) => (
+                            <Chip
+                              key={d.id}
+                              active={search.city === d.id}
+                              onClick={() => update({ city: d.id as City })}
+                            >
+                              {cityName(d, lang)}
+                            </Chip>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </FilterGroup>
               <FilterGroup label={t("filter.roomType")}>
-                {roomTypes.map((r) => (
+                <Chip active={!search.roomType} onClick={() => update({ roomType: undefined })}>
+                  {t("filter.any")}
+                </Chip>
+                {roomTypesData.map((r) => (
                   <Chip
-                    key={r}
-                    active={(search.roomType ?? "all") === r}
-                    onClick={() => update({ roomType: r === "all" ? undefined : (r as RoomType) })}
+                    key={r.id}
+                    active={search.roomType === r.id}
+                    onClick={() => update({ roomType: r.id as RoomType })}
                   >
-                    {r === "all" ? t("filter.any") : t(`room.${r}`)}
+                    {r.emoji ? `${r.emoji} ` : ""}{roomTypeName(r, lang)}
                   </Chip>
                 ))}
               </FilterGroup>

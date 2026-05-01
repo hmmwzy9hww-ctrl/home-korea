@@ -22,27 +22,36 @@ import { formatWon } from "@/lib/format";
 import { EDITABLE_TEXTS } from "@/lib/editableTexts";
 import {
   addListing,
+  cityName,
   deleteListing,
   loginAdmin,
   logoutAdmin,
+  roomTypeName,
   setTextOverride,
+  translateListingFields,
   updateListing,
   updateSiteSettings,
   useAdmin,
   useAnalytics,
+  useCitiesData,
   useCitySubscriptions,
   useListings,
+  useRoomTypesData,
   useSiteSettings,
 } from "@/lib/store";
 import type { City, Listing, ListingStatus, RoomType } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { AmenityPicker } from "@/components/AmenityPicker";
+import { AmenityManager } from "@/components/AmenityManager";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-const cities: City[] = ["seoul", "incheon", "gyeonggi", "busan", "other"];
-const roomTypes: RoomType[] = ["oneRoom", "twoRoom", "threeRoom", "officetel", "studio", "share"];
+const paymentTypes: { id: string; label: string }[] = [
+  { id: "monthly", label: "Сар бүр (월세 / Monthly)" },
+  { id: "quarterly", label: "Улирал бүр (전세 / Lump-sum)" },
+];
 
 type ListingForm = Omit<Listing, "id" | "createdAt">;
 type EditorState = { mode: "add" } | { mode: "edit"; id: string } | null;
@@ -72,6 +81,7 @@ function createEmptyListing(): ListingForm {
     messengerUrl: "",
     status: "available",
     featured: false,
+    paymentType: "monthly",
   };
 }
 
@@ -82,16 +92,39 @@ function arraysEqual(a: string[], b: string[]) {
 }
 
 function AdminPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const isAdmin = useAdmin();
   const listings = useListings();
   const settings = useSiteSettings();
   const analytics = useAnalytics();
   const subs = useCitySubscriptions();
+  const citiesData = useCitiesData();
+  const roomTypesData = useRoomTypesData();
+  
+
+  const parentCities = useMemo(() => citiesData.filter((c) => !c.parent_id), [citiesData]);
+  const childrenByParent = useMemo(() => {
+    const map = new Map<string, typeof citiesData>();
+    for (const c of citiesData) {
+      if (c.parent_id) {
+        const arr = map.get(c.parent_id) ?? [];
+        arr.push(c);
+        map.set(c.parent_id, arr);
+      }
+    }
+    return map;
+  }, [citiesData]);
+
   const [pw, setPw] = useState("");
   const [err, setErr] = useState("");
   const [editor, setEditor] = useState<EditorState>(null);
   const [form, setForm] = useState<ListingForm>(createEmptyListing());
+
+  // form.city stores the leaf id (district if present, else parent).
+  // Derive selected parent for the current form.city value.
+  const selectedCityRow = citiesData.find((c) => c.id === form.city);
+  const selectedParentId = selectedCityRow?.parent_id ?? selectedCityRow?.id ?? "";
+  const districtOptions = selectedParentId ? (childrenByParent.get(selectedParentId) ?? []) : [];
   const [optionsStr, setOptionsStr] = useState("");
   const [photos, setPhotos] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -243,7 +276,7 @@ function AdminPage() {
     setErr("");
   };
 
-  const saveListing = (e: FormEvent<HTMLFormElement>) => {
+  const saveListing = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const title = form.title.trim();
@@ -252,7 +285,12 @@ function AdminPage() {
       return;
     }
 
-    const payload: ListingForm = {
+    const optionsArr = optionsStr
+      .split(",")
+      .map((option) => option.trim())
+      .filter(Boolean);
+
+    const basePayload: ListingForm = {
       ...form,
       title,
       area: form.area.trim(),
@@ -262,21 +300,51 @@ function AdminPage() {
       busStop: form.busStop.trim(),
       availableFrom: form.availableFrom.trim(),
       description: form.description.trim(),
-      options: optionsStr
-        .split(",")
-        .map((option) => option.trim())
-        .filter(Boolean),
+      options: optionsArr,
       photos: photos.filter(Boolean).slice(0, MAX_PHOTOS),
       naverMapUrl: "",
       messengerUrl: "",
       latitude: form.latitude,
       longitude: form.longitude,
+      paymentType: form.paymentType || "monthly",
+    };
+
+    // Show a toast while we translate so admins know what's happening.
+    const translatingToast = toast.loading("Бүх хэл рүү орчуулж байна...");
+    let translations: Awaited<ReturnType<typeof translateListingFields>> = {};
+    try {
+      translations = await translateListingFields({
+        sourceLang: "mn",
+        fields: {
+          title: basePayload.title,
+          description: basePayload.description,
+          address: basePayload.address,
+          area: basePayload.area,
+          options: basePayload.options,
+        },
+      });
+      toast.dismiss(translatingToast);
+    } catch (err) {
+      toast.dismiss(translatingToast);
+      console.error(err);
+      toast.error(
+        "Орчуулга амжилтгүй боллоо. Зар Монгол дээр хадгалагдана.",
+      );
+    }
+
+    const payload: ListingForm = {
+      ...basePayload,
+      titleTranslations: translations.titleTranslations,
+      descriptionTranslations: translations.descriptionTranslations,
+      addressTranslations: translations.addressTranslations,
+      areaTranslations: translations.areaTranslations,
+      optionsTranslations: translations.optionsTranslations,
     };
 
     if (editor?.mode === "edit" && editingListing) {
-      updateListing(editingListing.id, payload);
+      await updateListing(editingListing.id, payload);
     } else {
-      addListing(payload);
+      await addListing(payload);
     }
 
     toast.success(t("form.saved"));
@@ -374,6 +442,9 @@ function AdminPage() {
 
         {/* Editable site texts */}
         <TextEditor settings={settings} />
+
+        {/* Amenities (icon-based options) manager */}
+        <AmenityManager />
 
         <button
           type="button"
@@ -512,34 +583,64 @@ function AdminPage() {
                   />
                 </Field>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   <Field label={t("form.roomType")}>
                     <select
                       value={form.roomType}
                       onChange={(e) => setForm({ ...form, roomType: e.target.value as RoomType })}
                       className={inputCls}
                     >
-                      {roomTypes.map((roomType) => (
-                        <option key={roomType} value={roomType}>
-                          {t(`room.${roomType}`)}
+                      {roomTypesData.map((rt) => (
+                        <option key={rt.id} value={rt.id}>
+                          {rt.emoji ? `${rt.emoji} ` : ""}{roomTypeName(rt, lang)}
                         </option>
                       ))}
                     </select>
                   </Field>
-                  <Field label={t("form.city")}>
-                    <select
-                      value={form.city}
-                      onChange={(e) => setForm({ ...form, city: e.target.value as City })}
-                      className={inputCls}
-                    >
-                      {cities.map((city) => (
-                        <option key={city} value={city}>
-                          {t(`city.${city}`)}
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label={t("form.city")}>
+                      <select
+                        value={selectedParentId}
+                        onChange={(e) => {
+                          const parentId = e.target.value;
+                          // If chosen parent has districts, keep the parent as form.city until user picks a district.
+                          setForm({ ...form, city: parentId as City });
+                        }}
+                        className={inputCls}
+                      >
+                        <option value="">—</option>
+                        {parentCities.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.emoji ? `${c.emoji} ` : ""}{cityName(c, lang)}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field label={lang === "ko" ? "구/군" : "Дүүрэг (구)"}>
+                      <select
+                        value={selectedCityRow?.parent_id ? form.city : ""}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            city: (e.target.value || selectedParentId) as City,
+                          })
+                        }
+                        className={inputCls}
+                        disabled={districtOptions.length === 0}
+                      >
+                        <option value="">
+                          {districtOptions.length === 0 ? "—" : (lang === "ko" ? "전체" : "Бүгд")}
                         </option>
-                      ))}
-                    </select>
-                  </Field>
+                        {districtOptions.map((d) => (
+                          <option key={d.id} value={d.id}>
+                            {cityName(d, lang)}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  </div>
                 </div>
+
 
                 <div className="grid grid-cols-2 gap-3">
                   <Field label={t("form.area")}>
@@ -603,6 +704,20 @@ function AdminPage() {
                     {geocoding ? "..." : "📍 Хаягаас авах"}
                   </button>
                 </div>
+
+                <Field label="Төлбөрийн төрөл (Payment type)">
+                  <select
+                    value={form.paymentType ?? "monthly"}
+                    onChange={(e) => setForm({ ...form, paymentType: e.target.value })}
+                    className={inputCls}
+                  >
+                    {paymentTypes.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.label}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
 
                 <div className="grid grid-cols-3 gap-3">
                   <Field label={t("form.monthly")}>
@@ -712,12 +827,12 @@ function AdminPage() {
                 </Field>
 
                 <Field label={t("form.options")}>
-                  <input
-                    type="text"
-                    value={optionsStr}
-                    onChange={(e) => setOptionsStr(e.target.value)}
-                    placeholder={t("form.options.ph")}
-                    className={inputCls}
+                  <AmenityPicker
+                    value={form.options}
+                    onChange={(next) => {
+                      setForm({ ...form, options: next });
+                      setOptionsStr(next.join(", "));
+                    }}
                   />
                 </Field>
 

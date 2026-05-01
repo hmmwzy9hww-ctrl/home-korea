@@ -6,6 +6,7 @@ import { AppShell } from "@/components/AppShell";
 import { useI18n } from "@/lib/i18n";
 import { useAdmin, useListing, addListing, updateListing } from "@/lib/store";
 import type { City, Listing, ListingStatus, RoomType } from "@/lib/types";
+import { AmenityPicker } from "@/components/AmenityPicker";
 
 export const Route = createFileRoute("/admin/edit/$id")({
   component: EditPage,
@@ -327,12 +328,12 @@ function EditPage() {
           </Field>
 
           <Field label={t("form.options")}>
-            <input
-              type="text"
-              value={optionsStr}
-              onChange={(e) => setOptionsStr(e.target.value)}
-              placeholder={t("form.options.ph")}
-              className={inputCls}
+            <AmenityPicker
+              value={form.options}
+              onChange={(next) => {
+                setForm({ ...form, options: next });
+                setOptionsStr(next.join(", "));
+              }}
             />
           </Field>
 
