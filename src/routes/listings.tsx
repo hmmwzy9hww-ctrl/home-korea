@@ -4,8 +4,10 @@ import { ArrowLeft, List, Map as MapIcon, SlidersHorizontal, X } from "lucide-re
 import { AppShell } from "@/components/AppShell";
 import { ListingCard } from "@/components/ListingCard";
 import { ListingCardSkeletonGrid } from "@/components/ListingCardSkeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
-import { cityName, roomTypeName, useCitiesData, useListings, useListingsLoaded, useRoomTypesData } from "@/lib/store";
+import { cityName, retryListingsFetch, roomTypeName, useCitiesData, useListings, useListingsError, useListingsLoaded, useRoomTypesData } from "@/lib/store";
 import { formatWon } from "@/lib/format";
 import type { City, Listing, RoomType, SortKey } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -68,6 +70,7 @@ function ListingsPage() {
   const navigate = useNavigate();
   const all = useListings();
   const loaded = useListingsLoaded();
+  const listingsError = useListingsError();
   const [filterOpen, setFilterOpen] = useState(false);
   const [view, setView] = useState<"list" | "map">("list");
   const [selectedPin, setSelectedPin] = useState<string | null>(null);
@@ -223,7 +226,16 @@ function ListingsPage() {
           </div>
         </div>
 
-        {!loaded && all.length === 0 ? (
+        {listingsError && all.length === 0 ? (
+          <Alert>
+            <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <span>Зарууд түр ачаалж чадсангүй. Дахин оролдоно уу.</span>
+              <Button type="button" size="sm" onClick={() => retryListingsFetch()}>
+                Дахин ачаалах
+              </Button>
+            </AlertDescription>
+          </Alert>
+        ) : !loaded && all.length === 0 ? (
           <ListingCardSkeletonGrid count={6} />
         ) : filtered.length === 0 ? (
           <div className="py-16 text-center text-sm text-muted-foreground">
