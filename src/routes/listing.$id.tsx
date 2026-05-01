@@ -1,22 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { ArrowLeft, Heart, MapPin, Train, Bus, Calendar, Ruler, Building2, MessageCircle, ExternalLink, Eye, Wallet } from "lucide-react";
+import { ArrowLeft, Heart, MapPin, Train, Bus, Calendar, Ruler, Building2, MessageCircle, ExternalLink, Eye } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
-import { PhotoGrid } from "@/components/PhotoGrid";
+import { PhotoCarousel } from "@/components/PhotoCarousel";
 import { useI18n } from "@/lib/i18n";
-import { lookupCityName, lookupRoomTypeName, useListing, useFavorites, useReferenceData, toggleFavorite, trackView, useAnalytics, useAmenities, amenityName } from "@/lib/store";
+import { useListing, useFavorites, toggleFavorite, trackView, useAnalytics } from "@/lib/store";
 import { buildMessengerUrl } from "@/lib/config";
 import { buildNaverMapSearchUrl } from "@/lib/maps";
 import { formatWon } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { listingTitle, listingDescription, listingAddress, listingArea, listingOptions } from "@/lib/listingI18n";
-import { AmenityIcon } from "@/components/AmenityIcon";
-import { useAutoTranslatedDescription, useAutoTranslatedTitle } from "@/lib/useAutoTranslate";
-
-const PAYMENT_LABEL: Record<string, Record<string, string>> = {
-  monthly: { mn: "Сар бүр", ko: "월세", en: "Monthly", ru: "Ежемесячно", zh: "月租", vi: "Hàng tháng" },
-  quarterly: { mn: "3 сараар бөөн", ko: "3개월 선납", en: "Every 3 months", ru: "Раз в 3 месяца", zh: "3个月一次", vi: "3 tháng một lần" },
-};
 
 export const Route = createFileRoute("/listing/$id")({
   component: ListingDetailPage,
@@ -33,13 +25,11 @@ export const Route = createFileRoute("/listing/$id")({
 });
 
 function ListingDetailPage() {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const { id } = Route.useParams();
   const listing = useListing(id);
   const favs = useFavorites();
   const analytics = useAnalytics();
-  useReferenceData();
-  const amenities = useAmenities();
 
   useEffect(() => {
     if (id) trackView(id);
@@ -59,32 +49,11 @@ function ListingDetailPage() {
   }
 
   const isFav = favs.has(listing.id);
-  const titleI18n = listingTitle(listing, lang);
-  const { text: titleAuto } = useAutoTranslatedTitle({
-    listingId: listing.id,
-    targetLang: lang,
-    title: listing.title,
-    existing: listing.titleTranslations as Record<string, string | undefined> | undefined,
-    descriptionSource: listing.description,
-    descriptionExisting: listing.descriptionTranslations as Record<string, string | undefined> | undefined,
-  });
-  const descriptionI18n = listingDescription(listing, lang);
-  const { text: descriptionAuto, loading: descLoading } = useAutoTranslatedDescription({
-    listingId: listing.id,
-    targetLang: lang,
-    description: listing.description,
-    existing: listing.descriptionTranslations as Record<string, string | undefined> | undefined,
-    titleSource: listing.title,
-    titleExisting: listing.titleTranslations as Record<string, string | undefined> | undefined,
-  });
-  const addressI18n = listingAddress(listing, lang);
-  const areaI18n = listingArea(listing, lang);
-  const optionsI18n = listingOptions(listing, lang);
   const messenger = buildMessengerUrl({
     listingId: listing.id,
-    listingTitle: titleI18n,
+    listingTitle: listing.title,
   });
-  const mapUrl = addressI18n?.trim() ? buildNaverMapSearchUrl(addressI18n.trim()) : "";
+  const mapUrl = listing.address?.trim() ? buildNaverMapSearchUrl(listing.address.trim()) : "";
 
   return (
     <AppShell showSearch={false}>
@@ -104,7 +73,7 @@ function ListingDetailPage() {
         >
           <Heart className={cn("h-5 w-5", isFav ? "fill-destructive text-destructive" : "")} />
         </button>
-        <PhotoGrid photos={listing.photos} alt={listingTitle(listing, lang)} />
+        <PhotoCarousel photos={listing.photos} alt={listing.title} rounded={false} />
       </div>
 
       <div className="px-4 py-4 space-y-5">
@@ -126,10 +95,10 @@ function ListingDetailPage() {
               {listing.status === "available" ? t("card.available") : t("card.unavailable")}
             </span>
           </div>
-          <h1 className="text-xl font-bold leading-tight">{titleAuto || titleI18n}</h1>
+          <h1 className="text-xl font-bold leading-tight">{listing.title}</h1>
           <p className="mt-1.5 text-sm text-muted-foreground flex items-center gap-1">
             <MapPin className="h-3.5 w-3.5" />
-            {(() => { const cn2 = lookupCityName(listing.city, lang) || t(`city.${listing.city}`); return areaI18n ? `${cn2} · ${areaI18n}` : cn2; })()}
+            {listing.area ? `${t(`city.${listing.city}`)} · ${listing.area}` : t(`city.${listing.city}`)}
           </p>
           <p className="mt-1 text-xs text-muted-foreground inline-flex items-center gap-1">
             <Eye className="h-3 w-3" />
@@ -158,35 +127,24 @@ function ListingDetailPage() {
 
         {/* Info rows */}
         <div className="rounded-2xl border bg-card divide-y">
-          <InfoRow icon={Building2} label={t("card.roomType")} value={lookupRoomTypeName(listing.roomType, lang) || t(`room.${listing.roomType}`)} />
+          <InfoRow icon={Building2} label={t("card.roomType")} value={t(`room.${listing.roomType}`)} />
           <InfoRow icon={Ruler} label={t("card.size")} value={`${listing.size} m² · ${listing.floor} ${t("card.floor")}`} />
           <InfoRow icon={Train} label={t("card.subway")} value={`${listing.subwayStation} · ${listing.subwayMinutes} ${t("card.minWalk")}`} />
           <InfoRow icon={Bus} label={t("card.bus")} value={`${listing.busStop} · ${listing.busMinutes} ${t("card.minWalk")}`} />
           <InfoRow icon={Calendar} label={t("card.availableFrom")} value={listing.availableFrom} />
-          <InfoRow icon={MapPin} label={t("card.address")} value={addressI18n} />
+          <InfoRow icon={MapPin} label={t("card.address")} value={listing.address} />
         </div>
 
         {/* Options */}
-        {listing.options && listing.options.length > 0 && (
+        {listing.options.length > 0 && (
           <div>
             <h2 className="font-bold text-sm mb-2">{t("card.options")}</h2>
             <div className="flex flex-wrap gap-1.5">
-              {listing.options.map((opt, i) => {
-                const a = amenities.find((x) => x.id === opt);
-                // Fallback: localized translation from options_translations or raw string
-                const label = a ? amenityName(a, lang) : (optionsI18n[i] ?? opt);
-                return (
-                  <span
-                    key={`${opt}-${i}`}
-                    className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-secondary"
-                  >
-                    {a ? (
-                      <AmenityIcon iconUrl={a.icon_url} iconName={a.icon} className="h-3.5 w-3.5" alt={label} />
-                    ) : null}
-                    {label}
-                  </span>
-                );
-              })}
+              {listing.options.map((o) => (
+                <span key={o} className="text-xs px-2.5 py-1 rounded-full bg-secondary">
+                  {o}
+                </span>
+              ))}
             </div>
           </div>
         )}
@@ -194,12 +152,7 @@ function ListingDetailPage() {
         {/* Description */}
         <div>
           <h2 className="font-bold text-sm mb-2">{t("card.description")}</h2>
-          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">
-            {descLoading && !descriptionAuto ? descriptionI18n : (descriptionAuto || descriptionI18n)}
-          </p>
-          {descLoading && (
-            <p className="mt-1 text-[11px] text-muted-foreground italic">…</p>
-          )}
+          <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-line">{listing.description}</p>
         </div>
 
         {/* Map */}

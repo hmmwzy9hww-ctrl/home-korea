@@ -1,15 +1,11 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Save, X, Upload, Trash2, MapPin, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, X, Upload, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { useI18n } from "@/lib/i18n";
 import { useAdmin, useListing, addListing, updateListing } from "@/lib/store";
 import type { City, Listing, ListingStatus, RoomType } from "@/lib/types";
-import { AmenityPicker } from "@/components/AmenityPicker";
-import { MultiLangField } from "@/components/MultiLangField";
-import { resolveNaverCoords, parseNaverCoords } from "@/lib/coords";
-import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/admin/edit/$id")({
   component: EditPage,
@@ -140,31 +136,7 @@ function EditPage() {
     );
   }
 
-  const [resolvingCoords, setResolvingCoords] = useState(false);
-
-  const invokeExpand = async (body: { url: string }) => {
-    const { data } = await supabase.functions.invoke("expand-naver-url", { body });
-    return data as { coords?: { lat: number; lng: number } | null } | null;
-  };
-
-  const updateCoordsFromUrl = async (url: string, silent = false): Promise<{ lat: number; lng: number } | null> => {
-    if (!url) return null;
-    setResolvingCoords(true);
-    try {
-      const coords = await resolveNaverCoords(url, invokeExpand);
-      if (coords) {
-        setForm((prev) => ({ ...prev, latitude: coords.lat, longitude: coords.lng }));
-        if (!silent) toast.success(`📍 ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`);
-        return coords;
-      }
-      if (!silent) toast.error(t("form.coordsNotFound") || "Координат олдсонгүй");
-      return null;
-    } finally {
-      setResolvingCoords(false);
-    }
-  };
-
-  const handle = async (e: React.FormEvent) => {
+  const handle = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim()) {
       toast.error(t("form.required") + ": " + t("form.title"));
@@ -172,21 +144,7 @@ function EditPage() {
     }
     const cleanPhotos = photos.filter(Boolean).slice(0, MAX_PHOTOS);
     const options = optionsStr.split(",").map((o) => o.trim()).filter(Boolean);
-
-    // If a Naver URL is set but coords missing/stale, try to resolve before save
-    let payload: Omit<Listing, "id" | "createdAt"> = { ...form, photos: cleanPhotos, options };
-    if (form.naverMapUrl) {
-      const direct = parseNaverCoords(form.naverMapUrl);
-      const needsResolve =
-        !direct &&
-        (form.latitude == null || form.longitude == null);
-      if (direct) {
-        payload = { ...payload, latitude: direct.lat, longitude: direct.lng };
-      } else if (needsResolve) {
-        const coords = await updateCoordsFromUrl(form.naverMapUrl, true);
-        if (coords) payload = { ...payload, latitude: coords.lat, longitude: coords.lng };
-      }
-    }
+    const payload = { ...form, photos: cleanPhotos, options };
 
     if (isNew) {
       addListing(payload);
@@ -212,14 +170,16 @@ function EditPage() {
         </div>
 
         <form onSubmit={handle} className="space-y-4">
-          <MultiLangField
-            baseLabel={t("form.title")}
-            baseValue={form.title}
-            onBaseChange={(v) => setForm({ ...form, title: v })}
-            translations={form.titleTranslations}
-            onTranslationsChange={(next) => setForm({ ...form, titleTranslations: next })}
-            placeholder={t("form.title.ph")}
-          />
+          <Field label={t("form.title")}>
+            <input
+              type="text"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              placeholder={t("form.title.ph")}
+              className={inputCls}
+              required
+            />
+          </Field>
 
           <div className="grid grid-cols-2 gap-3">
             <Field label={t("form.roomType")}>
@@ -246,22 +206,24 @@ function EditPage() {
             </Field>
           </div>
 
-          <MultiLangField
-            baseLabel={t("form.area")}
-            baseValue={form.area}
-            onBaseChange={(v) => setForm({ ...form, area: v })}
-            translations={form.areaTranslations}
-            onTranslationsChange={(next) => setForm({ ...form, areaTranslations: next })}
-            placeholder={t("form.area.ph")}
-          />
+          <Field label={t("form.area")}>
+            <input
+              type="text"
+              value={form.area}
+              onChange={(e) => setForm({ ...form, area: e.target.value })}
+              placeholder={t("form.area.ph")}
+              className={inputCls}
+            />
+          </Field>
 
-          <MultiLangField
-            baseLabel={t("form.address")}
-            baseValue={form.address}
-            onBaseChange={(v) => setForm({ ...form, address: v })}
-            translations={form.addressTranslations}
-            onTranslationsChange={(next) => setForm({ ...form, addressTranslations: next })}
-          />
+          <Field label={t("form.address")}>
+            <input
+              type="text"
+              value={form.address}
+              onChange={(e) => setForm({ ...form, address: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
 
           <div className="grid grid-cols-3 gap-3">
             <Field label={t("form.monthly")}>
@@ -365,25 +327,24 @@ function EditPage() {
           </Field>
 
           <Field label={t("form.options")}>
-            <AmenityPicker
-              value={form.options}
-              onChange={(next) => {
-                setForm({ ...form, options: next });
-                setOptionsStr(next.join(", "));
-              }}
+            <input
+              type="text"
+              value={optionsStr}
+              onChange={(e) => setOptionsStr(e.target.value)}
+              placeholder={t("form.options.ph")}
+              className={inputCls}
             />
           </Field>
 
-          <MultiLangField
-            baseLabel={t("form.description")}
-            baseValue={form.description}
-            onBaseChange={(v) => setForm({ ...form, description: v })}
-            translations={form.descriptionTranslations}
-            onTranslationsChange={(next) => setForm({ ...form, descriptionTranslations: next })}
-            placeholder={t("form.description.ph")}
-            textarea
-            rows={4}
-          />
+          <Field label={t("form.description")}>
+            <textarea
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              placeholder={t("form.description.ph")}
+              rows={4}
+              className={inputCls}
+            />
+          </Field>
 
           <Field label={`${t("form.photos")} (${photos.length}/${MAX_PHOTOS})`}>
             <div className="space-y-3">
@@ -436,46 +397,13 @@ function EditPage() {
           </Field>
 
           <Field label={t("form.naver")}>
-            <div className="flex gap-2">
-              <input
-                type="url"
-                value={form.naverMapUrl || ""}
-                onChange={(e) => setForm({ ...form, naverMapUrl: e.target.value })}
-                onBlur={(e) => {
-                  const v = e.target.value.trim();
-                  if (!v) return;
-                  const direct = parseNaverCoords(v);
-                  if (direct) {
-                    setForm((prev) => ({ ...prev, latitude: direct.lat, longitude: direct.lng }));
-                  }
-                }}
-                placeholder="https://map.naver.com/... эсвэл https://naver.me/..."
-                className={inputCls + " flex-1"}
-              />
-              <button
-                type="button"
-                disabled={!form.naverMapUrl || resolvingCoords}
-                onClick={() => updateCoordsFromUrl(form.naverMapUrl || "")}
-                className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border bg-secondary px-3 text-sm font-medium hover:bg-secondary/80 disabled:opacity-50"
-                title="URL-аас координат татах"
-              >
-                {resolvingCoords ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <MapPin className="h-4 w-4" />
-                )}
-                <span className="hidden sm:inline">Pin</span>
-              </button>
-            </div>
-            {form.latitude != null && form.longitude != null ? (
-              <p className="mt-1 text-xs text-muted-foreground">
-                📍 {form.latitude.toFixed(5)}, {form.longitude.toFixed(5)}
-              </p>
-            ) : (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Naver Map линк оруулаад Pin товчийг дарвал газрын зураг дээрх бодит байршлыг олж тогтооно.
-              </p>
-            )}
+            <input
+              type="url"
+              value={form.naverMapUrl || ""}
+              onChange={(e) => setForm({ ...form, naverMapUrl: e.target.value })}
+              placeholder="https://map.naver.com/..."
+              className={inputCls}
+            />
           </Field>
 
           <Field label={t("form.messenger")}>

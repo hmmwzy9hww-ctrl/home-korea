@@ -25,7 +25,6 @@ export type Database = {
           name_ru: string
           name_vi: string
           name_zh: string
-          parent_id: string | null
           sort_order: number
           updated_at: string
         }
@@ -39,7 +38,6 @@ export type Database = {
           name_ru?: string
           name_vi?: string
           name_zh?: string
-          parent_id?: string | null
           sort_order?: number
           updated_at?: string
         }
@@ -53,19 +51,10 @@ export type Database = {
           name_ru?: string
           name_vi?: string
           name_zh?: string
-          parent_id?: string | null
           sort_order?: number
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "cities_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "cities"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       floor_options: {
         Row: {
@@ -113,7 +102,6 @@ export type Database = {
         Row: {
           created_at: string
           icon: string
-          icon_url: string
           id: string
           name_en: string
           name_ko: string
@@ -127,7 +115,6 @@ export type Database = {
         Insert: {
           created_at?: string
           icon?: string
-          icon_url?: string
           id: string
           name_en?: string
           name_ko?: string
@@ -141,7 +128,6 @@ export type Database = {
         Update: {
           created_at?: string
           icon?: string
-          icon_url?: string
           id?: string
           name_en?: string
           name_ko?: string
@@ -157,10 +143,8 @@ export type Database = {
       listings: {
         Row: {
           address: string
-          address_translations: Json
           approval_status: string
           area: string
-          area_translations: Json
           available_from: string
           bus_minutes: number
           bus_stop: string
@@ -180,7 +164,6 @@ export type Database = {
           monthly_rent: number
           naver_map_url: string | null
           options: Json
-          options_translations: Json
           payment_type: string
           photos: Json
           rejection_reason: string
@@ -195,10 +178,8 @@ export type Database = {
         }
         Insert: {
           address?: string
-          address_translations?: Json
           approval_status?: string
           area?: string
-          area_translations?: Json
           available_from?: string
           bus_minutes?: number
           bus_stop?: string
@@ -218,7 +199,6 @@ export type Database = {
           monthly_rent?: number
           naver_map_url?: string | null
           options?: Json
-          options_translations?: Json
           payment_type?: string
           photos?: Json
           rejection_reason?: string
@@ -233,10 +213,8 @@ export type Database = {
         }
         Update: {
           address?: string
-          address_translations?: Json
           approval_status?: string
           area?: string
-          area_translations?: Json
           available_from?: string
           bus_minutes?: number
           bus_stop?: string
@@ -256,7 +234,6 @@ export type Database = {
           monthly_rent?: number
           naver_map_url?: string | null
           options?: Json
-          options_translations?: Json
           payment_type?: string
           photos?: Json
           rejection_reason?: string

@@ -5,9 +5,6 @@ import { ClientOnly } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { ListingCard } from "@/components/ListingCard";
-import { ListingCardSkeletonGrid } from "@/components/ListingCardSkeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 
 const HomeMap = lazy(() =>
@@ -15,15 +12,11 @@ const HomeMap = lazy(() =>
 );
 import {
   toggleCitySubscription,
-  retryListingsFetch,
   useCitySubscriptions,
   useListings,
-  useListingsError,
-  useListingsLoaded,
   useSiteSettings,
 } from "@/lib/store";
 import type { City } from "@/lib/types";
-import { usePrefetchTranslations } from "@/lib/useAutoTranslate";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -40,18 +33,13 @@ function sortAvailableFirst<T extends { status: string; createdAt: number }>(ite
 }
 
 function HomePage() {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const all = useListings();
-  const loaded = useListingsLoaded();
-  const listingsError = useListingsError();
   const settings = useSiteSettings();
   const subs = useCitySubscriptions();
 
   const featured = all.filter((l) => l.featured && l.status === "available").slice(0, 4);
   const latest = sortAvailableFirst(all).slice(0, 4);
-
-  // Prefetch AI translations for the listings shown on this page.
-  usePrefetchTranslations([...featured, ...latest], lang);
 
   const cities: { code: City; emoji: string }[] = [
     { code: "seoul", emoji: "🏙️" },
@@ -239,24 +227,11 @@ function HomePage() {
       {/* Latest */}
       <section className="px-4 pb-6">
         <h2 className="text-base font-bold mb-3">{t("home.section.latest")}</h2>
-        {listingsError && all.length === 0 ? (
-          <Alert>
-            <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <span>Зарууд түр ачаалж чадсангүй. Дахин оролдоно уу.</span>
-              <Button type="button" size="sm" onClick={() => retryListingsFetch()}>
-                Дахин ачаалах
-              </Button>
-            </AlertDescription>
-          </Alert>
-        ) : !loaded && all.length === 0 ? (
-          <ListingCardSkeletonGrid count={4} />
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {latest.map((l) => (
-              <ListingCard key={l.id} listing={l} />
-            ))}
-          </div>
-        )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {latest.map((l) => (
+            <ListingCard key={l.id} listing={l} />
+          ))}
+        </div>
       </section>
     </AppShell>
   );

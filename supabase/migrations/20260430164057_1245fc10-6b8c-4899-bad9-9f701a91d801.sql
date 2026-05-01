@@ -1,1 +1,0 @@
-ALTER TABLE public.listing_amenities ADD COLUMN IF NOT EXISTS icon_url text NOT NULL DEFAULT '';

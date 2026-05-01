@@ -1,51 +1,21 @@
 // Listings store backed by Lovable Cloud (Supabase) with realtime sync.
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { emergencyListingRows } from "./emergencyListings";
 import { sampleListings } from "./sampleData";
 import type { City, Listing, ListingStatus, RoomType } from "./types";
 
 let memoryStore: Listing[] = [];
 let initialized = false;
 let loaded = false;
-let usingEmergencyFallback = false;
 const listeners = new Set<() => void>();
-let fetchRetryTimer: number | null = null;
-let fetchInFlight = false;
-let listingsError: string | null = null;
-
-// sessionStorage cache so that repeat navigations within the same tab show
-// listings instantly while a fresh fetch runs in the background.
-const LISTINGS_CACHE_KEY = "ger.listings.cache.v1";
-
-function loadCachedListings(): Listing[] | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.sessionStorage.getItem(LISTINGS_CACHE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Listing[];
-    return Array.isArray(parsed) ? parsed : null;
-  } catch {
-    return null;
-  }
-}
-
-function persistCachedListings(rows: Listing[]) {
-  if (typeof window === "undefined") return;
-  try {
-    window.sessionStorage.setItem(LISTINGS_CACHE_KEY, JSON.stringify(rows));
-  } catch {
-    // Quota errors are non-fatal — the in-memory store still works.
-  }
-}
 
 // Map a Supabase row (snake_case) to our Listing type (camelCase).
 function rowToListing(row: Record<string, unknown>): Listing {
   return {
     id: String(row.id),
     title: String(row.title ?? ""),
-    roomType: (row.room_type as string) ?? "oneRoom",
-    city: (row.city as string) ?? "other",
+    roomType: (row.room_type as RoomType) ?? "oneRoom",
+    city: (row.city as City) ?? "other",
     area: String(row.area ?? ""),
     address: String(row.address ?? ""),
     monthlyRent: Number(row.monthly_rent ?? 0),
@@ -69,21 +39,8 @@ function rowToListing(row: Record<string, unknown>): Listing {
     createdAt: Number(row.created_at ?? Date.now()),
     latitude: row.latitude == null ? undefined : Number(row.latitude),
     longitude: row.longitude == null ? undefined : Number(row.longitude),
-    paymentType: row.payment_type ? String(row.payment_type) : "monthly",
-    titleTranslations: (row.title_translations as Record<string, string>) ?? {},
-    descriptionTranslations:
-      (row.description_translations as Record<string, string>) ?? {},
-    addressTranslations:
-      (row.address_translations as Record<string, string>) ?? {},
-    areaTranslations: (row.area_translations as Record<string, string>) ?? {},
-    optionsTranslations:
-      (row.options_translations as Record<string, string[]>) ?? {},
   };
 }
-
-const emergencyListingsFallback: Listing[] = emergencyListingRows.map((row) =>
-  rowToListing(row as unknown as Record<string, unknown>),
-);
 
 function listingToRow(l: Partial<Listing>): Record<string, unknown> {
   const row: Record<string, unknown> = {};
@@ -114,12 +71,6 @@ function listingToRow(l: Partial<Listing>): Record<string, unknown> {
   if (l.createdAt !== undefined) row.created_at = l.createdAt;
   if (l.latitude !== undefined) row.latitude = l.latitude;
   if (l.longitude !== undefined) row.longitude = l.longitude;
-  if (l.paymentType !== undefined) row.payment_type = l.paymentType;
-  if (l.titleTranslations !== undefined) row.title_translations = l.titleTranslations;
-  if (l.descriptionTranslations !== undefined) row.description_translations = l.descriptionTranslations;
-  if (l.addressTranslations !== undefined) row.address_translations = l.addressTranslations;
-  if (l.areaTranslations !== undefined) row.area_translations = l.areaTranslations;
-  if (l.optionsTranslations !== undefined) row.options_translations = l.optionsTranslations;
   return row;
 }
 
@@ -127,146 +78,29 @@ function emit() {
   listeners.forEach((l) => l());
 }
 
-// Lightweight column set used for list/grid/map views. Heavy fields like
-// description and per-language translation maps are fetched on demand by
-// fetchOne() when a user opens a single listing.
-const LIST_COLUMNS = [
-  "id",
-  "title",
-  "room_type",
-  "city",
-  "area",
-  "address",
-  "monthly_rent",
-  "deposit",
-  "maintenance_fee",
-  "maintenance_included",
-  "floor",
-  "size",
-  "subway_station",
-  "subway_minutes",
-  "bus_stop",
-  "bus_minutes",
-  "available_from",
-  "options",
-  "description",
-  "photos",
-  "naver_map_url",
-  "messenger_url",
-  "status",
-  "featured",
-  "created_at",
-  "payment_type",
-  "latitude",
-  "longitude",
-  "title_translations",
-  "area_translations",
-].join(",");
-
-const fullyLoadedIds = new Set<string>();
-
-function clearFetchRetryTimer() {
-  if (fetchRetryTimer === null) return;
-  clearTimeout(fetchRetryTimer);
-  fetchRetryTimer = null;
-}
-
-function scheduleFetchRetry(attempt: number) {
-  if (typeof window === "undefined" || fetchRetryTimer !== null) return;
-  // Tighter cap while serving emergency fallback so photos reappear quickly
-  // once the gateway recovers.
-  const cap = usingEmergencyFallback ? 5000 : 15000;
-  const delay = Math.min(1000 * Math.pow(2, Math.min(attempt, 4)), cap);
-  fetchRetryTimer = window.setTimeout(() => {
-    fetchRetryTimer = null;
-    void fetchAll(attempt + 1);
-  }, delay);
-}
-
 async function fetchAll(attempt = 0): Promise<void> {
-  if (fetchInFlight) return;
-  fetchInFlight = true;
-  const { data, error } = await supabase
-    .from("listings")
-    .select(LIST_COLUMNS)
-    .order("created_at", { ascending: false });
-  fetchInFlight = false;
-  if (error) {
-    console.error("[listings] fetch failed", error);
-    listingsError = error.message || "Failed to load listings.";
-    if (memoryStore.length === 0 && emergencyListingsFallback.length > 0) {
-      memoryStore = emergencyListingsFallback;
-      loaded = true;
-      usingEmergencyFallback = true;
-      // Intentionally do NOT persist the fallback to sessionStorage —
-      // we want the next page load to attempt a fresh fetch (with photos)
-      // instead of being stuck on the photo-less snapshot.
-    }
-    emit();
-    // While serving the emergency fallback, retry more aggressively so that
-    // photos reappear automatically as soon as the gateway recovers.
-    scheduleFetchRetry(usingEmergencyFallback ? 0 : attempt);
-    return;
-  }
-  clearFetchRetryTimer();
-  listingsError = null;
-  const rows = (data ?? []) as unknown as Record<string, unknown>[];
-  memoryStore = rows.map((r) => rowToListing(r));
-  loaded = true;
-  usingEmergencyFallback = false;
-  persistCachedListings(memoryStore);
-  emit();
-}
-
-export function retryListingsFetch() {
-  clearFetchRetryTimer();
-  void fetchAll();
-}
-
-async function fetchOne(id: string): Promise<void> {
   const { data, error } = await supabase
     .from("listings")
     .select("*")
-    .eq("id", id)
-    .maybeSingle();
+    .order("created_at", { ascending: false });
   if (error) {
-    console.error("[listings] fetch one failed", error);
+    console.error("[listings] fetch failed", error);
+    // Retry transient connection errors with exponential backoff
+    if (attempt < 5) {
+      const delay = Math.min(1000 * Math.pow(2, attempt), 8000);
+      setTimeout(() => { void fetchAll(attempt + 1); }, delay);
+    }
     return;
   }
-  if (!data) return;
-  const full = rowToListing(data as Record<string, unknown>);
-  fullyLoadedIds.add(id);
-  const idx = memoryStore.findIndex((l) => l.id === id);
-  if (idx >= 0) {
-    memoryStore = memoryStore.map((l) => (l.id === id ? full : l));
-  } else {
-    memoryStore = [full, ...memoryStore];
-  }
+  memoryStore = (data ?? []).map((r) => rowToListing(r as Record<string, unknown>));
+  loaded = true;
   emit();
 }
 
 function ensureInit() {
   if (initialized || typeof window === "undefined") return;
   initialized = true;
-  // Hydrate from sessionStorage cache so the UI shows data immediately.
-  // Skip cache that has zero photos across all rows — that means it was
-  // saved during an emergency-fallback session and would show photoless
-  // cards instead of letting the fresh fetch populate real images.
-  const cached = loadCachedListings();
-  const cacheHasPhotos =
-    !!cached && cached.some((l) => Array.isArray(l.photos) && l.photos.length > 0);
-  if (cached && cached.length > 0 && cacheHasPhotos) {
-    memoryStore = cached;
-    loaded = true;
-  }
   void fetchAll();
-  window.addEventListener("online", () => {
-    clearFetchRetryTimer();
-    void fetchAll();
-  });
-  window.addEventListener("focus", () => {
-    if (!fetchInFlight) void fetchAll();
-  });
   // Realtime subscription so all devices stay in sync.
   supabase
     .channel("listings-changes")
@@ -276,7 +110,6 @@ function ensureInit() {
       (payload) => {
         if (payload.eventType === "INSERT" && payload.new) {
           const l = rowToListing(payload.new as Record<string, unknown>);
-          fullyLoadedIds.add(l.id);
           if (!memoryStore.some((x) => x.id === l.id)) {
             memoryStore = [l, ...memoryStore];
             emit();
@@ -284,7 +117,6 @@ function ensureInit() {
           }
         } else if (payload.eventType === "UPDATE" && payload.new) {
           const l = rowToListing(payload.new as Record<string, unknown>);
-          fullyLoadedIds.add(l.id);
           const before = memoryStore.find((x) => x.id === l.id);
           memoryStore = memoryStore.map((x) => (x.id === l.id ? l : x));
           emit();
@@ -294,7 +126,6 @@ function ensureInit() {
         } else if (payload.eventType === "DELETE" && payload.old) {
           const oldId = String((payload.old as { id?: unknown }).id ?? "");
           if (oldId) {
-            fullyLoadedIds.delete(oldId);
             memoryStore = memoryStore.filter((x) => x.id !== oldId);
             emit();
           }
@@ -329,50 +160,8 @@ export function useListings(): Listing[] {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
-// True once the first network fetch has completed (or hydrated from cache).
-// Components use this to show skeletons before any data is available.
-export function useListingsLoaded(): boolean {
-  const [v, setV] = useState<boolean>(() => loaded);
-  useEffect(() => {
-    if (loaded) {
-      setV(true);
-      return;
-    }
-    const cb = () => {
-      if (loaded) setV(true);
-    };
-    listeners.add(cb);
-    ensureInit();
-    return () => {
-      listeners.delete(cb);
-    };
-  }, []);
-  return v;
-}
-
-export function useListingsError(): string | null {
-  const [v, setV] = useState<string | null>(() => listingsError);
-  useEffect(() => {
-    const cb = () => setV(listingsError);
-    listeners.add(cb);
-    ensureInit();
-    return () => {
-      listeners.delete(cb);
-    };
-  }, []);
-  return v;
-}
-
 export function useListing(id: string | undefined): Listing | undefined {
   const all = useListings();
-  // When a single listing is opened, lazily fetch the heavy fields
-  // (description + per-language translations) that are omitted from the
-  // lightweight list query.
-  useEffect(() => {
-    if (!id) return;
-    if (fullyLoadedIds.has(id)) return;
-    void fetchOne(id);
-  }, [id]);
   return all.find((l) => l.id === id);
 }
 
@@ -486,41 +275,21 @@ export function toggleFavorite(id: string) {
 // ===== Admin auth (simple, client-side, password-protected) =====
 const AUTH_KEY = "ger.admin.v1";
 const authListeners = new Set<() => void>();
-let adminSessionMemory = false;
-
-function readAdminSession(): boolean {
-  if (typeof window === "undefined") return adminSessionMemory;
-  try {
-    return window.localStorage.getItem(AUTH_KEY) === "1";
-  } catch {
-    return adminSessionMemory;
-  }
-}
-
-function writeAdminSession(value: boolean) {
-  adminSessionMemory = value;
-  if (typeof window === "undefined") return;
-  try {
-    if (value) window.localStorage.setItem(AUTH_KEY, "1");
-    else window.localStorage.removeItem(AUTH_KEY);
-  } catch {
-    // Ignore storage restrictions and keep the in-memory session for this tab.
-  }
-}
 
 export function isAdmin(): boolean {
-  return readAdminSession();
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(AUTH_KEY) === "1";
 }
 
 export function loginAdmin(password: string, expected: string): boolean {
-  if (password.trim() !== expected) return false;
-  writeAdminSession(true);
+  if (password !== expected) return false;
+  if (typeof window !== "undefined") window.localStorage.setItem(AUTH_KEY, "1");
   authListeners.forEach((l) => l());
   return true;
 }
 
 export function logoutAdmin() {
-  writeAdminSession(false);
+  if (typeof window !== "undefined") window.localStorage.removeItem(AUTH_KEY);
   authListeners.forEach((l) => l());
 }
 
@@ -853,227 +622,4 @@ function notifyRented(listing: Listing) {
     listingId: listing.id,
     city: listing.city,
   });
-}
-
-// ===== Translation helper (calls translate-listing edge function) =====
-export interface TranslateInput {
-  sourceLang?: "mn" | "ko" | "en" | "ru" | "zh" | "vi";
-  fields: {
-    title?: string;
-    description?: string;
-    address?: string;
-    area?: string;
-    options?: string[];
-  };
-}
-
-export interface TranslateResult {
-  titleTranslations?: Record<string, string>;
-  descriptionTranslations?: Record<string, string>;
-  addressTranslations?: Record<string, string>;
-  areaTranslations?: Record<string, string>;
-  optionsTranslations?: Record<string, string[]>;
-}
-
-export async function translateListingFields(
-  input: TranslateInput,
-): Promise<TranslateResult> {
-  const { data, error } = await supabase.functions.invoke<TranslateResult>(
-    "translate-listing",
-    { body: input },
-  );
-  if (error) {
-    console.error("[translate-listing] failed", error);
-    throw error;
-  }
-  return data ?? {};
-}
-
-// ===== Cities & Room Types (dynamic from DB) =====
-export type CityRow = {
-  id: string;
-  parent_id: string | null;
-  name_mn: string;
-  name_ko: string;
-  name_en: string;
-  name_ru: string;
-  name_zh: string;
-  name_vi: string;
-  emoji: string;
-  sort_order: number;
-};
-export type RoomTypeRow = Omit<CityRow, "parent_id">;
-
-export function cityName(row: CityRow | undefined, lang: string): string {
-  if (!row) return "";
-  const key = `name_${lang}` as keyof CityRow;
-  const v = row[key];
-  return (typeof v === "string" && v.trim()) ? v : row.name_mn || row.name_ko || row.id;
-}
-export function roomTypeName(row: RoomTypeRow | undefined, lang: string): string {
-  if (!row) return "";
-  const key = `name_${lang}` as keyof RoomTypeRow;
-  const v = row[key];
-  return (typeof v === "string" && v.trim()) ? v : row.name_mn || row.name_ko || row.id;
-}
-
-export function useCitiesData(): CityRow[] {
-  const [rows, setRows] = useState<CityRow[]>([]);
-  useEffect(() => {
-    let active = true;
-    supabase
-      .from("cities")
-      .select("*")
-      .order("sort_order", { ascending: true })
-      .then(({ data }) => {
-        if (active && data) setRows(data as unknown as CityRow[]);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-  return rows;
-}
-
-export function useRoomTypesData(): RoomTypeRow[] {
-  const [rows, setRows] = useState<RoomTypeRow[]>([]);
-  useEffect(() => {
-    let active = true;
-    supabase
-      .from("room_types")
-      .select("*")
-      .order("sort_order", { ascending: true })
-      .then(({ data }) => {
-        if (active && data) setRows(data as unknown as RoomTypeRow[]);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-  return rows;
-}
-
-// Global cache for cities & room types so UI components can resolve names by id synchronously.
-let citiesCache: CityRow[] = [];
-let roomTypesCache: RoomTypeRow[] = [];
-const refDirListeners = new Set<() => void>();
-
-async function loadReferenceDirs() {
-  const [c, r] = await Promise.all([
-    supabase.from("cities").select("*").order("sort_order", { ascending: true }),
-    supabase.from("room_types").select("*").order("sort_order", { ascending: true }),
-  ]);
-  if (c.data) citiesCache = c.data as unknown as CityRow[];
-  if (r.data) roomTypesCache = r.data as unknown as RoomTypeRow[];
-  refDirListeners.forEach((l) => l());
-}
-
-let referenceLoaded = false;
-function ensureReferenceLoaded() {
-  if (referenceLoaded) return;
-  referenceLoaded = true;
-  loadReferenceDirs();
-}
-
-export function lookupCityName(id: string | undefined, lang: string): string {
-  if (!id) return "";
-  ensureReferenceLoaded();
-  const row = citiesCache.find((c) => c.id === id);
-  if (!row) return id;
-  const v = (row as any)[`name_${lang}`];
-  return (typeof v === "string" && v.trim()) ? v : row.name_mn || row.name_ko || id;
-}
-export function lookupRoomTypeName(id: string | undefined, lang: string): string {
-  if (!id) return "";
-  ensureReferenceLoaded();
-  const row = roomTypesCache.find((r) => r.id === id);
-  if (!row) return id;
-  const v = (row as any)[`name_${lang}`];
-  return (typeof v === "string" && v.trim()) ? v : row.name_mn || row.name_ko || id;
-}
-
-export function useReferenceData() {
-  const subscribe = (cb: () => void) => {
-    refDirListeners.add(cb);
-    return () => { refDirListeners.delete(cb); };
-  };
-  const get = () => citiesCache.length + roomTypesCache.length;
-  useSyncExternalStore(subscribe, get, () => 0);
-  ensureReferenceLoaded();
-  return { cities: citiesCache, roomTypes: roomTypesCache };
-}
-
-// ===== Amenities (icon-based options) =====
-export type AmenityRow = {
-  id: string;
-  icon: string;
-  icon_url: string;
-  name_mn: string;
-  name_ko: string;
-  name_en: string;
-  name_ru: string;
-  name_zh: string;
-  name_vi: string;
-  sort_order: number;
-};
-
-let amenitiesCache: AmenityRow[] = [];
-const amenityListeners = new Set<() => void>();
-let amenitiesLoaded = false;
-
-async function loadAmenities() {
-  const { data, error } = await supabase
-    .from("listing_amenities")
-    .select("*")
-    .order("sort_order", { ascending: true });
-  if (error) {
-    console.error("[amenities] fetch failed", error);
-    return;
-  }
-  amenitiesCache = (data ?? []) as unknown as AmenityRow[];
-  amenitiesLoaded = true;
-  amenityListeners.forEach((l) => l());
-}
-
-function ensureAmenitiesLoaded() {
-  if (amenitiesLoaded) return;
-  amenitiesLoaded = true; // mark to prevent double-load
-  void loadAmenities().then(() => {
-    // ensure listeners are notified again once first load resolves
-    amenityListeners.forEach((l) => l());
-  });
-}
-
-export function useAmenities(): AmenityRow[] {
-  const subscribe = (cb: () => void) => {
-    amenityListeners.add(cb);
-    return () => { amenityListeners.delete(cb); };
-  };
-  const get = () => amenitiesCache.length;
-  useSyncExternalStore(subscribe, get, () => 0);
-  ensureAmenitiesLoaded();
-  return amenitiesCache;
-}
-
-export function lookupAmenity(id: string): AmenityRow | undefined {
-  ensureAmenitiesLoaded();
-  return amenitiesCache.find((a) => a.id === id);
-}
-
-export function amenityName(row: AmenityRow | undefined, lang: string): string {
-  if (!row) return "";
-  const v = (row as unknown as Record<string, string>)[`name_${lang}`];
-  return (typeof v === "string" && v.trim()) ? v : row.name_mn || row.name_en || row.id;
-}
-
-export async function upsertAmenity(row: Partial<AmenityRow> & { id: string }) {
-  const { error } = await supabase.from("listing_amenities").upsert(row as never, { onConflict: "id" });
-  if (error) throw error;
-  await loadAmenities();
-}
-
-export async function deleteAmenity(id: string) {
-  const { error } = await supabase.from("listing_amenities").delete().eq("id", id);
-  if (error) throw error;
-  await loadAmenities();
 }
