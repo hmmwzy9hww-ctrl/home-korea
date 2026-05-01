@@ -165,7 +165,17 @@ async function fetchAll(attempt = 0): Promise<void> {
     if (attempt < 5) {
       const delay = Math.min(1000 * Math.pow(2, attempt), 8000);
       setTimeout(() => { void fetchAll(attempt + 1); }, delay);
+      return;
     }
+    // After exhausting retries, mark as loaded so UI can stop showing
+    // skeletons. If we have nothing in memory (no cache hit either),
+    // fall back to sample listings so the page is not blank when the
+    // backend pool is exhausted.
+    if (memoryStore.length === 0) {
+      memoryStore = sampleListings;
+    }
+    loaded = true;
+    emit();
     return;
   }
   const rows = (data ?? []) as unknown as Record<string, unknown>[];
