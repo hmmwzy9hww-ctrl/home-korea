@@ -249,8 +249,13 @@ function ensureInit() {
   if (initialized || typeof window === "undefined") return;
   initialized = true;
   // Hydrate from sessionStorage cache so the UI shows data immediately.
+  // Skip cache that has zero photos across all rows — that means it was
+  // saved during an emergency-fallback session and would show photoless
+  // cards instead of letting the fresh fetch populate real images.
   const cached = loadCachedListings();
-  if (cached && cached.length > 0) {
+  const cacheHasPhotos =
+    !!cached && cached.some((l) => Array.isArray(l.photos) && l.photos.length > 0);
+  if (cached && cached.length > 0 && cacheHasPhotos) {
     memoryStore = cached;
     loaded = true;
   }
