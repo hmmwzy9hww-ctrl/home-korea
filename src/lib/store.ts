@@ -8,7 +8,7 @@ let memoryStore: Listing[] = [];
 let initialized = false;
 let loaded = false;
 const listeners = new Set<() => void>();
-let fetchRetryTimer: ReturnType<typeof setTimeout> | null = null;
+let fetchRetryTimer: number | null = null;
 let fetchInFlight = false;
 
 // sessionStorage cache so that repeat navigations within the same tab show
