@@ -17,6 +17,60 @@ const LISTINGS_CACHE_TS_KEY = "ger.listings.cache.v2.ts";
 // network request entirely on init.
 const CACHE_FRESH_MS = 5 * 60 * 1000; // 5 minutes
 
+// ===== Cache bypass toggle =====
+// When enabled, the listings store ignores the localStorage cache entirely
+// and always fetches fresh data from Supabase on every mount / refresh.
+const CACHE_BYPASS_KEY = "ger.listings.cacheBypass.v1";
+const cacheBypassListeners = new Set<() => void>();
+let cacheBypassMemory = false;
+
+function readCacheBypass(): boolean {
+  if (typeof window === "undefined") return cacheBypassMemory;
+  try {
+    return window.localStorage.getItem(CACHE_BYPASS_KEY) === "1";
+  } catch {
+    return cacheBypassMemory;
+  }
+}
+
+export function isCacheBypass(): boolean {
+  return readCacheBypass();
+}
+
+export function setCacheBypass(value: boolean) {
+  cacheBypassMemory = value;
+  if (typeof window !== "undefined") {
+    try {
+      if (value) {
+        window.localStorage.setItem(CACHE_BYPASS_KEY, "1");
+        // Drop any existing cache so nothing stale lingers.
+        window.localStorage.removeItem(LISTINGS_CACHE_KEY);
+        window.localStorage.removeItem(LISTINGS_CACHE_TS_KEY);
+      } else {
+        window.localStorage.removeItem(CACHE_BYPASS_KEY);
+      }
+    } catch {
+      // Ignore storage failures — in-memory toggle still applies.
+    }
+  }
+  cacheBypassListeners.forEach((l) => l());
+  // Force a fresh pull immediately so the user sees the effect right away.
+  void fetchAll();
+}
+
+export function useCacheBypass(): boolean {
+  const [v, setV] = useState<boolean>(false);
+  useEffect(() => {
+    setV(readCacheBypass());
+    const cb = () => setV(readCacheBypass());
+    cacheBypassListeners.add(cb);
+    return () => {
+      cacheBypassListeners.delete(cb);
+    };
+  }, []);
+  return v;
+}
+
 function loadCachedListings(): { rows: Listing[]; ageMs: number } | null {
   if (typeof window === "undefined") return null;
   try {
