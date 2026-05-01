@@ -10,6 +10,7 @@ let loaded = false;
 const listeners = new Set<() => void>();
 let fetchRetryTimer: number | null = null;
 let fetchInFlight = false;
+let listingsError: string | null = null;
 
 // sessionStorage cache so that repeat navigations within the same tab show
 // listings instantly while a fresh fetch runs in the background.
@@ -183,15 +184,23 @@ async function fetchAll(attempt = 0): Promise<void> {
   fetchInFlight = false;
   if (error) {
     console.error("[listings] fetch failed", error);
+    listingsError = error.message || "Failed to load listings.";
+    emit();
     scheduleFetchRetry(attempt);
     return;
   }
   clearFetchRetryTimer();
+  listingsError = null;
   const rows = (data ?? []) as unknown as Record<string, unknown>[];
   memoryStore = rows.map((r) => rowToListing(r));
   loaded = true;
   persistCachedListings(memoryStore);
   emit();
+}
+
+export function retryListingsFetch() {
+  clearFetchRetryTimer();
+  void fetchAll();
 }
 
 async function fetchOne(id: string): Promise<void> {
@@ -307,6 +316,19 @@ export function useListingsLoaded(): boolean {
     const cb = () => {
       if (loaded) setV(true);
     };
+    listeners.add(cb);
+    ensureInit();
+    return () => {
+      listeners.delete(cb);
+    };
+  }, []);
+  return v;
+}
+
+export function useListingsError(): string | null {
+  const [v, setV] = useState<string | null>(() => listingsError);
+  useEffect(() => {
+    const cb = () => setV(listingsError);
     listeners.add(cb);
     ensureInit();
     return () => {
