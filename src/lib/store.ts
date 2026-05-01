@@ -298,9 +298,6 @@ function getServerSnapshot(): Listing[] {
   return loaded ? memoryStore : EMPTY_LISTINGS;
 }
 
-// Stable empty array for SSR / initial render before data loads.
-const SAMPLE_FALLBACK = sampleListings;
-void SAMPLE_FALLBACK;
 
 export function useListings(): Listing[] {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
