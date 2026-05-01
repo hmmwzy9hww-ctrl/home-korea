@@ -194,10 +194,15 @@ async function fetchAll(attempt = 0): Promise<void> {
     if (memoryStore.length === 0 && emergencyListingsFallback.length > 0) {
       memoryStore = emergencyListingsFallback;
       loaded = true;
-      persistCachedListings(memoryStore);
+      usingEmergencyFallback = true;
+      // Intentionally do NOT persist the fallback to sessionStorage —
+      // we want the next page load to attempt a fresh fetch (with photos)
+      // instead of being stuck on the photo-less snapshot.
     }
     emit();
-    scheduleFetchRetry(attempt);
+    // While serving the emergency fallback, retry more aggressively so that
+    // photos reappear automatically as soon as the gateway recovers.
+    scheduleFetchRetry(usingEmergencyFallback ? 0 : attempt);
     return;
   }
   clearFetchRetryTimer();
@@ -205,6 +210,7 @@ async function fetchAll(attempt = 0): Promise<void> {
   const rows = (data ?? []) as unknown as Record<string, unknown>[];
   memoryStore = rows.map((r) => rowToListing(r));
   loaded = true;
+  usingEmergencyFallback = false;
   persistCachedListings(memoryStore);
   emit();
 }
