@@ -87,6 +87,9 @@ function loadCachedListings(): { rows: Listing[]; ageMs: number } | null {
 
 function persistCachedListings(rows: Listing[]) {
   if (typeof window === "undefined") return;
+  // When bypass is on we explicitly avoid persisting, so a later toggle-off
+  // doesn't surface stale data.
+  if (readCacheBypass()) return;
   try {
     window.localStorage.setItem(LISTINGS_CACHE_KEY, JSON.stringify(rows));
     window.localStorage.setItem(LISTINGS_CACHE_TS_KEY, String(Date.now()));
