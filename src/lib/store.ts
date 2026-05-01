@@ -358,6 +358,13 @@ function getServerSnapshot(): Listing[] {
 
 
 export function useListings(): Listing[] {
+  // When cache bypass is on, refetch from Supabase on every mount so the
+  // user always sees the latest data when navigating between pages.
+  useEffect(() => {
+    if (typeof window !== "undefined" && readCacheBypass()) {
+      void fetchAll();
+    }
+  }, []);
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
