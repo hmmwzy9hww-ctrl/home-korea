@@ -8,6 +8,7 @@ import type { City, Listing, ListingStatus, RoomType } from "./types";
 let memoryStore: Listing[] = [];
 let initialized = false;
 let loaded = false;
+let usingEmergencyFallback = false;
 const listeners = new Set<() => void>();
 let fetchRetryTimer: number | null = null;
 let fetchInFlight = false;
