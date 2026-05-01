@@ -139,8 +139,6 @@ const LIST_COLUMNS = [
   "bus_stop",
   "bus_minutes",
   "available_from",
-  "options",
-  "description",
   "photos",
   "naver_map_url",
   "messenger_url",
