@@ -1,6 +1,7 @@
 // Listings store backed by Lovable Cloud (Supabase) with realtime sync.
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { emergencyListingRows } from "./emergencyListings";
 import { sampleListings } from "./sampleData";
 import type { City, Listing, ListingStatus, RoomType } from "./types";
 
@@ -78,6 +79,10 @@ function rowToListing(row: Record<string, unknown>): Listing {
       (row.options_translations as Record<string, string[]>) ?? {},
   };
 }
+
+const emergencyListingsFallback: Listing[] = emergencyListingRows.map((row) =>
+  rowToListing(row as unknown as Record<string, unknown>),
+);
 
 function listingToRow(l: Partial<Listing>): Record<string, unknown> {
   const row: Record<string, unknown> = {};
@@ -185,6 +190,11 @@ async function fetchAll(attempt = 0): Promise<void> {
   if (error) {
     console.error("[listings] fetch failed", error);
     listingsError = error.message || "Failed to load listings.";
+    if (memoryStore.length === 0 && emergencyListingsFallback.length > 0) {
+      memoryStore = emergencyListingsFallback;
+      loaded = true;
+      persistCachedListings(memoryStore);
+    }
     emit();
     scheduleFetchRetry(attempt);
     return;
