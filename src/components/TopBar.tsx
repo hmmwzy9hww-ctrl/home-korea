@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import { useState } from "react";
 import { useI18n } from "@/lib/i18n";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { CacheBypassToggle } from "./CacheBypassToggle";
 
 export function TopBar({ showSearch = true }: { showSearch?: boolean }) {
   const { t } = useI18n();
