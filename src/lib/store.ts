@@ -8,6 +8,7 @@ import type { City, Listing, ListingStatus, RoomType } from "./types";
 let memoryStore: Listing[] = [];
 let initialized = false;
 let loaded = false;
+let usingEmergencyFallback = false;
 const listeners = new Set<() => void>();
 let fetchRetryTimer: number | null = null;
 let fetchInFlight = false;
@@ -172,7 +173,10 @@ function clearFetchRetryTimer() {
 
 function scheduleFetchRetry(attempt: number) {
   if (typeof window === "undefined" || fetchRetryTimer !== null) return;
-  const delay = Math.min(1000 * Math.pow(2, Math.min(attempt, 4)), 15000);
+  // Tighter cap while serving emergency fallback so photos reappear quickly
+  // once the gateway recovers.
+  const cap = usingEmergencyFallback ? 5000 : 15000;
+  const delay = Math.min(1000 * Math.pow(2, Math.min(attempt, 4)), cap);
   fetchRetryTimer = window.setTimeout(() => {
     fetchRetryTimer = null;
     void fetchAll(attempt + 1);
@@ -193,10 +197,15 @@ async function fetchAll(attempt = 0): Promise<void> {
     if (memoryStore.length === 0 && emergencyListingsFallback.length > 0) {
       memoryStore = emergencyListingsFallback;
       loaded = true;
-      persistCachedListings(memoryStore);
+      usingEmergencyFallback = true;
+      // Intentionally do NOT persist the fallback to sessionStorage —
+      // we want the next page load to attempt a fresh fetch (with photos)
+      // instead of being stuck on the photo-less snapshot.
     }
     emit();
-    scheduleFetchRetry(attempt);
+    // While serving the emergency fallback, retry more aggressively so that
+    // photos reappear automatically as soon as the gateway recovers.
+    scheduleFetchRetry(usingEmergencyFallback ? 0 : attempt);
     return;
   }
   clearFetchRetryTimer();
@@ -204,6 +213,7 @@ async function fetchAll(attempt = 0): Promise<void> {
   const rows = (data ?? []) as unknown as Record<string, unknown>[];
   memoryStore = rows.map((r) => rowToListing(r));
   loaded = true;
+  usingEmergencyFallback = false;
   persistCachedListings(memoryStore);
   emit();
 }
@@ -239,8 +249,13 @@ function ensureInit() {
   if (initialized || typeof window === "undefined") return;
   initialized = true;
   // Hydrate from sessionStorage cache so the UI shows data immediately.
+  // Skip cache that has zero photos across all rows — that means it was
+  // saved during an emergency-fallback session and would show photoless
+  // cards instead of letting the fresh fetch populate real images.
   const cached = loadCachedListings();
-  if (cached && cached.length > 0) {
+  const cacheHasPhotos =
+    !!cached && cached.some((l) => Array.isArray(l.photos) && l.photos.length > 0);
+  if (cached && cached.length > 0 && cacheHasPhotos) {
     memoryStore = cached;
     loaded = true;
   }
