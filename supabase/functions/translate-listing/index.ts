@@ -178,12 +178,21 @@ Rules:
         );
       }
       if (aiRes.status === 402) {
+        // Return 200 with an empty result so callers (auto-translate hooks,
+        // background admin patches) don't surface this as a runtime error.
+        // The `creditsExhausted` flag lets UI show a friendly toast if it cares.
         return new Response(
           JSON.stringify({
+            creditsExhausted: true,
             error: "AI credits exhausted. Top up in Settings → Workspace → Usage.",
+            titleTranslations: {},
+            descriptionTranslations: {},
+            addressTranslations: {},
+            areaTranslations: {},
+            optionsTranslations: {},
           }),
           {
-            status: 402,
+            status: 200,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           },
         );
