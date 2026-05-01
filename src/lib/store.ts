@@ -17,6 +17,60 @@ const LISTINGS_CACHE_TS_KEY = "ger.listings.cache.v2.ts";
 // network request entirely on init.
 const CACHE_FRESH_MS = 5 * 60 * 1000; // 5 minutes
 
+// ===== Cache bypass toggle =====
+// When enabled, the listings store ignores the localStorage cache entirely
+// and always fetches fresh data from Supabase on every mount / refresh.
+const CACHE_BYPASS_KEY = "ger.listings.cacheBypass.v1";
+const cacheBypassListeners = new Set<() => void>();
+let cacheBypassMemory = false;
+
+function readCacheBypass(): boolean {
+  if (typeof window === "undefined") return cacheBypassMemory;
+  try {
+    return window.localStorage.getItem(CACHE_BYPASS_KEY) === "1";
+  } catch {
+    return cacheBypassMemory;
+  }
+}
+
+export function isCacheBypass(): boolean {
+  return readCacheBypass();
+}
+
+export function setCacheBypass(value: boolean) {
+  cacheBypassMemory = value;
+  if (typeof window !== "undefined") {
+    try {
+      if (value) {
+        window.localStorage.setItem(CACHE_BYPASS_KEY, "1");
+        // Drop any existing cache so nothing stale lingers.
+        window.localStorage.removeItem(LISTINGS_CACHE_KEY);
+        window.localStorage.removeItem(LISTINGS_CACHE_TS_KEY);
+      } else {
+        window.localStorage.removeItem(CACHE_BYPASS_KEY);
+      }
+    } catch {
+      // Ignore storage failures — in-memory toggle still applies.
+    }
+  }
+  cacheBypassListeners.forEach((l) => l());
+  // Force a fresh pull immediately so the user sees the effect right away.
+  void fetchAll();
+}
+
+export function useCacheBypass(): boolean {
+  const [v, setV] = useState<boolean>(false);
+  useEffect(() => {
+    setV(readCacheBypass());
+    const cb = () => setV(readCacheBypass());
+    cacheBypassListeners.add(cb);
+    return () => {
+      cacheBypassListeners.delete(cb);
+    };
+  }, []);
+  return v;
+}
+
 function loadCachedListings(): { rows: Listing[]; ageMs: number } | null {
   if (typeof window === "undefined") return null;
   try {
@@ -33,6 +87,9 @@ function loadCachedListings(): { rows: Listing[]; ageMs: number } | null {
 
 function persistCachedListings(rows: Listing[]) {
   if (typeof window === "undefined") return;
+  // When bypass is on we explicitly avoid persisting, so a later toggle-off
+  // doesn't surface stale data.
+  if (readCacheBypass()) return;
   try {
     window.localStorage.setItem(LISTINGS_CACHE_KEY, JSON.stringify(rows));
     window.localStorage.setItem(LISTINGS_CACHE_TS_KEY, String(Date.now()));
@@ -213,16 +270,17 @@ async function fetchOne(id: string): Promise<void> {
 function ensureInit() {
   if (initialized || typeof window === "undefined") return;
   initialized = true;
-  // Hydrate from cache first so the UI shows data immediately without ever
-  // touching the network.
-  const cached = loadCachedListings();
-  if (cached && cached.rows.length > 0) {
-    memoryStore = cached.rows;
-    loaded = true;
-    // If the cache is still fresh, skip the network request entirely. This
-    // is the single biggest reduction in DB connection pool pressure.
-    if (cached.ageMs < CACHE_FRESH_MS) {
-      return;
+  const bypass = readCacheBypass();
+  // When bypass is on, skip cache hydration entirely — always pull fresh
+  // data from Supabase.
+  if (!bypass) {
+    const cached = loadCachedListings();
+    if (cached && cached.rows.length > 0) {
+      memoryStore = cached.rows;
+      loaded = true;
+      if (cached.ageMs < CACHE_FRESH_MS) {
+        return;
+      }
     }
   }
   void fetchAll();
@@ -300,6 +358,13 @@ function getServerSnapshot(): Listing[] {
 
 
 export function useListings(): Listing[] {
+  // When cache bypass is on, refetch from Supabase on every mount so the
+  // user always sees the latest data when navigating between pages.
+  useEffect(() => {
+    if (typeof window !== "undefined" && readCacheBypass()) {
+      void fetchAll();
+    }
+  }, []);
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
