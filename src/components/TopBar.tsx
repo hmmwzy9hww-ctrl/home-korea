@@ -36,6 +36,7 @@ export function TopBar({ showSearch = true }: { showSearch?: boolean }) {
             />
           </form>
         )}
+        <CacheBypassToggle />
         <LanguageSwitcher compact />
       </div>
     </header>
