@@ -336,6 +336,12 @@ function AdminPage() {
             options: basePayload.options,
           },
         });
+        toast.dismiss(translatingToast);
+        const t = translations as typeof translations & { creditsExhausted?: boolean };
+        if (t?.creditsExhausted) {
+          toast.error("AI кредит дууссан. Settings → Workspace → Usage-аас цэнэглэнэ үү.");
+          return;
+        }
         if (savedId) {
           await updateListing(savedId, {
             ...basePayload,
@@ -346,19 +352,11 @@ function AdminPage() {
             optionsTranslations: translations.optionsTranslations,
           });
         }
-        toast.dismiss(translatingToast);
         toast.success("Орчуулга бэлэн боллоо");
       } catch (err) {
         toast.dismiss(translatingToast);
         console.error("[translate] background failed", err);
-        const msg = err instanceof Error ? err.message : String(err);
-        if (msg.includes("402") || msg.toLowerCase().includes("credit")) {
-          toast.error("AI кредит дууссан. Settings → Workspace → Usage-аас цэнэглэнэ үү.");
-        } else if (msg.includes("429")) {
-          toast.error("Хэт олон хүсэлт. Хэсэг хүлээгээд дахин оролдоно уу.");
-        } else {
-          toast.error("Орчуулга амжилтгүй. Дараа дахин оролдоно уу.");
-        }
+        toast.error("Орчуулга амжилтгүй. Дараа дахин оролдоно уу.");
       }
     })().catch((err) => {
       console.error("[translate] unhandled", err);
