@@ -173,7 +173,10 @@ function clearFetchRetryTimer() {
 
 function scheduleFetchRetry(attempt: number) {
   if (typeof window === "undefined" || fetchRetryTimer !== null) return;
-  const delay = Math.min(1000 * Math.pow(2, Math.min(attempt, 4)), 15000);
+  // Tighter cap while serving emergency fallback so photos reappear quickly
+  // once the gateway recovers.
+  const cap = usingEmergencyFallback ? 5000 : 15000;
+  const delay = Math.min(1000 * Math.pow(2, Math.min(attempt, 4)), cap);
   fetchRetryTimer = window.setTimeout(() => {
     fetchRetryTimer = null;
     void fetchAll(attempt + 1);
