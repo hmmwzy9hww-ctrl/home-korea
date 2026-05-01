@@ -270,16 +270,17 @@ async function fetchOne(id: string): Promise<void> {
 function ensureInit() {
   if (initialized || typeof window === "undefined") return;
   initialized = true;
-  // Hydrate from cache first so the UI shows data immediately without ever
-  // touching the network.
-  const cached = loadCachedListings();
-  if (cached && cached.rows.length > 0) {
-    memoryStore = cached.rows;
-    loaded = true;
-    // If the cache is still fresh, skip the network request entirely. This
-    // is the single biggest reduction in DB connection pool pressure.
-    if (cached.ageMs < CACHE_FRESH_MS) {
-      return;
+  const bypass = readCacheBypass();
+  // When bypass is on, skip cache hydration entirely — always pull fresh
+  // data from Supabase.
+  if (!bypass) {
+    const cached = loadCachedListings();
+    if (cached && cached.rows.length > 0) {
+      memoryStore = cached.rows;
+      loaded = true;
+      if (cached.ageMs < CACHE_FRESH_MS) {
+        return;
+      }
     }
   }
   void fetchAll();
