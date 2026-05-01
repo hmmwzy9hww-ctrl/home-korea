@@ -28,6 +28,7 @@ import {
   logoutAdmin,
   roomTypeName,
   setTextOverride,
+  startListingsRealtime,
   translateListingFields,
   updateListing,
   updateSiteSettings,
@@ -100,7 +101,12 @@ function AdminPage() {
   const subs = useCitySubscriptions();
   const citiesData = useCitiesData();
   const roomTypesData = useRoomTypesData();
-  
+
+  // Realtime sync is admin-only to keep public visitors off the
+  // shared DB connection pool.
+  useEffect(() => {
+    if (isAdmin) startListingsRealtime();
+  }, [isAdmin]);
 
   const parentCities = useMemo(() => citiesData.filter((c) => !c.parent_id), [citiesData]);
   const childrenByParent = useMemo(() => {

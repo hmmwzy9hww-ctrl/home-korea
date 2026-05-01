@@ -1,7 +1,6 @@
-// Listings store backed by Lovable Cloud (Supabase) with realtime sync.
+// Listings store backed by Lovable Cloud (Supabase).
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { sampleListings } from "./sampleData";
 import type { City, Listing, ListingStatus, RoomType } from "./types";
 
 let memoryStore: Listing[] = [];
@@ -9,17 +8,24 @@ let initialized = false;
 let loaded = false;
 const listeners = new Set<() => void>();
 
-// sessionStorage cache so that repeat navigations within the same tab show
-// listings instantly while a fresh fetch runs in the background.
-const LISTINGS_CACHE_KEY = "ger.listings.cache.v1";
+// localStorage cache so listings appear instantly on repeat visits — even
+// across tabs and sessions — and we only hit the backend when the cache is
+// stale. This dramatically reduces load on the Cloud DB connection pool.
+const LISTINGS_CACHE_KEY = "ger.listings.cache.v2";
+const LISTINGS_CACHE_TS_KEY = "ger.listings.cache.v2.ts";
+// Time the cache is considered "fresh" — within this window we skip the
+// network request entirely on init.
+const CACHE_FRESH_MS = 5 * 60 * 1000; // 5 minutes
 
-function loadCachedListings(): Listing[] | null {
+function loadCachedListings(): { rows: Listing[]; ageMs: number } | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = window.sessionStorage.getItem(LISTINGS_CACHE_KEY);
+    const raw = window.localStorage.getItem(LISTINGS_CACHE_KEY);
+    const ts = Number(window.localStorage.getItem(LISTINGS_CACHE_TS_KEY) ?? 0);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Listing[];
-    return Array.isArray(parsed) ? parsed : null;
+    if (!Array.isArray(parsed)) return null;
+    return { rows: parsed, ageMs: ts ? Date.now() - ts : Number.POSITIVE_INFINITY };
   } catch {
     return null;
   }
@@ -28,7 +34,8 @@ function loadCachedListings(): Listing[] | null {
 function persistCachedListings(rows: Listing[]) {
   if (typeof window === "undefined") return;
   try {
-    window.sessionStorage.setItem(LISTINGS_CACHE_KEY, JSON.stringify(rows));
+    window.localStorage.setItem(LISTINGS_CACHE_KEY, JSON.stringify(rows));
+    window.localStorage.setItem(LISTINGS_CACHE_TS_KEY, String(Date.now()));
   } catch {
     // Quota errors are non-fatal — the in-memory store still works.
   }
@@ -161,19 +168,15 @@ async function fetchAll(attempt = 0): Promise<void> {
     .order("created_at", { ascending: false });
   if (error) {
     console.error("[listings] fetch failed", error);
-    // Retry transient connection errors with exponential backoff
-    if (attempt < 5) {
-      const delay = Math.min(1000 * Math.pow(2, attempt), 8000);
+    // Retry transient connection/pool errors with exponential backoff.
+    // Longer delays reduce pressure on the shared connection pool.
+    if (attempt < 6) {
+      const delay = Math.min(2000 * Math.pow(2, attempt), 30000);
       setTimeout(() => { void fetchAll(attempt + 1); }, delay);
       return;
     }
-    // After exhausting retries, mark as loaded so UI can stop showing
-    // skeletons. If we have nothing in memory (no cache hit either),
-    // fall back to sample listings so the page is not blank when the
-    // backend pool is exhausted.
-    if (memoryStore.length === 0) {
-      memoryStore = sampleListings;
-    }
+    // Give up — keep whatever is in memory (cache hit, if any) and stop
+    // showing skeletons.
     loaded = true;
     emit();
     return;
@@ -210,14 +213,29 @@ async function fetchOne(id: string): Promise<void> {
 function ensureInit() {
   if (initialized || typeof window === "undefined") return;
   initialized = true;
-  // Hydrate from sessionStorage cache so the UI shows data immediately.
+  // Hydrate from cache first so the UI shows data immediately without ever
+  // touching the network.
   const cached = loadCachedListings();
-  if (cached && cached.length > 0) {
-    memoryStore = cached;
+  if (cached && cached.rows.length > 0) {
+    memoryStore = cached.rows;
     loaded = true;
+    // If the cache is still fresh, skip the network request entirely. This
+    // is the single biggest reduction in DB connection pool pressure.
+    if (cached.ageMs < CACHE_FRESH_MS) {
+      return;
+    }
   }
   void fetchAll();
-  // Realtime subscription so all devices stay in sync.
+}
+
+// Realtime subscription is opt-in (admins only) — it holds an open WebSocket
+// connection per visitor and adds extra DB load that public listing browsers
+// don't need.
+let realtimeStarted = false;
+export function startListingsRealtime() {
+  if (realtimeStarted || typeof window === "undefined") return;
+  realtimeStarted = true;
+  ensureInit();
   supabase
     .channel("listings-changes")
     .on(
@@ -229,6 +247,7 @@ function ensureInit() {
           fullyLoadedIds.add(l.id);
           if (!memoryStore.some((x) => x.id === l.id)) {
             memoryStore = [l, ...memoryStore];
+            persistCachedListings(memoryStore);
             emit();
             notifyNewListing(l);
           }
@@ -237,6 +256,7 @@ function ensureInit() {
           fullyLoadedIds.add(l.id);
           const before = memoryStore.find((x) => x.id === l.id);
           memoryStore = memoryStore.map((x) => (x.id === l.id ? l : x));
+          persistCachedListings(memoryStore);
           emit();
           if (before && before.status === "available" && l.status === "unavailable") {
             notifyRented(l);
@@ -246,12 +266,19 @@ function ensureInit() {
           if (oldId) {
             fullyLoadedIds.delete(oldId);
             memoryStore = memoryStore.filter((x) => x.id !== oldId);
+            persistCachedListings(memoryStore);
             emit();
           }
         }
       },
     )
     .subscribe();
+}
+
+// Manually force a refresh from the network — used by pull-to-refresh or
+// after mutations.
+export function refreshListings() {
+  void fetchAll();
 }
 
 function subscribe(cb: () => void) {
@@ -271,9 +298,6 @@ function getServerSnapshot(): Listing[] {
   return loaded ? memoryStore : EMPTY_LISTINGS;
 }
 
-// Stable empty array for SSR / initial render before data loads.
-const SAMPLE_FALLBACK = sampleListings;
-void SAMPLE_FALLBACK;
 
 export function useListings(): Listing[] {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
