@@ -350,10 +350,19 @@ function AdminPage() {
         toast.success("Орчуулга бэлэн боллоо");
       } catch (err) {
         toast.dismiss(translatingToast);
-        console.error(err);
-        toast.error("Орчуулга амжилтгүй. Дараа дахин оролдоно уу.");
+        console.error("[translate] background failed", err);
+        const msg = err instanceof Error ? err.message : String(err);
+        if (msg.includes("402") || msg.toLowerCase().includes("credit")) {
+          toast.error("AI кредит дууссан. Settings → Workspace → Usage-аас цэнэглэнэ үү.");
+        } else if (msg.includes("429")) {
+          toast.error("Хэт олон хүсэлт. Хэсэг хүлээгээд дахин оролдоно уу.");
+        } else {
+          toast.error("Орчуулга амжилтгүй. Дараа дахин оролдоно уу.");
+        }
       }
-    })();
+    })().catch((err) => {
+      console.error("[translate] unhandled", err);
+    });
   };
 
   if (!isAdmin) {
